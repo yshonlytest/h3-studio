@@ -22,8 +22,7 @@ h3-studio/
 │   ├── notebooks/film_chain_runner.ipynb   # Google Colab 雲端算力執行腳本
 │   ├── skills/minimax-h3-colab/            # Colab CLI 工具包
 │   ├── tests/                              # Node.js 原生單元測試套件
-│   ├── wrangler.json                       # Cloudflare Workers 標準部署設定
-│   └── wrangler.jsonc                      # Cloudflare Workers 註解版部署設定
+│   └── wrangler.jsonc                      # Cloudflare Workers 部署設定 (SSOT)
 ├── 📁 pipeline/                            # 【調度管線與防護層】Python 分鏡接力、進程中斷與品質審查
 ├── 📁 comfy_nodes/                         # 【ComfyUI 自定義節點】H3ChainedStoryboardVideo 雙模接力節點
 ├── 📁 engines/h3.c/                        # 【底層推論核心】Apple Silicon Metal GPU 引擎 (整合 6 大 PR)
@@ -77,4 +76,4 @@ npm test
   - **Root Directory**：`film-chain`
   - **Build Command**：留空 (None)
   - **Deploy Command**：`npx wrangler deploy`
-  - **Config File**：`wrangler.json` / `wrangler.jsonc`
+  - **Config File**：`wrangler.jsonc` (官方標準格式)
