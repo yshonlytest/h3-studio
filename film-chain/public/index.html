@@ -867,7 +867,7 @@
           💡 <strong>方案限制與授權說明：</strong>本工作流利用 Google 訂閱贈送之每月 Compute Units 啟動雲端 A100 GPU；首次使用需在本機終端執行 <code>colab login</code> 完成 Google OAuth 授權（若尚未安裝 CLI，指令會自動引導安裝）。零本機顯卡負擔！
         </div>
         <div style="font-size:0.75rem; color:#7dd3fc; margin-bottom:4px; opacity:0.9;">▼ 終端 Agent 完整執行指令預覽（支援全自動安裝 skill、授權引導、A100 排程生成與 ffmpeg 無縫縫合）：</div>
-        <textarea id="colabPromptTextarea" readonly style="width:100%; height:82px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請幫我下載開源專案 https://github.com/yshonlytest/film-chain 作為長影片輸入/輸出控制模板，並安裝專案內建的 `skills/minimax-h3-colab`（若本機尚未安裝 colab CLI，請執行 `pip install google-colab-cli` 並提示我完成 `colab login` OAuth 授權）。確認具備 Compute Units 餘額後，讀取本專案分鏡任務，調用 Google Colab A100 GPU 依序渲染 MiniMax H3 影片，完成後自動調用本機 ffmpeg 消除重複首幀並以無縫 concat 合併為完整長影片，回填至網頁播放廳中。</textarea>
+        <textarea id="colabPromptTextarea" readonly style="width:100%; height:82px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 `film-chain/skills/minimax-h3-colab`（若本機尚未安裝 colab CLI，請執行 `pip install google-colab-cli` 並提示我完成 `colab login` OAuth 授權）。確認具備 Compute Units 餘額後，讀取本專案分鏡任務，調用 Google Colab A100 GPU 依序渲染 MiniMax H3 影片，完成後自動調用本機 ffmpeg 消除重複首幀並以無縫 concat 合併為完整長影片，回填至網頁播放廳中。</textarea>
       </div>
 
       <!-- 🤖 路線 3: 本機 ComfyUI Agent 環境對齊卡片（僅在選取路線 3 時顯示） -->
@@ -882,7 +882,7 @@
           </button>
         </div>
         <div style="font-size:0.75rem; color:#64748b; margin-bottom:4px;">▼ 指令內容預覽（可直接點擊上方按鈕一鍵複製）：</div>
-        <textarea id="agentPromptTextarea" readonly style="width:100%; height:74px; background:#050912; color:#94a3b8; border:1px solid #1e293b; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請你下載 https://github.com/yshonlytest/film-chain 並參考其「本地配置示範（路線 A）」，作為長影片銜接及製作的框架。請幫我判斷目前電腦的硬體配置（GPU 顯存、驅動與環境）是否有本地產製長影片的可能性；若可以，請幫我下載 ComfyUI 及配置相關依賴節點，並將流程中的 API 呼叫結構替換為我本機真實可運行的 ComfyUI 架構。</textarea>
+        <textarea id="agentPromptTextarea" readonly style="width:100%; height:74px; background:#050912; color:#94a3b8; border:1px solid #1e293b; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請你下載開源專案 https://github.com/yshonlytest/h3-studio 並參考其 Quick Start 說明，作為長影片銜接及製作的框架。請幫我執行 `./setup.sh` 進行環境健檢與 Apple Silicon Metal GPU 引擎編譯，並自動完成 ComfyUI 節點掛載（或執行 `python3 -m pipeline.h3_storyboard_pipeline --dry-run` 進行零權重管線測試）；若具備 MiniMax-H3 權重，請協助調用鏈接管線渲染完整分鏡影片。</textarea>
       </div>
 
       <div class="step1-container">
@@ -1947,7 +1947,7 @@
       showToast(`✅ 已複製 Session ID: ${sid}！正在開啟 Colab，請貼上並點擊全部執行。`);
       startSessionListener(sid);
 
-      const colabUrl = `https://colab.research.google.com/github/yshonlytest/film-chain/blob/main/notebooks/film_chain_runner.ipynb`;
+      const colabUrl = `https://colab.research.google.com/github/yshonlytest/h3-studio/blob/main/film-chain/notebooks/film_chain_runner.ipynb`;
       window.open(colabUrl, "_blank");
     }
 
@@ -2134,9 +2134,9 @@
       const s = slug || (currentPlan ? currentPlan.project_slug : "story_project");
       const sid = getOrCreateSessionId();
 
-      const promptText = `請幫我下載開源專案 https://github.com/yshonlytest/film-chain 作為長影片輸入/輸出控制模板，並安裝專案內建的 \`skills/minimax-h3-colab\`（若本機尚未安裝 colab CLI，請執行 \`pip install google-colab-cli\` 並提示我完成 \`colab login\` OAuth 授權）。確認具備 Compute Units 餘額後，直接執行專案原生自動串接命令：
+      const promptText = `請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 \`film-chain/skills/minimax-h3-colab\`（若本機尚未安裝 colab CLI，請執行 \`pip install google-colab-cli\` 並提示我完成 \`colab login\` OAuth 授權）。確認具備 Compute Units 餘額後，直接執行專案原生自動串接命令：
 
-python skills/minimax-h3-colab/scripts/runner.py chain --manifest colab_manifest_${s}_${sec}s.json --session-id ${sid}
+python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest colab_manifest_${s}_${sec}s.json --session-id ${sid}
 
 此命令會自動在 Colab A100 上依序完成各分鏡渲染、尾幀傳遞、FFmpeg 消幀拼接成 ${s}_${sec}s_seamless_merged.mp4，並即時回報進度與自動回傳至網頁播放廳中！`;
 

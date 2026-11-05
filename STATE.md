@@ -177,7 +177,7 @@
 ### Phase P5：範例 Prompt 現代化與程式碼遠端推送（Commit & Push）
 
 - [x] **Micro-Step P5.1：預設範例 Prompt 現代化改造與 Git Push**
-  - **目標倉庫**：`film-chain` (`https://github.com/yshonlytest/film-chain.git`)
+  - **目標倉庫**：`h3-studio` (`https://github.com/yshonlytest/h3-studio.git`)
   - **修改內容**：
     1. 徹底替換原先過時且小眾的「沖繩風獅爺拍球雜耍」範例，改為高度標準化、跨雲端/本地通用之「賽博霓虹・雨夜風衣偵探（Neo-Noir Detective）」15 秒連貫三部曲。
     2. 示範完整的 Context-IR 五維度結構（`[Scene]`, `[Camera]`, `Timeline:`, `[Look]`, `Audio:`）、無縫銜接語句、對白標籤（`<d>[Chinese] 看來今晚不會平靜了</d>`）、以及 `chain_mode: "motion_context"`。

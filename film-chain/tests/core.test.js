@@ -145,7 +145,7 @@ describe('H3 Storyboard Studio - Core Modules Unit Tests', () => {
         { title: "Part 1 (0-5s)", end_panel: 3, prompt: "P1" },
         { title: "Part 2 (5-10s)", end_panel: 9, prompt: "P2" }
       ];
-      const payload = comfyPayload.buildComfyApiPrompt("test_grid.png", segments, { steps: 8, layers: 12 }, "test/output");
+      const payload = comfyPayload.buildComfyApiPrompt("test_grid.png", segments, { steps: 8, layers: "45" }, "test/output");
 
       assert.ok(payload["3"], "Must contain LoadImage node 3");
       assert.equal(payload["3"].class_type, "LoadImage");
@@ -154,7 +154,7 @@ describe('H3 Storyboard Studio - Core Modules Unit Tests', () => {
       assert.ok(payload["1"], "Must contain H3ChainedStoryboardVideo node 1");
       assert.equal(payload["1"].class_type, "H3ChainedStoryboardVideo");
       assert.equal(payload["1"].inputs.steps, 8);
-      assert.equal(payload["1"].inputs.layers, 12);
+      assert.equal(payload["1"].inputs.layers, "45");
       assert.equal(payload["1"].inputs.ssd_streaming, true);
       assert.deepEqual(payload["1"].inputs.storyboard_grid, ["3", 0]);
 
@@ -190,12 +190,12 @@ describe('H3 Storyboard Studio - Core Modules Unit Tests', () => {
     it('should sanitize and normalize negative or malformed speed options', () => {
       const payload = comfyPayload.buildComfyApiPrompt("grid.png", [{ title: "P1", end_panel: 1, prompt: "A" }], {
         steps: -10,
-        layers: 0,
-        token_reduction: 1.5
+        layers: "invalid",
+        token_reduction: true
       });
-      assert.ok(payload["1"].inputs.steps >= 1, "Steps must be at least 1");
-      assert.ok(payload["1"].inputs.layers >= 1, "Layers must be at least 1");
-      assert.ok(payload["1"].inputs.token_reduction < 1.0, "Token reduction must be less than 1.0");
+      assert.ok(payload["1"].inputs.steps >= 2, "Steps must be at least 2");
+      assert.equal(payload["1"].inputs.layers, "45", "Invalid layers should fallback to default 45");
+      assert.equal(typeof payload["1"].inputs.token_reduction, "boolean", "Token reduction must be boolean");
     });
   });
 
