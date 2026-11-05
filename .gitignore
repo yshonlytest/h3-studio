@@ -1,0 +1,64 @@
+# 1. 模型權重與巨型二進位檔 (130GB+ 防護)
+**/MiniMax-H3/
+**/MiniMax-H3-h3c-ComfyUI/
+**/models/
+**/weights/
+*.safetensors
+*.bin
+*.ckpt
+*.pt
+*.pth
+*.gguf
+*.h3ctx
+
+# 2. C / Metal 編譯產物 (⚠️ 絕對保留 .metal 原始碼！)
+**/h3.c/h3
+**/h3.c/libh3.a
+**/h3.c/*.o
+**/h3.c/*.d
+**/h3.c/*.air
+**/h3.c/*.metallib
+**/h3.c/*.dylib
+**/h3.c/*.so
+**/h3.c/build/
+**/h3.c/tests/test_*
+
+# 3. 前端與 Node.js 依賴
+**/node_modules/
+**/dist/
+**/.next/
+*.log
+
+# 4. Python 快取與虛擬環境
+**/__pycache__/
+*.py[cod]
+**/.venv/
+**/venv/
+*.egg-info/
+**/ComfyUI/
+
+# 5. 渲染輸出與暫存媒體 (可保留一個 docs/assets/ 放 README 展示用 GIF/WebP)
+**/output/
+**/outputs/
+**/temp/
+**/tmp/
+*.mp4
+*.mov
+*.wav
+*.trimmed.mp4
+*.concat.txt
+!docs/assets/*.mp4
+!docs/assets/*.gif
+
+# 6. 系統檔、敏感環境變數與本地 Agent 工作狀態
+**/.DS_Store
+.env
+.env.*
+!.env.example
+PROGRESS.md
+AGENTS.md
+.opencode*
+**/.agents/
+**/.git_backup/
+*.command
+

@@ -1,0 +1,24 @@
+{
+	"name": "film-chain",
+	"main": "src/worker.js",
+	"compatibility_date": "2024-12-01",
+	"assets": {
+		"directory": "public",
+		"binding": "ASSETS"
+	},
+	"routes": [
+		{
+			"pattern": "film-chain.onlytest.dev",
+			"custom_domain": true
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	"kv_namespaces": [
+		{
+			"binding": "FILM_CHAIN_KV",
+			"id": "e6e956221a984bb99687243b5ee8e93b"
+		}
+	]
+}
