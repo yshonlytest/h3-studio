@@ -12,18 +12,18 @@
 ## 📁 標準化專案目錄結構
 
 ```text
-/Users/ysh/Documents/H3C/
-├── 🚀 一鍵啟動_本地ComfyUI與工作坊.command   # 頂層一鍵啟動器 (啟動本地 ComfyUI 並開啟最新工作坊)
-├── 📁 film-chain/                          # 【主程式與雲端部署專案 (Git 儲存庫)】
+h3-studio/
+├── 📁 film-chain/                          # 【Web Studio 與 Cloudflare 部署專案】
 │   ├── public/                             # 唯一前端靜態資源入口
 │   │   ├── index.html                      # 主工作坊網頁介面 (步驟 1 ~ 5)
-│   │   ├── src/core/                       # 前端與測試共用的核心邏輯模組
-│   │   └── assets/demo/                    # 內建沖繩風獅爺 15s 預設示範素材
+│   │   ├── src/core/                       # 前端與測試共用的核心邏輯模組 (UMD 純函式)
+│   │   └── assets/demo/                    # 內建示範素材
 │   ├── src/worker.js                       # Cloudflare Worker (Session KV 中繼與 API 無狀態代理)
-│   ├── notebooks/film_chain_runner.ipynb   # Google Colab 一鍵雲端算力執行腳本
-│   ├── skills/minimax-h3-colab/            # Colab CLI 自動化工具包與 Python 排程器
-│   ├── tests/                              # Node.js 單元測試套件 (39 項測試)
-│   └── wrangler.jsonc                      # Cloudflare Workers 部署設定
+│   ├── notebooks/film_chain_runner.ipynb   # Google Colab 雲端算力執行腳本
+│   ├── skills/minimax-h3-colab/            # Colab CLI 工具包
+│   ├── tests/                              # Node.js 原生單元測試套件
+│   ├── wrangler.json                       # Cloudflare Workers 標準部署設定
+│   └── wrangler.jsonc                      # Cloudflare Workers 註解版部署設定
 ├── 📁 pipeline/                            # 【調度管線與防護層】Python 分鏡接力、進程中斷與品質審查
 ├── 📁 comfy_nodes/                         # 【ComfyUI 自定義節點】H3ChainedStoryboardVideo 雙模接力節點
 ├── 📁 engines/h3.c/                        # 【底層推論核心】Apple Silicon Metal GPU 引擎 (整合 6 大 PR)
@@ -71,5 +71,10 @@ npm test
 
 ## 🚀 部署資訊
 
-- **線上測試站**：`https://film-chain.onlytest.dev`
-- **GitHub 專案庫**：`https://github.com/yshonlytest/film-chain`
+- **線上工作坊**：`https://film-chain.onlytest.dev`
+- **GitHub 專案庫 (Monorepo)**：`https://github.com/yshonlytest/h3-studio`
+- **Cloudflare Workers Builds 設定**：
+  - **Root Directory**：`film-chain`
+  - **Build Command**：留空 (None)
+  - **Deploy Command**：`npx wrangler deploy`
+  - **Config File**：`wrangler.json` / `wrangler.jsonc`
