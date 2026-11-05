@@ -62,9 +62,46 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1.2;
     }
     .badge.ok { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.35); }
     .badge.warn { background: rgba(245, 158, 11, 0.16); color: #fcd34d; border-color: rgba(245, 158, 11, 0.35); }
+
+    /* Modern Pill Badges for Timecode & Part Labels (Anti-wrapping on Mobile) */
+    .time-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1;
+      background: rgba(56, 189, 248, 0.14);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      letter-spacing: 0.02em;
+    }
+    .part-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1;
+      background: rgba(99, 102, 241, 0.18);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+    }
 
     .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -457,17 +494,68 @@
       border-radius: 10px;
       padding: 14px;
       margin-bottom: 12px;
+      box-sizing: border-box;
+      transition: border-color 0.15s ease;
     }
     .segment-card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 10px;
+      margin-bottom: 10px;
       font-size: 0.86rem;
       font-weight: 700;
       color: #a5b4fc;
       flex-wrap: wrap;
+    }
+    .seg-header-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+    .seg-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .seg-title-input {
+      flex: 1;
+      min-width: 140px;
+      max-width: 420px;
+      padding: 5px 8px;
+      font-size: 0.84rem;
+      background: #060c18;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      color: #f1f5f9;
+      box-sizing: border-box;
+    }
+    @media (max-width: 768px) {
+      .segment-card-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .seg-header-main {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .seg-title-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 4px;
+      }
+      .seg-header-controls {
+        width: 100%;
+        justify-content: space-between;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding-top: 8px;
+      }
     }
 
     /* Mini 3x3 Grid Position Indicator */
@@ -1651,9 +1739,9 @@
       reuse: 2,
       seed: 20261105,
       trim_first_frames: 1,
-      ref_image_path: "assets/demo/okinawa_shisa_ref.jpg",
-      grid_image_path: "assets/demo/okinawa_shisa_9grid.png",
-      grid_image_name: "demo_9grid.png",
+      ref_image_path: "assets/demo/detective_noir_ref.jpg",
+      grid_image_path: "assets/demo/detective_noir_9grid.png",
+      grid_image_name: "detective_noir_9grid.png",
       merged_video_path: "assets/demo/shisa_15s_story_merged_00001_.mp4",
       part_videos: [
         { title: "Part 1 (0-5s): 雨夜街頭・風衣偵探收傘確立環境氛圍", url: "assets/demo/shisa_15s_story_part1_00001_.mp4" },
@@ -1663,7 +1751,7 @@
       chinese_desc: "雨夜未來的霓虹城市街頭，地面倒映著絢爛燈光。身穿深灰色風衣的偵探站在全息廣告看板旁，收起透明雨傘，低頭點亮全息腕錶讀取密訊，隨後敏銳抬頭望向街角幽暗處，低聲說：「看來今晚不會平靜了。」",
       plan: {
         project_slug: "neo_noir_detective",
-        grid_image_name: "demo_9grid.png",
+        grid_image_name: "detective_noir_9grid.png",
         recommended_total_seconds: 15,
         reasoning_zh: "【通用電影級 15 秒連貫示範】採用現代標準 3×3 九宮格分鏡與 Context-IR 五維度結構（Scene, Camera, Timeline, Look, Audio）。以 Part 1 廣角確立氛圍、Part 2 中近景推近操作全息介面、Part 3 低角度特寫說出關鍵對白。每段使用尾幀無縫銜接與對白標籤 <d>[Chinese] 台詞</d>，相容本地 h3.c 與雲端 API 流水線。",
         expanded_story_zh: "第一幕（0-5s）：雨夜午夜的賽博霓虹街頭，大雨在柏油路面激起粼粼水光。鏡頭自遠景緩慢推近，身穿深灰色風衣的偵探站在全息路燈下，收起透明雨傘注視著沉睡的城市。第二幕（5-10s）：承接前幕姿態，鏡頭推進至中近景。偵探抬起左腕點亮戰術腕錶，一束清澈的藍光全息投影浮現眼前，跳動著機密密訊與幾何圖形。第三幕（10-15s）：承接全息介面，偵探指尖微動關閉投影，神情警惕地轉頭望向暗巷深處，在呼嘯的夜風與雨聲中沉著開口說：「看來今晚不會平靜了。」",
@@ -2192,7 +2280,10 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
               <span>段落 ${idx + 1}/${count}</span>
               <span>🎬</span>
             </div>
-            <div class="pipeline-step-title">Part ${idx + 1} (${startS}-${endS}s)</div>
+            <div class="pipeline-step-title" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span class="part-pill">Part ${idx + 1}</span>
+              <span class="time-pill">⏱️ ${startS} - ${endS}s</span>
+            </div>
             <div class="pipeline-step-time">4~5 分鐘 (A100)</div>
             <div class="pipeline-step-desc">
               <strong style="color:#e0f2fe;">${escapeHtml(cleanTitle)}</strong><br>
@@ -2938,8 +3029,12 @@ Return ONLY valid JSON matching this schema:
            </div>`;
       div.innerHTML = `
         <div class="segment-card-header">
-          <span>🎬 <input type="text" class="seg-title-input" value="${seg.title || `Part ${idx + 1} (${startSec}-${endSec}s)`}" style="width:340px; display:inline-block; padding:4px 8px; font-size:0.84rem;" /></span>
-          <div style="display:flex; align-items:center; gap:8px;">
+          <div class="seg-header-main">
+            <span class="part-pill">Part ${idx + 1}</span>
+            <span class="time-pill">⏱️ ${startSec} - ${endSec}s</span>
+            <input type="text" class="seg-title-input" value="${escapeHtml(seg.title || `Part ${idx + 1} (${startSec}-${endSec}s)`)}" placeholder="分鏡情節說明..." />
+          </div>
+          <div class="seg-header-controls">
             ${chainSelectHTML}
             <span style="font-size:0.75rem; color:var(--muted);">→ 目標尾幀：</span>
             <div style="display:inline-flex; align-items:center; gap:5px;">
@@ -3604,7 +3699,10 @@ Return ONLY valid JSON matching this schema:
       grid.innerHTML = segments.map((seg, idx) => `
         <div id="cloud-part-card-${idx}" class="pipeline-step-card stage-render" style="min-height:95px;">
           <div class="pipeline-step-num">
-            <span>Part ${idx + 1}</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="part-pill">Part ${idx + 1}</span>
+              <span class="time-pill">⏱️ ${idx * 5} - ${(idx + 1) * 5}s</span>
+            </div>
             <span id="cloud-card-tag-${idx}" class="badge warn" style="font-size:0.68rem; padding:2px 6px;">⏳ 排隊中</span>
           </div>
           <div class="pipeline-step-title" style="font-size:0.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(seg.title || ('Part ' + (idx + 1)))}</div>
@@ -4234,10 +4332,9 @@ Return ONLY valid JSON matching this schema:
         return `
           <div style="background:#070d1a; border:1px solid #1e293b; border-radius:8px; padding:10px 14px; display:flex; flex-direction:column; gap:8px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span class="badge ok" style="font-size:0.72rem; padding:2px 8px; border-color:#38bdf8; color:#7dd3fc;">
-                  Part ${idx + 1} (${segSecStart}s - ${segSecEnd}s)
-                </span>
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span class="part-pill">Part ${idx + 1}</span>
+                <span class="time-pill">⏱️ ${segSecStart} - ${segSecEnd}s</span>
                 <span style="font-size:0.8rem; font-weight:600; color:#e2e8f0;">${escapeHtml(item.partTitle || ('Part ' + (idx + 1)))}</span>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">

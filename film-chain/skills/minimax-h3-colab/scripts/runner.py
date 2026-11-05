@@ -905,6 +905,9 @@ def run_chain(
                         ref_imgs = [str(cloud_ref_img.resolve())]
                     else:
                         for demo_candidate in [
+                            Path("assets/demo/detective_noir_ref.jpg"),
+                            Path("public/assets/demo/detective_noir_ref.jpg"),
+                            manifest_path.parent / "detective_noir_ref.jpg" if manifest_path else None,
                             Path("assets/demo/okinawa_shisa_ref.jpg"),
                             Path("public/assets/demo/okinawa_shisa_ref.jpg"),
                             manifest_path.parent / "okinawa_shisa_ref.jpg" if manifest_path else None,
