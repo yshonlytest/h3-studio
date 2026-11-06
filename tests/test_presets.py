@@ -3,9 +3,7 @@ from __future__ import annotations
 import unittest
 
 from pipeline.h3_presets import (
-    BASE,
     PRESETS,
-    TURBO,
     RenderRequest,
     build_cli_args,
     validate_dimensions,

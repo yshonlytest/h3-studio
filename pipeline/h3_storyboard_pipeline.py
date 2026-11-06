@@ -21,18 +21,26 @@ import shutil
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from pipeline.config import (
     DEFAULT_FFMPEG_AUDIO_ARGS,
-    DEFAULT_FFMPEG_AUDIO_TRIM_FIRST_FRAME,
     DEFAULT_FFMPEG_ENCODE_ARGS,
     DEFAULT_FFMPEG_TAIL_SEEK,
     get_comfy_dir,
     get_h3_binary_path,
     get_h3_model_dir,
     get_output_dir,
+)
+from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor
+from pipeline.h3_gdrive_sync import dispatch_async_upload
+from pipeline.h3_job_spec import (
+    ChainedSegmentContext,
+    SegmentInputs,
+    SegmentJob,
+    SegmentOutputs,
+    SegmentRender,
 )
 from pipeline.h3_presets import (
     BASE,
@@ -48,10 +56,12 @@ from pipeline.h3_presets import (
 )
 from pipeline.h3_prompt_linter import LintInput, lint_prompt
 from pipeline.h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
-from pipeline.h3_gdrive_sync import dispatch_async_upload, sync_upload
-from pipeline.h3_job_spec import ChainedSegmentContext, SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
-from pipeline.h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
-from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor
+from pipeline.h3_state import (
+    ChainState,
+    compute_config_hash,
+    load_state,
+    save_state,
+)
 
 COMFY_DIR = get_comfy_dir()
 INPUT_DIR = COMFY_DIR / "input"
@@ -315,7 +325,7 @@ def trim_initial_frames(video_path: Path, frames_to_trim: int = 1, fps: float = 
     else:
         if tmp_trimmed.exists():
             tmp_trimmed.unlink()
-        print(f"[Warning] ffmpeg trim failed, keeping original video.", flush=True)
+        print("[Warning] ffmpeg trim failed, keeping original video.", flush=True)
 
 
 def concat_videos(video_paths: list[Path], final_output_path: Path) -> Path:
@@ -735,9 +745,9 @@ def run_chained_manifest(
     prev_context: Path | None = None
 
     for idx, seg in enumerate(segments, start=1):
-        print(f"\n==========================================", flush=True)
+        print("\n==========================================", flush=True)
         print(f"🎬 Starting Segment {idx}/{len(segments)}: {seg.get('title', f'part_{idx}')}", flush=True)
-        print(f"==========================================", flush=True)
+        print("==========================================", flush=True)
 
         str_idx = str(idx)
         current_save_context = TEMP_DIR / f"{Path(output_prefix).name}_seg{idx}.h3ctx"
@@ -873,7 +883,7 @@ def run_dry_run_demo(args: argparse.Namespace | None = None) -> None:
     if swap_warn:
         print(f"  • Swap Guard Alert: ⚠️  {swap_warn}")
     else:
-        print(f"  • Swap Guard Alert: ✅ Unified memory headroom sufficient for resident execution.")
+        print("  • Swap Guard Alert: ✅ Unified memory headroom sufficient for resident execution.")
 
     print("\n[Stage 1/6] 📐 2D Staging Board Camera Trajectory Compilation:")
     track = CameraTrack(
@@ -882,7 +892,7 @@ def run_dry_run_demo(args: argparse.Namespace | None = None) -> None:
         subject=Point2D(0.5, 0.0),
     )
     cam_desc = compile_camera_direction(track)
-    print(f"  • Coordinates : Cam Start(0.1, 0.8) -> Cam End(0.5, 0.25) around Subject(0.5, 0.0)")
+    print("  • Coordinates : Cam Start(0.1, 0.8) -> Cam End(0.5, 0.25) around Subject(0.5, 0.0)")
     print(f"  • Compiled    : \"{cam_desc}\"")
 
     print("\n[Stage 2/6] 🧭 Context-IR 5D Structured Prompt Compilation:")
@@ -902,15 +912,15 @@ def run_dry_run_demo(args: argparse.Namespace | None = None) -> None:
     lint_report = lint_prompt(LintInput(raw_prompt_with_unclosed_tag))
     print(f"  • Tag self-healing warnings : {lint_report.warnings}")
     print(f"  • Fixed prompt tail         : ...{lint_report.fixed_prompt[-30:]}")
-    print(f"  • Mutual exclusion check    : Passed (No conflict between first-frame and ref-images)")
+    print("  • Mutual exclusion check    : Passed (No conflict between first-frame and ref-images)")
 
     print(f"\n[Stage 4/6] ⚡ Engine Mode Switching (Active: --mode {target_mode}):")
     print(f"  • Resolved Model Directory  : {model_dir}")
     turbo_flags = build_cli_args(TURBO, RenderRequest(safe_w, safe_h))
     base_flags = build_cli_args(BASE, RenderRequest(safe_w, safe_h))
-    print(f"  • Turbo Mode Command (6-step folded LoRA):")
+    print("  • Turbo Mode Command (6-step folded LoRA):")
     print(f"      ./engines/h3.c/h3 -d {get_h3_model_dir('turbo')} {' '.join(turbo_flags)} --seed 20260931")
-    print(f"  • Base Mode Command (20-step undistilled):")
+    print("  • Base Mode Command (20-step undistilled):")
     print(f"      ./engines/h3.c/h3 -d {get_h3_model_dir('base')} {' '.join(base_flags)} --seed 20260931")
 
     print("\n[Stage 5/6] 🔗 3-Shot Chained Storyboard Dispatch Plan:")

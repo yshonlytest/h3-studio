@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """H3 Prompt & Conditioning Linter, Syntax Auto-Fixer, and Dynamic Tension Analyzer.
 
 Catches syntax, conditioning, and cinematography flaws punished by MiniMax-H3 & h3.c:
@@ -16,8 +14,10 @@ Catches syntax, conditioning, and cinematography flaws punished by MiniMax-H3 & 
      - Enforces high-kinetic verbs (dives, slashes, soars) and camera motion directives.
 """
 
-from dataclasses import dataclass, field
+from __future__ import annotations
+
 import re
+from dataclasses import dataclass, field
 from typing import Optional
 
 from pipeline.config import TENSION_MIN_SCORE

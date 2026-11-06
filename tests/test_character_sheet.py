@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 from pipeline.h3_character_sheet import CharacterSheetSpec, build_character_sheet_prompt
 from pipeline.h3_presets import DRAFT_AGGRESSIVE, DRAFT_FALLBACK

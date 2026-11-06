@@ -2,25 +2,25 @@
 """Google Drive background sync module for H3 Studio with folder deduplication, timestamped naming, and non-blocking upload."""
 
 from __future__ import annotations
+
 import json
 import logging
 import os
 import shutil
 import subprocess
 import sys
-import threading
-import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 
-LOGGER = logging.getLogger(__name__)
 from pipeline.config import (
     DEFAULT_GDRIVE_CACHE,
-    DEFAULT_SCRATCH_DIR,
+    DEFAULT_SCRATCH_DIR,  # noqa: F401  (re-exported; tests patch this name)
     get_gdrive_public_share,
     get_scratch_dir,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 CACHE_FILE = DEFAULT_GDRIVE_CACHE
 

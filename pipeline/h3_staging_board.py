@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """2D Top-Down Staging Board Coordinate to H3 Camera Direction Compiler."""
 
-from dataclasses import dataclass
+from __future__ import annotations
+
 import math
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,6 @@ class CameraTrack:
 
 def compile_camera_direction(track: CameraTrack) -> str:
     dx_cam = track.end.x - track.start.x
-    dy_cam = track.end.y - track.start.y
     dist_start = math.hypot(track.start.x - track.subject.x, track.start.y - track.subject.y)
     dist_end = math.hypot(track.end.x - track.subject.x, track.end.y - track.subject.y)
     d_dist = dist_end - dist_start

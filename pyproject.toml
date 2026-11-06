@@ -69,13 +69,24 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-# Mandatory blocking rules for CI
-select = ["E", "F", "I", "B"]
+# Mandatory blocking rules for CI (thresholds follow docs/STANDARDS.md)
+select = ["E", "F", "I", "B", "C901", "PLR0912", "PLR0913", "PLR0915"]
 ignore = ["E501"]
+
+# Tech-debt baseline: legacy files exempt from complexity/size gates.
+# Shrink this list as files are refactored; NEVER add new files here.
+[tool.ruff.lint.per-file-ignores]
+"pipeline/h3_storyboard_pipeline.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
+"pipeline/h3_gdrive_sync.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
+"pipeline/h3_runner.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
+"pipeline/h3_prompt_linter.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
+"comfy_nodes/comfy_h3_bridge/__init__.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
+"engines/h3.c/tools/fold_turbo_lora.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
 
 [tool.ruff.lint.pylint]
-max-args = 5
-max-statements = 80
+# PLR0915 counts statements (not lines): 50 statements is a proxy for the 50-line rule.
+max-args = 3
+max-statements = 50

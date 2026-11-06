@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Unified Dynamic Path and Environment Configuration for H3 Studio Pipeline."""
+
+from __future__ import annotations
 
 import os
 from pathlib import Path

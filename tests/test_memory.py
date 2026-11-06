@@ -9,7 +9,6 @@ from pipeline.h3_presets import (
     recommend_safe_canvas,
 )
 
-
 SAMPLE_VM_STAT_OUTPUT = """Mach Virtual Memory Statistics: (page size of 16384 bytes)
 Pages free:                              12345.
 Pages active:                           987654.

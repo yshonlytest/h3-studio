@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
-import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from pipeline.h3_gdrive_sync import GDriveUploadResult, sync_upload
+from pipeline.h3_gdrive_sync import sync_upload
 
 
 class TestGDriveSyncOptIn(unittest.TestCase):

@@ -1,21 +1,20 @@
 import logging
 import os
-from pathlib import Path
 import re
 import select
-import signal
 import shutil
+import signal
 import subprocess
 import tempfile
 import wave
-
-import numpy as np
-from PIL import Image
+from pathlib import Path
 
 import comfy.model_management as model_management
 import comfy.utils
-from comfy_api.latest import InputImpl
 import folder_paths
+import numpy as np
+from comfy_api.latest import InputImpl
+from PIL import Image
 
 try:
     from pipeline.config import (

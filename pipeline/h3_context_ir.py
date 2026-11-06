@@ -1,12 +1,12 @@
-from __future__ import annotations
-
 """Context-IR 5-Dimensional Structured Prompt Compiler and Local LLM Expander."""
 
-from dataclasses import dataclass
+from __future__ import annotations
+
 import json
 import logging
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 
 from pipeline.h3_prompt_linter import normalize_prompt_tags
 

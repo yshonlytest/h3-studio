@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 
@@ -12,7 +12,6 @@ class TestCheckpointStateMachine(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
             with patch("pipeline.h3_storyboard_pipeline.OUTPUT_DIR", tmp_path):
-                from pipeline import h3_storyboard_pipeline
 
                 output_prefix = "test_run/clip"
                 state_file = tmp_path / f"{Path(output_prefix).name}.state.json"

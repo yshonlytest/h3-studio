@@ -1,11 +1,11 @@
-from __future__ import annotations
-
 """H3 5-Frame Character Sheet Designer and Single-Frame Asset Extractor."""
 
-from dataclasses import dataclass, field
+from __future__ import annotations
+
 import logging
-from pathlib import Path
 import subprocess
+from dataclasses import dataclass, field
+from pathlib import Path
 
 from pipeline.h3_presets import DRAFT_AGGRESSIVE
 from pipeline.h3_runner import H3JobSpec, RunnerConfig, run_job

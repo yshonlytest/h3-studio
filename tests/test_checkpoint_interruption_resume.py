@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from pipeline.h3_storyboard_pipeline import run_chained_manifest, VideoHealthReport
+from pipeline.h3_storyboard_pipeline import VideoHealthReport, run_chained_manifest
 
 
 class TestCheckpointInterruptionResume(unittest.TestCase):

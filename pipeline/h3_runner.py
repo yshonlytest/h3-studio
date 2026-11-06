@@ -7,16 +7,16 @@ Enforces the three P0 engineering guardrails:
   3. Optional persistent interactive session (h3_cli_run with h3_cache_set_enabled=1)
      controlled via stdin commands with automatic idle-timeout shutdown.
 """
-from dataclasses import dataclass, field
 import logging
 import os
-from pathlib import Path
 import re
 import select
 import shutil
 import signal
 import subprocess
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable, Optional
 
 LOGGER = logging.getLogger("h3_runner")

@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import io
 import json
-from pathlib import Path
 import unittest
-from unittest.mock import MagicMock, patch
 
-from pipeline.h3_server import H3DaemonHandler, HUB, EventBroadcaster
+from pipeline.h3_server import EventBroadcaster, H3DaemonHandler
 
 
 class MockSocket:

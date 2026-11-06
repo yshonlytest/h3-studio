@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Lightweight Zero-Dependency Local Daemon for H3 Studio Web UI Integration.
 
 Exposes REST and Server-Sent Events (SSE) endpoints via Python standard library
@@ -8,20 +6,19 @@ memory status, run dynamic prompt tension linting, trigger Metal direct renderin
 and receive real-time progress events without third-party dependencies.
 """
 
-from collections.abc import Generator
-from dataclasses import asdict, dataclass
+from __future__ import annotations
+
 import json
 import logging
-from math import ceil
-import os
-from pathlib import Path
 import queue
 import sys
 import threading
 import time
-from typing import Any
-from urllib.parse import parse_qs, urlparse
+from dataclasses import asdict, dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlparse
 
 from pipeline.config import get_output_dir, get_scratch_dir
 from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor

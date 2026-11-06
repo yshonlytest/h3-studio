@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 from pipeline.h3_job_spec import ChainedSegmentContext
 from pipeline.h3_storyboard_pipeline import _resolve_segment_anchoring

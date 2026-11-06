@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 from pipeline.h3_presets import validate_dimensions
 from pipeline.h3_prompt_linter import LintInput, lint_prompt

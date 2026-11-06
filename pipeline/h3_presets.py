@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Standard h3.c render presets, hardware memory perception, and safety guardrails.
 
 Single source of truth (SSOT) for speed/quality flag bundles, dimension validation,
@@ -15,12 +13,13 @@ Constraints verified against h3.c:
       Downgrading to 864x480 (50,220 tokens) safely fits in resident RAM (1.5m/step).
 """
 
-from dataclasses import dataclass
-from math import gcd
-import os
+from __future__ import annotations
+
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
+from math import gcd
 from typing import Optional
 
 CANVAS_MULTIPLE: int = 32
