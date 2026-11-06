@@ -50,7 +50,7 @@ try:
     from .h3_prompt_linter import LintInput, lint_prompt
     from .h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
     from .h3_gdrive_sync import dispatch_async_upload, sync_upload
-    from .h3_job_spec import SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
+    from .h3_job_spec import ChainedSegmentContext, SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
     from .h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
 except ImportError:
     from config import (
@@ -77,7 +77,7 @@ except ImportError:
     )
     from h3_prompt_linter import LintInput, lint_prompt
     from h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
-    from h3_job_spec import SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
+    from h3_job_spec import ChainedSegmentContext, SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
     from h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
     try:
         from h3_gdrive_sync import dispatch_async_upload, sync_upload
@@ -630,9 +630,7 @@ def _resolve_segment_anchoring(
     seg: dict,
     idx: int,
     manifest: dict,
-    prev_video: Path | None,
-    prev_context: Path | None,
-    output_prefix: str,
+    ctx: ChainedSegmentContext,
 ) -> tuple[Path | None, Path | None, int]:
     """Resolve first_frame, motion_context, and trim count for a segment."""
     anchor_reset = bool(seg.get("anchor_reset", False))
@@ -649,16 +647,16 @@ def _resolve_segment_anchoring(
             return anchor_path, None, 1
 
     if use_prev_motion:
-        if prev_context is None and prev_video is None:
+        if ctx.prev_context is None and ctx.prev_video is None:
             raise ValueError(f"Segment {idx} requested motion_context, but no previous context/video exists.")
-        ctx = prev_context if (prev_context and prev_context.is_file()) else prev_video
-        return None, ctx, 0
+        target_ctx = ctx.prev_context if (ctx.prev_context and ctx.prev_context.is_file()) else ctx.prev_video
+        return None, target_ctx, 0
 
     if use_prev_last:
-        if prev_video is None:
+        if ctx.prev_video is None:
             raise ValueError(f"Segment {idx} requested use_prev_last_frame=True, but there is no previous video.")
-        chain_frame_path = INPUT_DIR / f"{Path(output_prefix).name}_seg{idx-1}_last_frame.png"
-        return extract_last_frame(prev_video, chain_frame_path), None, 1
+        chain_frame_path = INPUT_DIR / f"{Path(ctx.output_prefix).name}_seg{idx-1}_last_frame.png"
+        return extract_last_frame(ctx.prev_video, chain_frame_path), None, 1
 
     ff_str = seg.get("first_frame") or manifest.get("grid_image")
     if not ff_str:
@@ -783,8 +781,13 @@ def run_chained_manifest(manifest_path: Path) -> Path:
                     continue
                 print(f"[Checkpoint] ⚠️ Cached segment {idx} failed health verification ({health_check.warnings}). Re-rendering...", flush=True)
 
+        chain_ctx = ChainedSegmentContext(
+            prev_video=prev_video,
+            prev_context=prev_context,
+            output_prefix=output_prefix,
+        )
         first_frame, motion_context, default_trim = _resolve_segment_anchoring(
-            seg, idx, manifest, prev_video, prev_context, output_prefix
+            seg, idx, manifest, chain_ctx
         )
         last_frame = Path(seg["last_frame"]).expanduser().resolve() if seg.get("last_frame") else None
         seg_job = SegmentJob(
@@ -952,7 +955,8 @@ def run_dry_run_demo(args: argparse.Namespace | None = None) -> None:
     print("=" * 72 + "\n")
 
 
-def main():
+def build_arg_parser() -> argparse.ArgumentParser:
+    """Build declarative CLI argument parser for H3 Studio pipeline."""
     parser = argparse.ArgumentParser(description="Run 9-Grid Storyboard -> ComfyUI H3 FL2VA Video Pipeline")
     parser.add_argument("--dry-run", action="store_true", help="Run zero-weight pipeline simulation (Hardware Perception, 2D Staging, 5D Context-IR, Linter, CLI sequence)")
     parser.add_argument("--mode", choices=["turbo", "base"], default=os.environ.get("H3_ACTIVE_MODE", "turbo"), help="Execution engine mode: turbo (6-step folded LoRA) or base (20-step undistilled)")
@@ -978,50 +982,11 @@ def main():
     parser.add_argument("--prepare-only", action="store_true", help="Only copy image and write workflow JSON without running inference")
     parser.add_argument("--export-gdrive", action="store_true", help="Automatically trigger non-blocking Google Drive sync upon completion")
     parser.add_argument("--model-dir", help="Override MiniMax-H3 model directory (e.g. models/MiniMax-H3-Turbo)")
-    args = parser.parse_args()
+    return parser
 
-    # Dimension and memory safety guardrails
-    try:
-        args.width, args.height = validate_dimensions(args.width, args.height)
-    except ValueError as ve:
-        if args.dry_run:
-            print(f"[Dimension Warning] {ve}")
-            args.width = ((args.width + CANVAS_MULTIPLE - 1) // CANVAS_MULTIPLE) * CANVAS_MULTIPLE
-            args.height = ((args.height + CANVAS_MULTIPLE - 1) // CANVAS_MULTIPLE) * CANVAS_MULTIPLE
-            print(f"[Auto-Snap] Snapped canvas to valid 32-multiple: {args.width}x{args.height}")
-        else:
-            sys.exit(f"Dimension Error: {ve}")
 
-    args.width, args.height, swap_warn = recommend_safe_canvas(
-        args.width, args.height, auto_downgrade=args.auto_downgrade_canvas
-    )
-    if swap_warn and not args.dry_run:
-        print(f"\n⚠️  {swap_warn}\n", flush=True)
-
-    if not args.model_dir:
-        args.model_dir = str(get_h3_model_dir(args.mode))
-
-    if args.dry_run:
-        run_dry_run_demo(args)
-        return
-
-    render_w, render_h = _apply_cli_preset(args)
-
-    INPUT_DIR.mkdir(parents=True, exist_ok=True)
-    WORKFLOWS_DIR.mkdir(parents=True, exist_ok=True)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    if args.chain_manifest:
-        manifest_path = Path(args.chain_manifest).expanduser().resolve()
-        if not manifest_path.is_file():
-            sys.exit(f"Error: Chain manifest not found: {manifest_path}")
-        final_video = run_chained_manifest(manifest_path)
-        print(f"\n[SUCCESS] Chained video generated at: {final_video}", flush=True)
-        return
-
-    if not args.grid_image or not args.prompt_file:
-        sys.exit("Error: Provide either --chain-manifest OR both --grid-image and --prompt-file.")
-
+def _execute_single_shot_cli(args: argparse.Namespace, render_w: int, render_h: int) -> None:
+    """Execute standalone single-shot 9-grid generation workflow."""
     grid_src = Path(args.grid_image).expanduser().resolve()
     if not grid_src.is_file():
         sys.exit(f"Error: Grid image not found: {grid_src}")
@@ -1092,6 +1057,55 @@ def main():
     if args.trim_first_frames > 0:
         trim_initial_frames(output_video, frames_to_trim=args.trim_first_frames)
     print(f"\n[SUCCESS] Video generated at: {output_video}", flush=True)
+
+
+def main():
+    parser = build_arg_parser()
+    args = parser.parse_args()
+
+    # Dimension and memory safety guardrails
+    try:
+        args.width, args.height = validate_dimensions(args.width, args.height)
+    except ValueError as ve:
+        if args.dry_run:
+            print(f"[Dimension Warning] {ve}")
+            args.width = ((args.width + CANVAS_MULTIPLE - 1) // CANVAS_MULTIPLE) * CANVAS_MULTIPLE
+            args.height = ((args.height + CANVAS_MULTIPLE - 1) // CANVAS_MULTIPLE) * CANVAS_MULTIPLE
+            print(f"[Auto-Snap] Snapped canvas to valid 32-multiple: {args.width}x{args.height}")
+        else:
+            sys.exit(f"Dimension Error: {ve}")
+
+    args.width, args.height, swap_warn = recommend_safe_canvas(
+        args.width, args.height, auto_downgrade=args.auto_downgrade_canvas
+    )
+    if swap_warn and not args.dry_run:
+        print(f"\n⚠️  {swap_warn}\n", flush=True)
+
+    if not args.model_dir:
+        args.model_dir = str(get_h3_model_dir(args.mode))
+
+    if args.dry_run:
+        run_dry_run_demo(args)
+        return
+
+    render_w, render_h = _apply_cli_preset(args)
+
+    INPUT_DIR.mkdir(parents=True, exist_ok=True)
+    WORKFLOWS_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    if args.chain_manifest:
+        manifest_path = Path(args.chain_manifest).expanduser().resolve()
+        if not manifest_path.is_file():
+            sys.exit(f"Error: Chain manifest not found: {manifest_path}")
+        final_video = run_chained_manifest(manifest_path)
+        print(f"\n[SUCCESS] Chained video generated at: {final_video}", flush=True)
+        return
+
+    if not args.grid_image or not args.prompt_file:
+        sys.exit("Error: Provide either --chain-manifest OR both --grid-image and --prompt-file.")
+
+    _execute_single_shot_cli(args, render_w, render_h)
 
 
 if __name__ == "__main__":

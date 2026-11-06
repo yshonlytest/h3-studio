@@ -111,6 +111,40 @@ def _save_folder_cache(folder_name: str, folder_id: str) -> None:
     CACHE_FILE.write_text(json.dumps(cache, indent=2), encoding="utf-8")
 
 
+def _maybe_share_and_resolve_url(
+    gdrive_bin: str,
+    file_id: str,
+    make_public: bool,
+) -> str | None:
+    """Optionally share file publicly and return read-only web URL."""
+    if not make_public:
+        return None
+    cmd_share = [gdrive_bin, "mutate", "share", file_id, "--role", "reader", "--type", "anyone"]
+    subprocess.run(cmd_share, capture_output=True, text=True, timeout=30.0)
+    cmd_url = [gdrive_bin, "readonly", "url", file_id]
+    res_url = subprocess.run(cmd_url, capture_output=True, text=True, timeout=30.0)
+    return res_url.stdout.strip() if res_url.returncode == 0 and res_url.stdout.strip() else None
+
+
+def _perform_upload_subprocess(
+    gdrive_bin: str,
+    staged_path: Path,
+    folder_id: str | None,
+    staged_filename: str,
+) -> str | None:
+    """Execute gdrive upload command and parse file ID."""
+    cmd_upload = [gdrive_bin, "mutate", "upload", str(staged_path)]
+    if folder_id:
+        cmd_upload.extend(["--parent", folder_id])
+    res = subprocess.run(cmd_upload, capture_output=True, text=True, check=True, timeout=180.0)
+    file_id = None
+    for line in res.stdout.splitlines():
+        if "(ID:" in line:
+            file_id = line.split("(ID:")[-1].replace(")", "").strip()
+            break
+    return file_id or _extract_file_id_fallback(gdrive_bin, staged_filename)
+
+
 def sync_upload(
     file_path: Path,
     folder_name: str = "H3-Studio",
@@ -129,48 +163,18 @@ def sync_upload(
         return GDriveUploadResult(ok=False, error=f"File not found: {target_path}", timestamp=now_str)
 
     folder_id = get_or_create_folder(folder_name)
-
-    # Copy with timestamped name in scratch to avoid collision:
     scratch_dir = DEFAULT_SCRATCH_DIR / "gdrive_upload_staging"
     scratch_dir.mkdir(parents=True, exist_ok=True)
     staged_filename = f"{target_path.stem}_{now_str}{target_path.suffix}"
     staged_path = scratch_dir / staged_filename
     shutil.copy2(target_path, staged_path)
 
-    # Upload command:
-    cmd_upload = [gdrive_bin, "mutate", "upload", str(staged_path)]
-    if folder_id:
-        cmd_upload.extend(["--parent", folder_id])
-
     try:
-        res = subprocess.run(cmd_upload, capture_output=True, text=True, check=True, timeout=180.0)
-        # Parse ID from output: e.g. "Uploaded: filename (ID: 1Mx8Jq5gCK1ie4toOkO-818bsYf2_g1pQ)"
-        file_id = None
-        for line in res.stdout.splitlines():
-            if "(ID:" in line:
-                file_id = line.split("(ID:")[-1].replace(")", "").strip()
-                break
-
-        if not file_id:
-            # Fallback search for recently uploaded file
-            file_id = _extract_file_id_fallback(gdrive_bin, staged_filename)
-
+        file_id = _perform_upload_subprocess(gdrive_bin, staged_path, folder_id, staged_filename)
         if not file_id:
             return GDriveUploadResult(ok=False, error="Failed to parse file ID from gdrive output", timestamp=now_str)
 
-        # Make shareable if requested:
-        web_url = None
-        if make_public:
-            cmd_share = [gdrive_bin, "mutate", "share", file_id, "--role", "reader", "--type", "anyone"]
-            subprocess.run(cmd_share, capture_output=True, text=True, timeout=30.0)
-
-            # Get Web URL only when public sharing is explicitly enabled:
-            cmd_url = [gdrive_bin, "readonly", "url", file_id]
-            res_url = subprocess.run(cmd_url, capture_output=True, text=True, timeout=30.0)
-            if res_url.returncode == 0 and res_url.stdout.strip():
-                web_url = res_url.stdout.strip()
-
-        # Cleanup staged file:
+        web_url = _maybe_share_and_resolve_url(gdrive_bin, file_id, make_public)
         if staged_path.is_file():
             staged_path.unlink()
 

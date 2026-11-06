@@ -5,6 +5,14 @@ from pathlib import Path
 
 
 @dataclass(frozen=True)
+class ChainedSegmentContext:
+    """Carried context from previous segment in a multi-shot chain."""
+    prev_video: Path | None = None
+    prev_context: Path | None = None
+    output_prefix: str = "clip"
+
+
+@dataclass(frozen=True)
 class SegmentInputs:
     """Inputs and conditioning assets for a segment render."""
     prompt_text: str = ""
