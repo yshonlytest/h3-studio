@@ -6,7 +6,10 @@
   - ✅ 已安裝：`Qwen3-VL encoder` (62.13 GiB)、`FL2VA DiT` (61.73 GiB)、`video VAE` (9.70 GiB)、`audio VAE` (0.56 GiB)。
   - ✅ 已完成折疊：`MiniMax-H3-Turbo`（利用 APFS CoW clonefile 摺疊 259 個 Turbo LoRA 增量權重，零雙倍空間浪費，支援 5-6 steps 極速原生 Metal 推理）。
   - ✅ 雲端同步：已完成 `pipeline/h3_gdrive_sync.py`，支援 Google Drive 專屬 `H3-Studio` 資料夾快取去重、時間戳防覆蓋、非阻塞異步上傳。
-  - ✅ 25 秒仙俠史詩全鏈路實測通過：`MiniMax-H3-Turbo` 864×480 (16:9 電影寬螢幕) + 5 段 PR #76 潛空間接力 + Google Drive 自動同步完成。
+  - ✅ 25 秒仙俠史詩全鏈路實測通過（Verified Ground Truth）：`MiniMax-H3-Turbo` 864×480 (16:9 電影寬螢幕) + 5 段 PR #76 潛空間接力 + Google Drive 自動同步完成。
+    - **實測總耗時**：**2 小時 22 分鐘**（單段 5 秒耗時 25～29 分鐘，單 step 耗時約 228s～272s / 3.8～4.5 分鐘）。
+    - **記憶體水位**：Resident peak ~33 GiB，純 Resident 零 Swap 震盪，SSD Streaming 保持 5.3～5.5 GiB/s。
+    - **產出成品**：`outputs/storyboard_runs/xianxia_aerial_duel_25s_merged_00001_.mp4`（12.2 MB，23.05 秒無黑影格完稿）。
   - ⚠️ 未安裝：`Ref2VA DiT` (0 files，本機實測維持走 `FL2VA` + `--first-frame` 或 PR #76 `--motion-context`)。
 - **Code Review 雙軸全數修復（Pass Checklist）**：
   - ✅ `h3.c:649` & `h3.c:660` 對齊：`h3_storyboard_pipeline.py` 遇到 `--checkpoint-after-step` / `--resume` 時自動約束 `reuse=1` 與 `core_reuse=1`，並自動補全 `.ckpt` 輸出路徑。

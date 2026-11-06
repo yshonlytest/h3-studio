@@ -566,7 +566,10 @@ def run_h3_direct(
         "--frames", str(req.frames), "--steps", str(req.steps), "--layers", str(req.layers),
         "--seed", str(req.seed),
     ]
-    extra_args.extend(["--core-reuse", str(eff_core_reuse)] if eff_core_reuse > 0 else ["--reuse", str(eff_reuse)])
+    if eff_core_reuse > 0:
+        extra_args.extend(["--core-reuse", str(eff_core_reuse)])
+    elif eff_reuse > 0:
+        extra_args.extend(["--reuse", str(eff_reuse)])
     if req.render_width > 0 and req.render_height > 0:
         extra_args.extend(["--render-width", str(req.render_width), "--render-height", str(req.render_height)])
     if req.token_reduction:
