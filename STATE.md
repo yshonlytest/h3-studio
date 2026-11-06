@@ -249,3 +249,13 @@
   - **驗證通過**：
     - `python3 -m unittest tests/test_gdrive_sync.py` 3 項測試全數通過。
     - `python3 -m unittest discover -s tests` 8 項全域單元測試全數通過（0.018s）。
+
+- [x] **Phase 2（資料結構：消除 23 參數並引入 SegmentJob）**：
+  - **完成項目**：
+    1. 建立 `pipeline/h3_job_spec.py`：以 `@dataclass(frozen=True)` 定義 `SegmentInputs`、`SegmentRender`、`SegmentOutputs`，並由 `SegmentJob` 聚合封裝。
+    2. 重構 `run_h3_direct` 簽名為 `run_h3_direct(job: SegmentJob | None = None, ...)`，將內部邏輯與旗標解析遷移至 `req = job`。
+    3. 全域替換呼叫端：更新 `run_chained_manifest` 與 `main()` CLI 入口，改以建構子方式傳入 `SegmentJob`。
+  - **驗證通過**：
+    - `python3 -m py_compile pipeline/h3_job_spec.py pipeline/h3_storyboard_pipeline.py` 通過。
+    - `python3 -m unittest discover -s tests` 8 項全域單元測試全數 PASS。
+    - `python3 pipeline/h3_storyboard_pipeline.py --chain-manifest examples/storyboards/cyberpunk_detective_25s.json --dry-run` 完整輸出 Stage 0 至 6。

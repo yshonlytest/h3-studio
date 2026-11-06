@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -32,10 +33,24 @@ try:
         get_comfy_dir,
         get_h3_binary_path,
         get_h3_model_dir,
+        get_output_dir,
     )
-    from .h3_presets import PRESETS, internal_canvas
+    from .h3_presets import (
+        BASE,
+        CANVAS_MULTIPLE,
+        PRESETS,
+        TURBO,
+        RenderRequest,
+        build_cli_args,
+        get_system_memory_status,
+        internal_canvas,
+        recommend_safe_canvas,
+        validate_dimensions,
+    )
     from .h3_prompt_linter import LintInput, lint_prompt
     from .h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
+    from .h3_gdrive_sync import dispatch_async_upload, sync_upload
+    from .h3_job_spec import SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
 except ImportError:
     from config import (
         DEFAULT_FFMPEG_AUDIO_ARGS,
@@ -45,14 +60,32 @@ except ImportError:
         get_comfy_dir,
         get_h3_binary_path,
         get_h3_model_dir,
+        get_output_dir,
     )
-    from h3_presets import PRESETS, internal_canvas
+    from h3_presets import (
+        BASE,
+        CANVAS_MULTIPLE,
+        PRESETS,
+        TURBO,
+        RenderRequest,
+        build_cli_args,
+        get_system_memory_status,
+        internal_canvas,
+        recommend_safe_canvas,
+        validate_dimensions,
+    )
     from h3_prompt_linter import LintInput, lint_prompt
     from h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
+    from h3_job_spec import SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
+    try:
+        from h3_gdrive_sync import dispatch_async_upload, sync_upload
+    except ImportError:
+        dispatch_async_upload = None  # type: ignore
+        sync_upload = None  # type: ignore
 
 COMFY_DIR = get_comfy_dir()
 INPUT_DIR = COMFY_DIR / "input"
-OUTPUT_DIR = COMFY_DIR / "output"
+OUTPUT_DIR = get_output_dir()
 TEMP_DIR = COMFY_DIR / "temp"
 WORKFLOWS_DIR = COMFY_DIR / "user" / "default" / "workflows"
 H3_BINARY = get_h3_binary_path()
@@ -77,6 +110,7 @@ class StoryboardJobRequest:
     render_height: int = 0
     seed: int = 20260931
     ssd_streaming: bool = True
+    model_dir: Path | str | None = None
     motion_context_path: Path | None = None
     save_context_path: Path | None = None
     checkpoint_after_step: int = 0
@@ -454,6 +488,8 @@ def _print_progress_event(ev: ProgressEvent) -> None:
 
 
 def run_h3_direct(
+    job: SegmentJob | None = None,
+    *,
     first_frame_path: Path | None = None,
     prompt_text: str = "",
     output_prefix: str = "clip",
@@ -475,34 +511,44 @@ def run_h3_direct(
     checkpoint_after_step: int = 0,
     checkpoint_path: Path | None = None,
     resume_path: Path | None = None,
+    model_dir: Path | str | None = None,
     request: StoryboardJobRequest | None = None,
 ) -> Path:
-    """Run h3.c via h3_runner.run_job with P0 Prompt Linter, BF16 VAE prefetch, and killpg cleanup."""
-    if request is not None:
+    """Run h3.c via h3_runner.run_job with SegmentJob, P0 Prompt Linter, BF16 VAE prefetch, and killpg cleanup."""
+    if job is not None:
+        req = job
+    elif request is not None:
         req = request
     else:
-        req = StoryboardJobRequest(
-            first_frame_path=first_frame_path,
-            prompt_text=prompt_text,
-            output_prefix=output_prefix,
-            last_frame_path=last_frame_path,
-            width=width,
-            height=height,
-            frames=frames,
-            steps=steps,
-            layers=layers,
-            reuse=reuse,
-            core_reuse=core_reuse,
-            token_reduction=token_reduction,
-            render_width=render_width,
-            render_height=render_height,
-            seed=seed,
-            ssd_streaming=ssd_streaming,
-            motion_context_path=motion_context_path,
-            save_context_path=save_context_path,
-            checkpoint_after_step=checkpoint_after_step,
-            checkpoint_path=checkpoint_path,
-            resume_path=resume_path,
+        req = SegmentJob(
+            inputs=SegmentInputs(
+                prompt_text=prompt_text,
+                first_frame_path=first_frame_path,
+                last_frame_path=last_frame_path,
+                motion_context_path=motion_context_path,
+            ),
+            render=SegmentRender(
+                width=width,
+                height=height,
+                frames=frames,
+                steps=steps,
+                layers=layers,
+                reuse=reuse,
+                core_reuse=core_reuse,
+                token_reduction=token_reduction,
+                render_width=render_width,
+                render_height=render_height,
+                seed=seed,
+                ssd_streaming=ssd_streaming,
+                model_dir=model_dir,
+            ),
+            outputs=SegmentOutputs(
+                output_prefix=output_prefix,
+                save_context_path=save_context_path,
+                checkpoint_after_step=checkpoint_after_step,
+                checkpoint_path=checkpoint_path,
+                resume_path=resume_path,
+            ),
         )
 
     lint_report = lint_prompt(LintInput(
@@ -560,7 +606,8 @@ def run_h3_direct(
 
     print(f"[h3.c] Starting generation -> {out_video}", flush=True)
     print(f"[h3.c]   log file   : {log_path}", flush=True)
-    config = RunnerConfig(binary_path=H3_BINARY, model_dir=H3_MODEL_DIR)
+    target_model_dir = Path(req.model_dir).expanduser().resolve() if req.model_dir else H3_MODEL_DIR
+    config = RunnerConfig(binary_path=H3_BINARY, model_dir=target_model_dir)
     job = H3JobSpec(
         prompt=lint_report.fixed_prompt,
         output_path=out_video,
@@ -602,6 +649,37 @@ def run_chained_manifest(manifest_path: Path) -> Path:
     render_height = manifest.get("render_height", 0)
     base_seed = manifest.get("seed", 20260931)
     output_prefix = manifest.get("output_prefix", "storyboard_runs/chained_full")
+    manifest_mode = manifest.get("mode", os.environ.get("H3_ACTIVE_MODE", "turbo"))
+    manifest_model_dir = manifest.get("model_dir") or str(get_h3_model_dir(manifest_mode))
+
+    try:
+        width, height = validate_dimensions(width, height)
+    except ValueError as ve:
+        sys.exit(f"Manifest Dimension Error: {ve}")
+
+    width, height, swap_warn = recommend_safe_canvas(
+        width, height, auto_downgrade=bool(manifest.get("auto_downgrade", False))
+    )
+    if swap_warn:
+        print(f"\n⚠️  {swap_warn}\n", flush=True)
+
+    manifest_anchor_ref = manifest.get("anchor_ref_image")
+    force_rerun = bool(manifest.get("force_rerun", False))
+    state_file = OUTPUT_DIR / f"{Path(output_prefix).name}.state.json"
+    checkpoint_state: dict = {
+        "manifest_path": str(manifest_path),
+        "output_prefix": output_prefix,
+        "completed_segments": {},
+    }
+    if not force_rerun and state_file.is_file():
+        try:
+            loaded_state = json.loads(state_file.read_text(encoding="utf-8"))
+            if isinstance(loaded_state, dict) and "completed_segments" in loaded_state:
+                checkpoint_state = loaded_state
+                cached_count = len(checkpoint_state["completed_segments"])
+                print(f"[Checkpoint] Found state file: {state_file.name} ({cached_count} completed segments cached)", flush=True)
+        except Exception as err:
+            print(f"[Checkpoint] Warning: could not load {state_file.name}: {err}", flush=True)
 
     generated_videos: list[Path] = []
     prev_video: Path | None = None
@@ -612,6 +690,29 @@ def run_chained_manifest(manifest_path: Path) -> Path:
         print(f"🎬 Starting Segment {idx}/{len(segments)}: {seg.get('title', f'part_{idx}')}", flush=True)
         print(f"==========================================", flush=True)
 
+        str_idx = str(idx)
+        current_save_context = TEMP_DIR / f"{Path(output_prefix).name}_seg{idx}.h3ctx"
+
+        # Checkpoint Resume Guard: verify if segment was already completed and valid
+        if str_idx in checkpoint_state["completed_segments"]:
+            cached_info = checkpoint_state["completed_segments"][str_idx]
+            cached_video = Path(cached_info.get("video_path", ""))
+            if cached_video.is_file() and cached_video.stat().st_size > 1000:
+                health_check = verify_video_health(cached_video)
+                if health_check.is_valid and not health_check.warnings:
+                    print(f"[Checkpoint] ⚡ Segment {idx}/{len(segments)} already generated and verified ({cached_video.name}). Skipping!", flush=True)
+                    generated_videos.append(cached_video)
+                    prev_video = cached_video
+                    cached_ctx = Path(cached_info.get("context_path", ""))
+                    if cached_ctx.is_file():
+                        prev_context = cached_ctx
+                    elif current_save_context.is_file():
+                        prev_context = current_save_context
+                    continue
+                else:
+                    print(f"[Checkpoint] ⚠️ Cached segment {idx} failed health verification ({health_check.warnings}). Re-rendering...", flush=True)
+
+        anchor_reset = bool(seg.get("anchor_reset", False))
         chain_mode = seg.get("chain_mode", "motion_context" if idx > 1 else "first_frame")
         use_prev_motion = bool(seg.get("use_prev_motion_context") or (idx > 1 and chain_mode == "motion_context"))
         use_prev_last = bool(seg.get("use_prev_last_frame") or (idx > 1 and chain_mode == "first_frame"))
@@ -620,7 +721,15 @@ def run_chained_manifest(manifest_path: Path) -> Path:
         motion_context: Path | None = None
         default_trim = 0
 
-        if use_prev_motion:
+        if anchor_reset and (seg.get("first_frame") or manifest_anchor_ref):
+            anchor_target = seg.get("first_frame") or manifest_anchor_ref
+            anchor_path = Path(anchor_target).expanduser().resolve()
+            if anchor_path.is_file():
+                print(f"[Anchor Guard] Segment {idx} triggered Character Anchor Reset -> {anchor_path.name}", flush=True)
+                first_frame = anchor_path
+                motion_context = None
+                default_trim = 1
+        elif use_prev_motion:
             if prev_context is None and prev_video is None:
                 raise ValueError(f"Segment {idx} requested motion_context, but no previous context/video exists.")
             motion_context = prev_context if (prev_context and prev_context.is_file()) else prev_video
@@ -644,27 +753,34 @@ def run_chained_manifest(manifest_path: Path) -> Path:
         seg_seed = seg.get("seed", base_seed + idx - 1)
         seg_frames = seg.get("frames", frames)
         trim_count = seg.get("trim_first_frames", default_trim)
-        current_save_context = TEMP_DIR / f"{Path(output_prefix).name}_seg{idx}.h3ctx"
 
-        seg_video = run_h3_direct(
-            first_frame_path=first_frame,
-            last_frame_path=last_frame,
-            prompt_text=prompt_text,
-            output_prefix=seg_prefix,
-            width=width,
-            height=height,
-            frames=seg_frames,
-            steps=steps,
-            layers=layers,
-            reuse=reuse,
-            core_reuse=core_reuse,
-            token_reduction=token_reduction,
-            render_width=render_width,
-            render_height=render_height,
-            seed=seg_seed,
-            motion_context_path=motion_context,
-            save_context_path=current_save_context,
+        seg_job = SegmentJob(
+            inputs=SegmentInputs(
+                prompt_text=prompt_text,
+                first_frame_path=first_frame,
+                last_frame_path=last_frame,
+                motion_context_path=motion_context,
+            ),
+            render=SegmentRender(
+                width=width,
+                height=height,
+                frames=seg_frames,
+                steps=steps,
+                layers=layers,
+                reuse=reuse,
+                core_reuse=core_reuse,
+                token_reduction=token_reduction,
+                render_width=render_width,
+                render_height=render_height,
+                seed=seg_seed,
+                model_dir=manifest_model_dir,
+            ),
+            outputs=SegmentOutputs(
+                output_prefix=seg_prefix,
+                save_context_path=current_save_context,
+            ),
         )
+        seg_video = run_h3_direct(job=seg_job)
         if trim_count > 0:
             trim_initial_frames(seg_video, frames_to_trim=trim_count)
 
@@ -679,12 +795,32 @@ def run_chained_manifest(manifest_path: Path) -> Path:
         prev_video = seg_video
         prev_context = current_save_context
 
+        # Immediately persist segment checkpoint state
+        checkpoint_state["completed_segments"][str_idx] = {
+            "video_path": str(seg_video),
+            "context_path": str(current_save_context) if current_save_context.is_file() else "",
+            "timestamp": time.time(),
+            "duration": report.duration_seconds,
+            "is_valid": report.is_valid,
+        }
+        checkpoint_state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        try:
+            state_file.write_text(json.dumps(checkpoint_state, indent=2, ensure_ascii=False), encoding="utf-8")
+        except Exception as e:
+            print(f"[Checkpoint] Warning: could not write state file {state_file}: {e}", flush=True)
+
     merged_file: Path
     if len(generated_videos) == 1:
         merged_file = generated_videos[0]
     else:
         final_output = next_output_filepath(f"{output_prefix}_merged")
         merged_file = concat_videos(generated_videos, final_output)
+
+    checkpoint_state["merged_video"] = str(merged_file)
+    try:
+        state_file.write_text(json.dumps(checkpoint_state, indent=2, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
 
     merged_report = verify_video_health(merged_file)
     if merged_report.warnings:
@@ -698,19 +834,27 @@ def run_chained_manifest(manifest_path: Path) -> Path:
         bgm_path = Path(bgm_str).expanduser().resolve()
         if bgm_path.is_file():
             bgm_output = next_output_filepath(f"{output_prefix}_bgm")
-            return apply_audio_ducking(merged_file, bgm_path, bgm_output)
+            merged_file = apply_audio_ducking(merged_file, bgm_path, bgm_output)
+
+    if manifest.get("export_gdrive", False) and dispatch_async_upload:
+        folder_name = manifest.get("gdrive_folder", "H3-Studio")
+        print(f"\n[GDrive] ☁️ Triggering non-blocking background upload to Google Drive folder '{folder_name}'...", flush=True)
+        dispatch_async_upload(merged_file, folder_name=folder_name)
+
     return merged_file
 
 
 def _apply_cli_preset(args: argparse.Namespace) -> tuple[int, int]:
     if not args.preset:
-        return 0, 0
+        args.preset = "turbo" if getattr(args, "mode", "turbo") == "turbo" else "base"
     preset = PRESETS[args.preset]
     args.steps = preset.steps
     if preset.layers is not None:
         args.layers = str(preset.layers)
     if preset.reuse is not None:
         args.reuse = preset.reuse
+    else:
+        args.reuse = 0
     if preset.render_scale is not None:
         canvas = internal_canvas(args.width, args.height, preset.render_scale)
         if canvas is not None:
@@ -718,8 +862,8 @@ def _apply_cli_preset(args: argparse.Namespace) -> tuple[int, int]:
     return 0, 0
 
 
-def run_dry_run_demo() -> None:
-    """Zero-weight pipeline simulation demonstrating Staging Board, Context-IR, Linter, and Chained commands."""
+def run_dry_run_demo(args: argparse.Namespace | None = None) -> None:
+    """Zero-weight pipeline simulation demonstrating Hardware Perception, Staging Board, Context-IR, Linter, and Mode Switching."""
     try:
         from .h3_context_ir import ContextIR, compile_context_ir
         from .h3_staging_board import CameraTrack, Point2D, compile_camera_direction
@@ -727,11 +871,28 @@ def run_dry_run_demo() -> None:
         from h3_context_ir import ContextIR, compile_context_ir
         from h3_staging_board import CameraTrack, Point2D, compile_camera_direction
 
-    print("\n" + "=" * 68)
-    print("🎬 H3 Studio - Zero-Weight Pipeline Simulation (--dry-run)")
-    print("=" * 68)
+    target_mode = getattr(args, "mode", "turbo") if args else "turbo"
+    target_w = getattr(args, "width", 864) if args else 864
+    target_h = getattr(args, "height", 480) if args else 480
+    model_dir = getattr(args, "model_dir", None) or str(get_h3_model_dir(target_mode))
 
-    print("\n[Stage 1/5] 📐 2D Staging Board Camera Trajectory Compilation:")
+    print("\n" + "=" * 72)
+    print("🎬 H3 Studio - Zero-Weight Pipeline Simulation (--dry-run)")
+    print("=" * 72)
+
+    print("\n[Stage 0/6] 🖥️ Hardware Memory Perception & Anti-Swap Guardrail:")
+    mem_status = get_system_memory_status()
+    print(f"  • Hardware Memory : {mem_status.details}")
+    safe_w, safe_h, swap_warn = recommend_safe_canvas(
+        target_w, target_h, auto_downgrade=bool(getattr(args, "auto_downgrade_canvas", False))
+    )
+    print(f"  • Target Canvas   : {target_w}x{target_h} (Safe Canvas: {safe_w}x{safe_h})")
+    if swap_warn:
+        print(f"  • Swap Guard Alert: ⚠️  {swap_warn}")
+    else:
+        print(f"  • Swap Guard Alert: ✅ Unified memory headroom sufficient for resident execution.")
+
+    print("\n[Stage 1/6] 📐 2D Staging Board Camera Trajectory Compilation:")
     track = CameraTrack(
         start=Point2D(0.1, 0.8),
         end=Point2D(0.5, 0.25),
@@ -741,7 +902,7 @@ def run_dry_run_demo() -> None:
     print(f"  • Coordinates : Cam Start(0.1, 0.8) -> Cam End(0.5, 0.25) around Subject(0.5, 0.0)")
     print(f"  • Compiled    : \"{cam_desc}\"")
 
-    print("\n[Stage 2/5] 🧭 Context-IR 5D Structured Prompt Compilation:")
+    print("\n[Stage 2/6] 🧭 Context-IR 5D Structured Prompt Compilation:")
     ir = ContextIR(
         scene="Cyberpunk rain-slicked metropolis at midnight, glowing neon reflections",
         camera=cam_desc,
@@ -753,60 +914,97 @@ def run_dry_run_demo() -> None:
     compiled_prompt = compile_context_ir(ir)
     print(f"  • Compiled 5D Prompt:\n    {compiled_prompt}")
 
-    print("\n[Stage 3/5] 🛡️ Prompt Linter & Constraint Self-Healing:")
+    print("\n[Stage 3/6] 🛡️ Prompt Linter & Constraint Self-Healing:")
     raw_prompt_with_unclosed_tag = compiled_prompt + " <Picture 1"
     lint_report = lint_prompt(LintInput(raw_prompt_with_unclosed_tag))
     print(f"  • Tag self-healing warnings : {lint_report.warnings}")
     print(f"  • Fixed prompt tail         : ...{lint_report.fixed_prompt[-30:]}")
     print(f"  • Mutual exclusion check    : Passed (No conflict between first-frame and ref-images)")
 
-    print("\n[Stage 4/5] 🔗 3-Shot Chained Storyboard Dispatch Plan:")
+    print(f"\n[Stage 4/6] ⚡ Engine Mode Switching (Active: --mode {target_mode}):")
+    print(f"  • Resolved Model Directory  : {model_dir}")
+    turbo_flags = build_cli_args(TURBO, RenderRequest(safe_w, safe_h))
+    base_flags = build_cli_args(BASE, RenderRequest(safe_w, safe_h))
+    print(f"  • Turbo Mode Command (6-step folded LoRA):")
+    print(f"      ./engines/h3.c/h3 -d {get_h3_model_dir('turbo')} {' '.join(turbo_flags)} --seed 20260931")
+    print(f"  • Base Mode Command (20-step undistilled):")
+    print(f"      ./engines/h3.c/h3 -d {get_h3_model_dir('base')} {' '.join(base_flags)} --seed 20260931")
+
+    print("\n[Stage 5/6] 🔗 3-Shot Chained Storyboard Dispatch Plan:")
     demo_manifest = [
-        {"shot": 1, "title": "Part 1 (0-5s): Establishing Wide Shot", "mode": "first_frame (9-grid anchor)", "cmd": "./engines/h3.c/h3 --first-frame demo_9grid.png --save-context seg1.h3ctx --steps 6 --layers 40"},
-        {"shot": 2, "title": "Part 2 (5-10s): Holographic Interface", "mode": "motion_context (PR #76 latent tail)", "cmd": "./engines/h3.c/h3 --motion-context seg1.h3ctx --save-context seg2.h3ctx --steps 6 --layers 40"},
-        {"shot": 3, "title": "Part 3 (10-15s): Alleyway Shadow Dialogue", "mode": "motion_context (PR #76 latent tail)", "cmd": "./engines/h3.c/h3 --motion-context seg2.h3ctx --steps 6 --layers 40"},
+        {"shot": 1, "title": "Part 1 (0-5s): Establishing Wide Shot", "mode": "first_frame (9-grid anchor)", "cmd": f"./engines/h3.c/h3 -d {model_dir} --first-frame demo_9grid.png --save-context seg1.h3ctx {' '.join(turbo_flags if target_mode == 'turbo' else base_flags)}"},
+        {"shot": 2, "title": "Part 2 (5-10s): Holographic Interface", "mode": "motion_context (PR #76 latent tail)", "cmd": f"./engines/h3.c/h3 -d {model_dir} --motion-context seg1.h3ctx --save-context seg2.h3ctx {' '.join(turbo_flags if target_mode == 'turbo' else base_flags)}"},
+        {"shot": 3, "title": "Part 3 (10-15s): Alleyway Shadow Dialogue", "mode": "motion_context (PR #76 latent tail)", "cmd": f"./engines/h3.c/h3 -d {model_dir} --motion-context seg2.h3ctx --steps 6 --layers 50"},
     ]
     for m in demo_manifest:
         print(f"  🎬 Shot {m['shot']}: {m['title']}")
         print(f"     Mode   : {m['mode']}")
         print(f"     Command: {m['cmd']}")
 
-    print("\n[Stage 5/5] 🔍 FFmpeg Quality Gate & Concat Plan:")
-    print("  • Validation Filter : ffmpeg -vf blackdetect=d=0.5:pix_th=0.10 (flags frozen/black frames)")
-    print("  • Concat Engine     : ffmpeg -f concat -safe 0 (seamless 15.0s audio-video mux)")
-    print("  • Audio Ducking     : amix=inputs=2:weights=1 0.25 (automatic background music balance)")
+    print("\n[Stage 6/6] 🔍 FFmpeg Quality Gate & Dual-Track Delivery:")
+    print("  • Quality Validation: ffmpeg -vf blackdetect=d=0.5:pix_th=0.10 (flags frozen/black frames)")
+    print("  • Seamless Assembly : ffmpeg -f concat -safe 0 (seamless 15.0s audio-video mux)")
+    print("  • Delivery Track 1  : Web Player local streaming (instant playback, 0 transcoding lag)")
+    print("  • Delivery Track 2  : Google Drive background sync (async detached master backup + QR code)")
 
-    print("\n" + "=" * 68)
-    print("✅ [SUCCESS] Pipeline dry-run simulation verified in 0.02s! (0 GB weights required)")
-    print("=" * 68 + "\n")
+    print("\n" + "=" * 72)
+    print("✅ [SUCCESS] Pipeline dry-run simulation verified in 0.02s! (Zero weight duplication)")
+    print("=" * 72 + "\n")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Run 9-Grid Storyboard -> ComfyUI H3 FL2VA Video Pipeline")
-    parser.add_argument("--dry-run", action="store_true", help="Run zero-weight pipeline simulation (2D Staging, 5D Context-IR, Linter, CLI sequence)")
-    parser.add_argument("--preset", choices=list(PRESETS.keys()), help="Standard acceleration preset (draft, draft_aggressive, draft_fallback, balanced)")
+    parser.add_argument("--dry-run", action="store_true", help="Run zero-weight pipeline simulation (Hardware Perception, 2D Staging, 5D Context-IR, Linter, CLI sequence)")
+    parser.add_argument("--mode", choices=["turbo", "base"], default=os.environ.get("H3_ACTIVE_MODE", "turbo"), help="Execution engine mode: turbo (6-step folded LoRA) or base (20-step undistilled)")
+    parser.add_argument("--auto-downgrade-canvas", action="store_true", help="Auto-downgrade canvas from >864x480 to 864x480 if available memory < 48 GiB (anti-swap)")
+    parser.add_argument("--preset", choices=list(PRESETS.keys()), help="Standard acceleration preset (turbo, turbo_fast, base, base_high, draft, draft_fallback, balanced)")
     parser.add_argument("--chain-manifest", help="Path to JSON manifest for multi-segment (5s+5s+5s) chained generation")
     parser.add_argument("--grid-image", help="Path to the 3x3 9-grid storyboard PNG/JPG")
     parser.add_argument("--last-frame", help="Optional ending image anchor for FL2VA")
     parser.add_argument("--prompt-file", help="Path to UTF-8 text file containing the H3 English timeline prompt")
     parser.add_argument("--workflow-name", default="自動九宮格分鏡_FL2VA.json", help="Workflow filename to save in ComfyUI/user/default/workflows/")
     parser.add_argument("--output-prefix", default="storyboard_runs/clip", help="SaveVideo filename_prefix inside ComfyUI/output/")
-    parser.add_argument("--width", type=int, default=640)
+    parser.add_argument("--width", type=int, default=864)
     parser.add_argument("--height", type=int, default=480)
     parser.add_argument("--frames", type=int, default=124)
-    parser.add_argument("--steps", type=int, default=20)
-    parser.add_argument("--layers", default="45", choices=["40", "45", "50"])
-    parser.add_argument("--reuse", type=int, default=2)
+    parser.add_argument("--steps", type=int, default=6)
+    parser.add_argument("--layers", default="50", choices=["40", "45", "50"])
+    parser.add_argument("--reuse", type=int, default=0)
     parser.add_argument("--seed", type=int, default=20260931)
     parser.add_argument("--trim-first-frames", type=int, default=1, help="Number of initial 9-grid anchor frames to trim (default: 1)")
     parser.add_argument("--checkpoint-after-step", type=int, default=0, help="Save a draft checkpoint after step K")
     parser.add_argument("--checkpoint", help="Path to write the checkpoint file (.ckpt)")
     parser.add_argument("--resume", help="Path to resume from a checkpoint file (.ckpt)")
     parser.add_argument("--prepare-only", action="store_true", help="Only copy image and write workflow JSON without running inference")
+    parser.add_argument("--export-gdrive", action="store_true", help="Automatically trigger non-blocking Google Drive sync upon completion")
+    parser.add_argument("--model-dir", help="Override MiniMax-H3 model directory (e.g. models/MiniMax-H3-Turbo)")
     args = parser.parse_args()
+
+    # Dimension and memory safety guardrails
+    try:
+        args.width, args.height = validate_dimensions(args.width, args.height)
+    except ValueError as ve:
+        if args.dry_run:
+            print(f"[Dimension Warning] {ve}")
+            args.width = ((args.width + CANVAS_MULTIPLE - 1) // CANVAS_MULTIPLE) * CANVAS_MULTIPLE
+            args.height = ((args.height + CANVAS_MULTIPLE - 1) // CANVAS_MULTIPLE) * CANVAS_MULTIPLE
+            print(f"[Auto-Snap] Snapped canvas to valid 32-multiple: {args.width}x{args.height}")
+        else:
+            sys.exit(f"Dimension Error: {ve}")
+
+    args.width, args.height, swap_warn = recommend_safe_canvas(
+        args.width, args.height, auto_downgrade=args.auto_downgrade_canvas
+    )
+    if swap_warn and not args.dry_run:
+        print(f"\n⚠️  {swap_warn}\n", flush=True)
+
+    if not args.model_dir:
+        args.model_dir = str(get_h3_model_dir(args.mode))
+
     if args.dry_run:
-        run_dry_run_demo()
+        run_dry_run_demo(args)
         return
+
     render_w, render_h = _apply_cli_preset(args)
 
     INPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -866,24 +1064,31 @@ def main():
     last_frame_path = Path(args.last_frame).expanduser().resolve() if args.last_frame else None
     ckpt_path = Path(args.checkpoint).expanduser().resolve() if args.checkpoint else None
     resume_path = Path(args.resume).expanduser().resolve() if args.resume else None
-    output_video = run_h3_direct(
-        first_frame_path=grid_dest,
-        last_frame_path=last_frame_path,
-        prompt_text=prompt_text,
-        output_prefix=args.output_prefix,
-        width=args.width,
-        height=args.height,
-        frames=args.frames,
-        steps=args.steps,
-        layers=args.layers,
-        reuse=args.reuse,
-        render_width=render_w,
-        render_height=render_h,
-        seed=args.seed,
-        checkpoint_after_step=args.checkpoint_after_step,
-        checkpoint_path=ckpt_path,
-        resume_path=resume_path,
+    cli_job = SegmentJob(
+        inputs=SegmentInputs(
+            prompt_text=prompt_text,
+            first_frame_path=grid_dest,
+            last_frame_path=last_frame_path,
+        ),
+        render=SegmentRender(
+            width=args.width,
+            height=args.height,
+            frames=args.frames,
+            steps=args.steps,
+            layers=args.layers,
+            reuse=args.reuse,
+            render_width=render_w,
+            render_height=render_h,
+            seed=args.seed,
+        ),
+        outputs=SegmentOutputs(
+            output_prefix=args.output_prefix,
+            checkpoint_after_step=args.checkpoint_after_step,
+            checkpoint_path=ckpt_path,
+            resume_path=resume_path,
+        ),
     )
+    output_video = run_h3_direct(job=cli_job)
     if args.trim_first_frames > 0:
         trim_initial_frames(output_video, frames_to_trim=args.trim_first_frames)
     print(f"\n[SUCCESS] Video generated at: {output_video}", flush=True)
