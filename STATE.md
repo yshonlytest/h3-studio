@@ -259,3 +259,14 @@
     - `python3 -m py_compile pipeline/h3_job_spec.py pipeline/h3_storyboard_pipeline.py` 通過。
     - `python3 -m unittest discover -s tests` 8 項全域單元測試全數 PASS。
     - `python3 pipeline/h3_storyboard_pipeline.py --chain-manifest examples/storyboards/cyberpunk_detective_25s.json --dry-run` 完整輸出 Stage 0 至 6。
+
+- [x] **Phase 3-A（獨立新建 pipeline/h3_state.py 與 config_hash 防護）**：
+  - **完成項目**：
+    1. 建立 `pipeline/h3_state.py`：以 `ChainState` 與 `SegmentRecord` 定義狀態結構，支援 `schema_version = 1`。
+    2. 實作原子寫入 `save_state(path, state)`（寫入 `.tmp` 後 `os.replace`）與防損毀讀取 `load_state(path)`（捕捉 `JSONDecodeError` 並自動重命名為 `.corrupt` 備份）。
+    3. 實作 `compute_config_hash(manifest_dict)`：計算分鏡關鍵渲染維度之 SHA256 指紋，防範變更參數時誤用快取。
+    4. 實作 `is_segment_done()`：驗證片段持久化紀錄與檔案存在性。
+    5. 撰寫單元測試 `tests/test_h3_state.py`（4 項測試，覆蓋原子寫入、損毀恢復、Hash 確定性與片段判定）。
+  - **驗證通過**：
+    - `python3 -m unittest tests/test_h3_state.py` 4 項單元測試全數通過（0.003s）。
+    - `python3 -m unittest discover -s tests` 12 項全域單元測試全數 PASS（0.017s）。
