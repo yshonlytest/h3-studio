@@ -1793,47 +1793,61 @@
     let sessionPollInterval = null;
 
     const DEMO_PROJECT_CONFIG = {
-      width: 640,
-      height: 480,
+      width: 1376,
+      height: 768,
       frames: 124,
       steps: 20,
       layers: "45",
       reuse: 2,
-      seed: 20261105,
+      seed: 20261101,
       trim_first_frames: 1,
       ref_image_path: "assets/demo/detective_noir_ref.jpg",
       grid_image_path: "assets/demo/detective_noir_9grid.png",
       grid_image_name: "detective_noir_9grid.png",
-      merged_video_path: "assets/demo/shisa_15s_story_merged_00001_.mp4",
+      merged_video_path: "assets/demo/detective_25s_merged.mp4",
       part_videos: [
-        { title: "Part 1 (0-5s): 雨夜街頭・風衣偵探收傘確立環境氛圍", url: "assets/demo/shisa_15s_story_part1_00001_.mp4" },
-        { title: "Part 2 (5-10s): 尾幀接首幀・抬手點亮戰術腕錶投射全息密訊", url: "assets/demo/shisa_15s_story_part2_00001_.mp4" },
-        { title: "Part 3 (10-15s): 尾幀接首幀・收起投影警惕望向暗巷並說出對白", url: "assets/demo/shisa_15s_story_part3_00001_.mp4" }
+        { title: "Part 1 (0-5s): 雨夜巷弄與沉思獨白", url: "assets/demo/detective_part1.mp4" },
+        { title: "Part 2 (5-10s): 腳步逼近與巷口回眸", url: "assets/demo/detective_part2.mp4" },
+        { title: "Part 3 (10-15s): 全息解碼與荒坂機密", url: "assets/demo/detective_part3.mp4" },
+        { title: "Part 4 (15-20s): 紅外鎖定與生死閃避", url: "assets/demo/detective_part4.mp4" },
+        { title: "Part 5 (20-25s): 奔入雨幕與終章高潮", url: "assets/demo/detective_part5.mp4" }
       ],
-      chinese_desc: "雨夜未來的霓虹城市街頭，地面倒映著絢爛燈光。身穿深灰色風衣的偵探站在全息廣告看板旁，收起透明雨傘，低頭點亮全息腕錶讀取密訊，隨後敏銳抬頭望向街角幽暗處，低聲說：「看來今晚不會平靜了。」",
+      chinese_desc: "雨夜霓虹的新東京暗巷，身穿風衣、左眼發出藍色機械光的私家偵探在雨中避雨。點燃全息香菸沉思道：「今晚的雨，洗不掉這座城市的髒東西。」隨後察覺身後動靜回眸：「你果然還是來了，影子。」他掏出機密晶片展開旋轉全息球：「這枚晶片裡的秘密，夠拆掉整座荒坂塔。」突然紅色雷射瞄準胸口，偵探側滑貼牆拔槍：「動作挺快，但你們選錯了對手！」最後甩出干擾彈轉身狂奔入霓虹大道：「遊戲，現在才算真正開始。」",
       plan: {
-        project_slug: "neo_noir_detective",
+        project_slug: "cyberpunk_detective_25s",
         grid_image_name: "detective_noir_9grid.png",
-        recommended_total_seconds: 15,
-        reasoning_zh: "【通用電影級 15 秒連貫示範】採用現代標準 3×3 九宮格分鏡與 Context-IR 五維度結構（Scene, Camera, Timeline, Look, Audio）。以 Part 1 廣角確立氛圍、Part 2 中近景推近操作全息介面、Part 3 低角度特寫說出關鍵對白。每段使用尾幀無縫銜接與對白標籤 <d>[Chinese] 台詞</d>，相容本地 h3.c 與雲端 API 流水線。",
-        expanded_story_zh: "第一幕（0-5s）：雨夜午夜的賽博霓虹街頭，大雨在柏油路面激起粼粼水光。鏡頭自遠景緩慢推近，身穿深灰色風衣的偵探站在全息路燈下，收起透明雨傘注視著沉睡的城市。第二幕（5-10s）：承接前幕姿態，鏡頭推進至中近景。偵探抬起左腕點亮戰術腕錶，一束清澈的藍光全息投影浮現眼前，跳動著機密密訊與幾何圖形。第三幕（10-15s）：承接全息介面，偵探指尖微動關閉投影，神情警惕地轉頭望向暗巷深處，在呼嘯的夜風與雨聲中沉著開口說：「看來今晚不會平靜了。」",
+        recommended_total_seconds: 25,
+        reasoning_zh: "【賽博朋克偵探 25 秒全片鏈式示範】採用現代 3×3 九宮格分鏡與 Ref2VA 五段 5 秒接力技術。Part 1 廣角確立雨夜氛圍、Part 2 尾幀順滑回眸偵查、Part 3 展開立體全息晶片、Part 4 紅外雷射鎖定與拔槍閃避、Part 5 奔入暴雨霓虹大道終章。每段嚴格具備 <d>[Chinese] 台詞</d> 中文口型同步與尾幀銜接，已由 Colab 雲端完整推論驗證完成！",
+        expanded_story_zh: "第一幕（0-5s）：雨夜暗巷，偵探背靠濕紅磚牆吸全息香菸：「今晚的雨，洗不掉這座城市的髒東西。」第二幕（5-10s）：腳步聲靠近，偵探警覺回頭，機械藍眼變焦：「你果然還是來了，影子。」第三幕（10-15s）：展開三角全息晶片投射光球：「這枚晶片裡的秘密，夠拆掉整座荒坂塔。」第四幕（15-20s）：紅外雷射鎖定胸口，偵探側身貼牆拔出電磁手槍：「動作挺快，但你們選錯了對手！」第五幕（20-25s）：投擲干擾彈後大步衝向霓虹大道：「遊戲，現在才算真正開始。」",
         segments: [
           {
-            title: "Part 1 (0-5s): 雨夜街頭・風衣偵探收傘確立環境氛圍",
-            end_panel: 3,
-            prompt: "[Scene] Cyberpunk rain-slicked metropolis at midnight, towering glowing holographic billboards reflecting on wet asphalt. [Camera] Slow cinematic dolly-in tracking shot from wide establishing shot to medium shot, keeping the detective centered. Timeline: 0-2.5s: steady rain pouring onto the street, lens flares and bright neon reflections ripple across puddles. 2.5-5.0s: A detective in a tailored dark trench coat stands beside a lamppost, smoothly folding a transparent umbrella and observing the city shadows. [Look] High-contrast anamorphic cinema lighting, blade-runner noir aesthetic, soft cyan and amber rim lights. Audio: heavy rain falling steadily, distant hovercar engine humming, quiet low rumble of thunder; no dialogue."
+            title: "Part 1 (0-5s): 雨夜巷弄與沉思獨白",
+            end_panel: 2,
+            prompt: "In <Picture 1>, the camera slowly dollies in on S1 leaning against the damp brick wall. Steam rises from the rain grates. S1 raises the glowing holographic cigarette to take a drag and exhales a plume of mist. S1 says, <d>[Chinese] 今晚的雨，洗不掉這座城市的髒東西。</d> Heavy rain falling on metal fire escapes, wet pavement dripping, deep ambient synth drone."
           },
           {
-            title: "Part 2 (5-10s): 尾幀接首幀・抬手點亮戰術腕錶投射全息密訊",
+            title: "Part 2 (5-10s): 腳步逼近與巷口回眸",
+            end_panel: 4,
+            chain_mode: "motion_context",
+            prompt: "Create a 5-second film continuing seamlessly from the exact last frame of the previous segment. In <Picture 1>, continuous from previous shot, the camera arcs slowly to a profile medium shot. S1 lowers the cigarette and sharply snaps head toward the dark alley mouth. The blue cybernetic lens focuses with a mechanical click. S1 says, <d>[Chinese] 你果然還是來了，影子。</d>"
+          },
+          {
+            title: "Part 3 (10-15s): 全息解碼與荒坂機密",
             end_panel: 6,
             chain_mode: "motion_context",
-            prompt: "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Same neon-lit rain-drenched street corner at night. [Camera] Medium close-up pushing in smoothly toward the detective's hands and face. Timeline: 0-2.0s: Holding the folded umbrella at his side, the detective raises his left wrist. 2.0-5.0s: A sharp cyan holographic interface projects from his tactical wristwatch, casting luminous blue geometric reflections across his focused face and eyes. [Look] Blue and amber rim lighting, glistening raindrops on coat fabric, shallow depth of field. Audio: soft mechanical click, high-frequency holographic projection chime, steady falling rain; no dialogue."
+            prompt: "Create a 5-second film continuing seamlessly from the exact last frame of the previous segment. In <Picture 1>, continuing seamlessly from S1 stance, S1 reveals a glowing crystal chip from inside the coat. A spinning holographic 3D wireframe orb unfolds above the palm, casting cyan and magenta volumetric rays. S1 says, <d>[Chinese] 這枚晶片裡的秘密，夠拆掉整座荒坂塔。</d>"
           },
           {
-            title: "Part 3 (10-15s): 尾幀接首幀・收起投影警惕望向暗巷並說出對白",
+            title: "Part 4 (15-20s): 紅外鎖定與生死閃避",
+            end_panel: 8,
+            chain_mode: "motion_context",
+            prompt: "Create a 5-second film continuing seamlessly from the exact last frame of the previous segment. In <Picture 1>, continuing from S1 position, a crimson laser beam pierces the rain and targets S1 chest. S1 eyes widen, quickly retracting the chip and sliding against the brick corner for cover while unholstering a weapon. S1 says, <d>[Chinese] 動作挺快，但你們選錯了對手！</d>"
+          },
+          {
+            title: "Part 5 (20-25s): 奔入雨幕與終章高潮",
             end_panel: 9,
             chain_mode: "motion_context",
-            prompt: "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Same dark city alley corner in the rain. [Camera] Low-angle medium shot maintaining sharp focus on the detective's expressions. Timeline: 0-2.0s: The detective taps his wrist to close the holographic projection, the cyan glow vanishing into the rainy night. 2.0-5.0s: He turns his sharp gaze towards the dark alleyway shadows, his trench coat rustling in the night wind, and speaks in a calm resolute voice: <d>[Chinese] 看來今晚不會平靜了</d>. [Look] Moody cinematic chiaroscuro lighting, glistening wet streets. Audio: coat rustling in wind, distant siren echoing through the rain, and clear spoken Mandarin dialogue: <d>[Chinese] 看來今晚不會平靜了</d>."
+            prompt: "Create a 5-second film continuing seamlessly from the exact last frame of the previous segment. In <Picture 1>, continuing from the alley edge, S1 breaks into a fast sprint splashing through deep puddles toward the sprawling neon cityscape. The camera follows in a dynamic low-angle tracking shot as rain pours down. S1 says, <d>[Chinese] 遊戲，現在才算真正開始。</d>"
           }
         ]
       }
@@ -3008,7 +3022,7 @@ Return ONLY valid JSON matching this schema:
           gridImageBlob = await dataUrlToBlob(dataUrl);
         }
 
-        if ((currentActiveProjectId === "fc_shisa_demo" || currentActiveProjectId === "fc_cinema_demo") && typeof H3ProjectStore !== "undefined") {
+        if ((currentActiveProjectId === "fc_shisa_demo" || currentActiveProjectId === "fc_cinema_demo" || currentActiveProjectId === "fc_detective_25s_demo") && typeof H3ProjectStore !== "undefined") {
           currentActiveProjectId = H3ProjectStore.generateProjectId();
           currentActiveProjectName = plan.project_slug || "AI 生成分鏡專案";
           const nameInput = document.getElementById("currentProjectNameInput");
@@ -4906,16 +4920,16 @@ Return ONLY valid JSON matching this schema:
     }
 
     // ==================== Project Workspace, Auto-Save & Single-Panel Refiner ====================
-    let currentActiveProjectId = "fc_cinema_demo";
-    let currentActiveProjectName = "🎬 雨夜偵探 15s 電影級示範專案";
+    let currentActiveProjectId = "fc_detective_25s_demo";
+    let currentActiveProjectName = "🎬 賽博偵探 25s 電影級示範專案";
     let isRestoringProject = false;
     let autoSaveTimer = null;
     let currentEditingPanelIndex = 1;
 
     function createDefaultDemoProjectObject() {
       return {
-        id: "fc_cinema_demo",
-        name: "🎬 雨夜偵探 15s 電影級示範專案",
+        id: "fc_detective_25s_demo",
+        name: "🎬 賽博偵探 25s 電影級示範專案",
         updatedAt: Date.now(),
         isDemo: true,
         chineseDesc: DEMO_PROJECT_CONFIG.chinese_desc,
@@ -4952,7 +4966,7 @@ Return ONLY valid JSON matching this schema:
       }
 
       return {
-        id: currentActiveProjectId || "fc_shisa_demo",
+        id: currentActiveProjectId || "fc_detective_25s_demo",
         name: currentActiveProjectName || "未命名分鏡專案",
         updatedAt: Date.now(),
         chineseDesc: document.getElementById("chineseDesc")?.value || "",
@@ -4980,7 +4994,7 @@ Return ONLY valid JSON matching this schema:
       if (!proj) return;
       isRestoringProject = true;
       try {
-        currentActiveProjectId = proj.id || "fc_shisa_demo";
+        currentActiveProjectId = proj.id || "fc_detective_25s_demo";
         currentActiveProjectName = proj.name || "未命名分鏡專案";
 
         const nameInput = document.getElementById("currentProjectNameInput");
@@ -5149,9 +5163,10 @@ Return ONLY valid JSON matching this schema:
       const demoProj = createDefaultDemoProjectObject();
       if (typeof H3ProjectStore !== "undefined") {
         await H3ProjectStore.saveProject(demoProj);
+        await H3ProjectStore.setLastActiveProjectId(demoProj.id);
       }
       await applyProjectStateToUI(demoProj);
-      showToast("🎬 已載入「雨夜偵探 15s 電影級示範專案」");
+      showToast("🎬 已載入「賽博偵探 25s 電影級示範專案」");
     }
     const resetToShisaDemoProject = resetToDefaultDemoProject;
 
@@ -5431,25 +5446,41 @@ Return ONLY valid JSON matching this schema:
         const lastId = await H3ProjectStore.getLastActiveProjectId();
         if (lastId) {
           const savedProj = await H3ProjectStore.getProject(lastId);
-          if (savedProj) {
+          const isLegacyShisa = savedProj && (
+            savedProj.id === "fc_shisa_demo" ||
+            (savedProj.name && savedProj.name.includes("風獅爺")) ||
+            (savedProj.refImageDataUrl && savedProj.refImageDataUrl.includes("shisa")) ||
+            (savedProj.chineseDesc && savedProj.chineseDesc.includes("風獅爺"))
+          );
+          if (savedProj && !isLegacyShisa) {
             await applyProjectStateToUI(savedProj);
             return;
+          }
+          if (isLegacyShisa) {
+            await H3ProjectStore.deleteProject(savedProj.id);
           }
         }
 
         const allProjects = await H3ProjectStore.listProjects();
-        if (allProjects.length > 0) {
-          await applyProjectStateToUI(allProjects[0]);
+        const validProjects = allProjects.filter(p => !(
+          p.id === "fc_shisa_demo" ||
+          (p.name && p.name.includes("風獅爺")) ||
+          (p.refImageDataUrl && p.refImageDataUrl.includes("shisa")) ||
+          (p.chineseDesc && p.chineseDesc.includes("風獅爺"))
+        ));
+        if (validProjects.length > 0) {
+          await applyProjectStateToUI(validProjects[0]);
           return;
         }
 
-        // 3. 首次開啟：初始化預設風獅爺專案並存入 IndexedDB
-        const initialDemo = createShisaDemoProjectObject();
+        // 3. 首次開啟或舊版升級：初始化預設賽博偵探 25s 專案並存入 IndexedDB
+        const initialDemo = createDefaultDemoProjectObject();
         await H3ProjectStore.saveProject(initialDemo);
+        await H3ProjectStore.setLastActiveProjectId(initialDemo.id);
         await applyProjectStateToUI(initialDemo);
       } catch (err) {
         console.warn("工作區初始化回退至預設範例:", err);
-        loadShisaDemo();
+        loadDefaultDemo();
       }
     }
 
@@ -5472,7 +5503,7 @@ Return ONLY valid JSON matching this schema:
       renderSegmentsPlaylist(DEMO_PROJECT_CONFIG.part_videos);
       playVideoInStage(
         DEMO_PROJECT_CONFIG.merged_video_path,
-        "🎬 預設示範 15.4 秒完整合併成果",
+        "🎬 預設示範 25.7 秒完整合併成果",
         false
       );
     }

@@ -43,7 +43,7 @@ h3-studio/
 4. **純前端無縫合成 (In-Browser Canvas & Audio Merge)**：
    - 透過 HTML5 Canvas 與 MediaRecorder 在瀏覽器記憶體直接串接，免經後端伺服器，資料零外洩。
 5. **預設基準方案 (Default Preset)**：
-   - 內建沖繩風獅爺（Okinawa Shisa）15 秒有聲雜耍完整測試方案，開箱即測。
+   - 內建賽博朋克偵探（Cyberpunk Noir Detective）25 秒連貫電影級有聲實測方案（含 Part 1~5 獨立鏡段與 25.7s 無縫長片），開箱即測。
 
 ---
 
