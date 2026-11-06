@@ -342,3 +342,16 @@
   - **驗證通過**：
     - 本地個人路徑檢驗通過（Tracked 檔案零洩漏）。
     - `python3 -m unittest discover -s tests` 26 項全域單元測試全數通過。
+
+- [x] **Phase 9（Apache-2.0 LICENSE、NOTICE、雙語文件收尾與封箱）**：
+  - **完成項目**：
+    1. 建立標準 Apache-2.0 全文 [`LICENSE`](LICENSE)，版權宣告鎖定 `Copyright 2026 onlytest`。
+    2. 建立 [`NOTICE`](NOTICE) 檔案，詳列上游 antirez/h3.c（BSD-2-Clause）與 MiniMax 模型鳴謝聲明。
+    3. 補齊開源貢獻與演進檔案：[`CONTRIBUTING.md`](CONTRIBUTING.md)、[`CHANGELOG.md`](CHANGELOG.md) 與 [`examples/assets/README.md`](examples/assets/README.md)。
+    4. 實施開源前工作目錄清理：將內部接力專用 `STATE.md` 歸檔搬移至 [`docs/dev/STATE.md`](docs/dev/STATE.md)。
+    5. 清理 Jupyter Notebook 暫存，確保無殘留 Outputs 或隱私鏈接。
+  - **驗證通過**：
+    - `LICENSE` 開頭正確顯示 `Apache License Version 2.0`。
+    - 全庫發行檔案 `! grep -rn "/Users/"` 零洩漏。
+    - `README.md` 13/13 相對檔案連結全部存在有效。
+    - `python3 -m unittest discover -s tests` 26 項全域單元測試 100% 通過。

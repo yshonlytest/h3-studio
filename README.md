@@ -56,7 +56,7 @@ While raw CLI inference engines process isolated text prompts into disjointed 5-
 
 ## 📊 Apple Silicon Benchmark & Memory Matrix / 實測基準與記憶體矩陣
 
-Below is our first-hand empirical benchmark conducted on **Apple M2 Max (64 GB Unified Memory)** and **M5 Max**:
+Below is our empirical benchmark conducted on **Apple M2 Max (64 GB Unified Memory, macOS 15.1, Metal 4, engines/h3.c commit `269f13e`, November 2026)** and **M5 Max**:
 
 | Canvas Resolution | Total Pixels | DiT Tokens / Step | Peak VRAM | Available RAM Threshold | Step Latency (Resident RAM) | Step Latency (Swap Thrashing) | Recommended Preset |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -206,7 +206,9 @@ python3 -m unittest discover -s tests
 ├── requirements.txt           # Core runtime dependencies
 ├── .env.example               # Environment configuration template
 ├── README.md                  # Bilingual documentation and technical attribution
-├── STATE.md                   # Single source of truth for micro-batch execution
+├── docs/                      # Technical Documentation
+│   ├── dev/STATE.md           # Single source of truth for micro-batch execution
+│   └── H3_WORKFLOW_OPTIMIZATION_RESEARCH.md
 │
 ├── pipeline/                  # Core Python Pipeline & Guardrails
 │   ├── config.py              # Dynamic path and model directory resolver
@@ -253,5 +255,6 @@ H3 Studio is made possible thanks to pioneering open-source work:
 
 ## 📄 License
 
-* **H3 Studio** is licensed under the [MIT License](LICENSE).
-* **engines/h3.c** is licensed under the [MIT License](engines/h3.c/LICENSE) &copy; 2026 Salvatore Sanfilippo.
+* **H3 Studio** is licensed under the [Apache-2.0 License](LICENSE) &copy; 2026 onlytest.
+* **engines/h3.c** is developed by Salvatore Sanfilippo (antirez) under the BSD 2-Clause License. See [NOTICE](NOTICE) for complete attribution.
+* **Model Weights & LoRA Notice**: MiniMax-H3 model weights and MiniMax-H3-Turbo-Lora weights are not bundled with this repository. Users must independently download them from official distributors and comply with their respective acceptable use policies and licensing terms.

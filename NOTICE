@@ -1,0 +1,15 @@
+H3 Studio
+Copyright 2026 onlytest
+
+This product includes software developed as part of H3 Studio.
+
+This project incorporates and builds upon components from the following open-source works:
+
+1. h3.c
+   Copyright (c) 2025 Salvatore Sanfilippo <antirez at gmail dot com>
+   Licensed under the BSD 2-Clause License.
+
+2. MiniMax-H3 / MiniMax-H3-Turbo
+   Developed by MiniMax AI and the open-source community (e.g. larryvrh).
+   Model weights and LoRAs are governed by their respective release licenses
+   and must be downloaded independently by users.

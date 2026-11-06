@@ -1,0 +1,49 @@
+{
+  "title": "Cyberpunk Neo-Noir Detective (25s Chained Storyboard) / 賽博霓虹・雨夜風衣偵探 (25秒連貫分鏡)",
+  "description": "5-segment continuous cinematic narrative featuring bilingual Context-IR prompts, high-dynamic camera trajectories, dialogue synchronization, and anti-drift character anchoring.",
+  "mode": "turbo",
+  "width": 864,
+  "height": 480,
+  "frames": 124,
+  "steps": 6,
+  "layers": "50",
+  "reuse": 0,
+  "seed": 20261106,
+  "output_prefix": "storyboard_runs/cyberpunk_detective_25s",
+  "anchor_ref_image": "examples/assets/detective_anchor_ref.jpg",
+  "segments": [
+    {
+      "segment": 1,
+      "title": "Part 1 (0-5s): Establishing Shot & Rainstorm Entrance / 登場與雨夜開局",
+      "first_frame": "examples/assets/detective_anchor_ref.jpg",
+      "chain_mode": "first_frame",
+      "prompt": "[Scene] Futuristic rain-slicked Neo-Tokyo alleyway at midnight, vibrant magenta and cyan neon signs reflecting on wet asphalt. [Camera] Low-angle cinematic tracking push-in, starting wide and smoothly gliding closer to the protagonist. Timeline: 0-2.5s: Detective in high-collar charcoal trench coat steps forward into the rain, folding transparent cybernetic umbrella. 2.5-5.0s: Adjusts fedora, trench coat swaying in the wind, gaze fixed forward. [Look] High-contrast Blade Runner noir aesthetic, anamorphic lens flares, atmospheric steam rising from street vents. Audio: Heavy rain drumming on pavement, distant hovercar sirens echoing in the background."
+    },
+    {
+      "segment": 2,
+      "title": "Part 2 (5-10s): Holographic Interface Activation / 全息信標啟動",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame and pose. [Scene] Same rain-drenched cyberpunk alleyway with flashing neon advertisements. [Camera] Dynamic counter-clockwise orbital tracking move, rotating 60 degrees around the detective. Timeline: 0-2.5s: Detective swiftly raises cybernetic right wrist and taps gauntlet. 2.5-5.0s: Glowing cyan holographic interface explodes into air, projecting complex orbital data coordinates and wireframe suspect profiles. [Look] Brilliant cyan holographic light illuminating detective's focused face and wet trench coat collar. Audio: High-frequency electronic activation chime, digital scanning pulse, steady ambient rain."
+    },
+    {
+      "segment": 3,
+      "title": "Part 3 (10-15s): Shadow Alert & Voice Dialogue / 暗巷警覺與台詞對白",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame and pose. [Scene] Deep cyberpunk alleyway shadowed by towering megastructure walls. [Camera] Slow cinematic dolly-in pushing into a dramatic medium close-up shot. Timeline: 0-2.0s: Detective halts suddenly, pivots toward the shadows with narrowing eyes. 2.0-5.0s: Draws a deep breath, delivering grim dialogue: <d>[Chinese] 看來今晚不會平靜了</d>, breath condensing into white vapor. [Look] Rim lighting on wet brim of fedora, sharp reflections in glowing ocular cyber-implant. Audio: Distant metallic clatter in darkness, sync dialogue in Chinese, quiet rainfall."
+    },
+    {
+      "segment": 4,
+      "title": "Part 4 (15-20s): Combat Alert & Weapon Draw (Anchor Reset) / 拔槍警備 (關鍵幀重錨定)",
+      "chain_mode": "first_frame",
+      "anchor_reset": true,
+      "first_frame": "examples/assets/detective_anchor_ref.jpg",
+      "prompt": "[Scene] Neon-lit cyberpunk crossroad intersection under pouring torrential rain. [Camera] Rapid high-speed whip pan transitioning into low-angle dynamic truck left shot. Timeline: 0-2.5s: Detective violently pivots body, trench coat billowing wildly in wind, reaching under coat. 2.5-5.0s: Draws sleek matte-black plasma revolver, aiming down the foggy street with illuminated neon crosshairs. [Look] Golden muzzle glow charging, water splashing furiously beneath combat boots. Audio: Fabric snapping violently in gust, mechanical slide racking click, plasma capacitor whine."
+    },
+    {
+      "segment": 5,
+      "title": "Part 5 (20-25s): High-Speed Sprint & Pursuit / 狂飆突進與終局追擊",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame and pose. [Scene] Grand cyberpunk boulevard flanked by massive holographic billboards and glowing rain puddles. [Camera] High-speed dynamic tracking lead shot moving backwards as detective charges forward. Timeline: 0-3.0s: Detective sprints forward in full pursuit, combat boots violently shattering neon-lit water puddles into flying droplets. 3.0-5.0s: Leaps across steaming drainage grate, firing weapon off-screen, laser pulse illuminating entire boulevard. [Look] Intense motion blur on background neon streaks, sharp focused protagonist, cinematic lens flare. Audio: Rapid splashing footsteps, roaring plasma discharge echoing between skyscrapers, pounding thunderclap."
+    }
+  ]
+}
