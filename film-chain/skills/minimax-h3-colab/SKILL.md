@@ -34,10 +34,16 @@ Example manifest:
 Run from this skill directory:
 
 ```bash
-python3 scripts/runner.py batch --manifest /absolute/path/jobs.json --gpu A100 --timeout 10800 --output-dir /absolute/path/outputs
+python3 scripts/runner.py chain --manifest /absolute/path/jobs.json --gpu A100 --timeout 10800 --output-dir /absolute/path/outputs
 ```
 
-Use `--no-high-mem` when high-memory allocation is unavailable or not desired. For a named existing session, add `--session SESSION --stop-on-complete` if the requested workflow should end that session.
+### GPU Selection & Auto-Fallback
+
+- **Default (`--gpu A100`)**: Runner attempts A100 with High-RAM. If Colab returns `503 Service Unavailable` or allocation fails, it automatically falls back to standard A100, then to **NVIDIA L4** (24GB VRAM, Ada Lovelace, native INT8/NVFP4).
+- **Cost-effective Alternative (`--gpu L4`)**: Use `--gpu L4` directly to bypass A100 queue times. L4 consumes only ~1.0 CU/hr (50% less than A100) while providing ample VRAM for MiniMax H3 Ref2VA.
+- Use `--no-high-mem` to skip high-memory requests on A100.
+- Use `--no-fallback` if you strictly want to abort instead of failing over to L4.
+- For a named existing session, add `--session SESSION --stop-on-complete` if the requested workflow should end that session.
 
 ## Operational limits
 

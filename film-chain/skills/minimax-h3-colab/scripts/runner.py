@@ -167,10 +167,12 @@ def get_usage() -> dict[str, Any]:
 
 def start_session(
     session: str,
-    gpu: str,
-    high_mem: bool,
+    gpu: str = "A100",
+    high_mem: bool = True,
     progress_path: Path | None = None,
-) -> None:
+    allow_fallback: bool = True,
+) -> str:
+    """Create a persistent Colab GPU session with auto-fallback for capacity errors (e.g. 503)."""
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", session):
         raise ValueError("Session name may contain only letters, numbers, underscores, and hyphens (up to 64 characters).")
     state: dict[str, Any] = {"task": "start", "status": "starting", "session": session, "gpu": gpu, "log_tail": [], "updated_at": now_iso()}
@@ -181,17 +183,37 @@ def start_session(
         state["updated_at"] = now_iso()
         write_progress(progress_path, state)
 
-    args = ["new", "--session", session, "--gpu", gpu]
-    if high_mem:
-        args.append("--high-mem")
-    try:
-        output = call_colab(args, label="create Colab session", timeout=900, on_line=on_line)
-        state.update({"status": "active", "session": session, "output": output, "updated_at": now_iso()})
-        write_progress(progress_path, state)
-    except Exception as exc:
-        state.update({"status": "failed", "error": str(exc), "updated_at": now_iso()})
-        write_progress(progress_path, state)
-        raise
+    candidates: list[tuple[str, bool]] = [(gpu, high_mem)]
+    if allow_fallback:
+        if high_mem:
+            candidates.append((gpu, False))
+        if gpu.upper() == "A100":
+            candidates.append(("L4", False))
+
+    last_error: Exception | None = None
+    for cand_gpu, cand_hm in candidates:
+        args = ["new", "--session", session, "--gpu", cand_gpu]
+        if cand_hm:
+            args.append("--high-mem")
+        desc = f"{cand_gpu} ({'High-RAM' if cand_hm else 'Standard'})"
+        try:
+            on_line(f"嘗試建立 Colab GPU 實例：{desc}...")
+            output = call_colab(args, label=f"create Colab session ({desc})", timeout=900, on_line=on_line)
+            state.update({"status": "active", "session": session, "gpu": cand_gpu, "high_mem": cand_hm, "output": output, "updated_at": now_iso()})
+            write_progress(progress_path, state)
+            return cand_gpu
+        except Exception as exc:
+            last_error = exc
+            err_str = str(exc)
+            is_capacity_error = any(kw in err_str.lower() for kw in ("503", "unavailable", "capacity", "quota", "allocate", "not available"))
+            if is_capacity_error and (cand_gpu, cand_hm) != candidates[-1]:
+                on_line(f"⚠️ {cand_gpu} 資源池繁忙或無配額 ({err_str[:120]})，自動切換至備援算力池...")
+                continue
+            break
+
+    state.update({"status": "failed", "error": str(last_error), "updated_at": now_iso()})
+    write_progress(progress_path, state)
+    raise last_error
 
 
 def stop_session(session: str, progress_path: Path | None = None) -> None:
@@ -416,6 +438,7 @@ def run_batch(
     output_dir: Path,
     exec_timeout: float,
     create_session_if_named: bool = False,
+    allow_fallback: bool = True,
 ) -> dict[str, Any]:
     if not NOTEBOOK.is_file():
         raise FileNotFoundError(f"Bundled inference notebook not found: {NOTEBOOK}")
@@ -452,7 +475,8 @@ def run_batch(
     work_root.mkdir(parents=True, exist_ok=True)
     try:
         if owns_session:
-            start_session(session, gpu, high_mem)
+            actual_gpu = start_session(session, gpu, high_mem, progress_path, allow_fallback=allow_fallback)
+            progress["gpu"] = actual_gpu
         progress["status"] = "running"
         progress["updated_at"] = now_iso()
         write_progress(progress_path, progress)
@@ -732,6 +756,7 @@ def run_chain(
     exec_timeout: float = 3600.0,
     reroll: int | None = None,
     cascade: bool = False,
+    allow_fallback: bool = True,
 ) -> dict[str, Any]:
     reporter = SessionRelayReporter(relay_url, session_id)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -816,7 +841,15 @@ def run_chain(
             log=f"Colab 餘額充足 ({usage['balance']:.2f} units)，啟動 {gpu} 會話 {session}...",
         )
         if owns_session:
-            start_session(session, gpu, high_mem)
+            actual_gpu = start_session(session, gpu, high_mem, allow_fallback=allow_fallback)
+            reporter.report(
+                "stage0",
+                step_index=0,
+                total_steps=total_jobs + 1,
+                percent=12,
+                title="Colab GPU 已就緒",
+                log=f"成功啟動並指派 {actual_gpu} 算力實例 ({session})，即將開始推論！",
+            )
 
         last_frame_png: Path | None = None
         for idx, job in enumerate(raw_jobs):
@@ -945,6 +978,7 @@ def run_chain(
                 progress_path=None,
                 output_dir=output_dir,
                 exec_timeout=exec_timeout,
+                allow_fallback=allow_fallback,
             )
 
             if batch_res.get("status") != "completed" or not part_output.is_file():
@@ -1031,8 +1065,9 @@ def main() -> int:
 
     start_parser = sub.add_parser("start", help="Create a persistent Colab GPU session")
     start_parser.add_argument("--session", required=True)
-    start_parser.add_argument("--gpu", default="A100")
+    start_parser.add_argument("--gpu", default="A100", help="GPU variant: A100 (default), L4 (cost-effective alternative), T4")
     start_parser.add_argument("--no-high-mem", action="store_true")
+    start_parser.add_argument("--no-fallback", action="store_true", help="Disable automatic fallback to alternative GPU on capacity errors (e.g. 503)")
     start_parser.add_argument("--progress", type=Path)
 
     stop_parser = sub.add_parser("stop", help="Stop a Colab session")
@@ -1042,8 +1077,9 @@ def main() -> int:
     batch_parser = sub.add_parser("batch", help="Render multiple videos sequentially on one Colab session")
     batch_parser.add_argument("--manifest", type=Path, required=True)
     batch_parser.add_argument("--session", help="Reuse an existing session instead of creating one")
-    batch_parser.add_argument("--gpu", default=os.environ.get("COLAB_GPU", "A100"))
+    batch_parser.add_argument("--gpu", default=os.environ.get("COLAB_GPU", "A100"), help="GPU variant: A100 (default), L4 (cost-effective alternative), T4")
     batch_parser.add_argument("--no-high-mem", action="store_true")
+    batch_parser.add_argument("--no-fallback", action="store_true", help="Disable automatic fallback to alternative GPU on capacity errors (e.g. 503)")
     batch_parser.add_argument("--stop-on-complete", action="store_true", help="Stop even a provided session after this queue")
     batch_parser.add_argument("--progress", type=Path)
     batch_parser.add_argument("--output-dir", type=Path, default=Path("output"))
@@ -1054,8 +1090,9 @@ def main() -> int:
     chain_parser.add_argument("--session-id", default=os.environ.get("FILM_CHAIN_SESSION_ID"))
     chain_parser.add_argument("--relay-url", default=os.environ.get("FILM_CHAIN_RELAY_URL", "https://film-chain.onlytest.dev"))
     chain_parser.add_argument("--session", help="Reuse an existing Colab session instead of creating one")
-    chain_parser.add_argument("--gpu", default=os.environ.get("COLAB_GPU", "A100"))
+    chain_parser.add_argument("--gpu", default=os.environ.get("COLAB_GPU", "A100"), help="GPU variant: A100 (default), L4 (cost-effective alternative), T4")
     chain_parser.add_argument("--no-high-mem", action="store_true")
+    chain_parser.add_argument("--no-fallback", action="store_true", help="Disable automatic fallback to alternative GPU on capacity errors (e.g. 503)")
     chain_parser.add_argument("--output-dir", type=Path, default=Path("output"))
     chain_parser.add_argument("--timeout", type=float, default=float(os.environ.get("COLAB_EXEC_TIMEOUT", "3600")))
     chain_parser.add_argument("--reroll", type=int, default=None, help="1-based index of segment to re-roll (e.g. 2 for Part 2)")
@@ -1065,8 +1102,9 @@ def main() -> int:
     single_parser.add_argument("--image", "-i", action="append", required=True)
     single_parser.add_argument("--prompt", "-p", required=True)
     single_parser.add_argument("--output", "-o")
-    single_parser.add_argument("--gpu", default=os.environ.get("COLAB_GPU", "A100"))
+    single_parser.add_argument("--gpu", default=os.environ.get("COLAB_GPU", "A100"), help="GPU variant: A100 (default), L4 (cost-effective alternative), T4")
     single_parser.add_argument("--no-high-mem", action="store_true")
+    single_parser.add_argument("--no-fallback", action="store_true", help="Disable automatic fallback to alternative GPU on capacity errors (e.g. 503)")
     single_parser.add_argument("--timeout", type=float, default=float(os.environ.get("COLAB_EXEC_TIMEOUT", "3600")))
 
     args = parser.parse_args()
@@ -1081,9 +1119,9 @@ def main() -> int:
                 print(f"Active assignments: {result['active_assignments']}")
             return 0
         if args.command == "start":
-            start_session(args.session, args.gpu, not args.no_high_mem, args.progress)
+            actual_gpu = start_session(args.session, args.gpu, not args.no_high_mem, args.progress, allow_fallback=not args.no_fallback)
             if args.progress is None:
-                print(f"Colab session ready: {args.session}")
+                print(f"Colab session ready: {args.session} ({actual_gpu})")
             return 0
         if args.command == "stop":
             stop_session(args.session, args.progress)
@@ -1116,6 +1154,7 @@ def main() -> int:
                     output_dir=output.parent,
                     exec_timeout=args.timeout,
                     create_session_if_named=True,
+                    allow_fallback=not args.no_fallback,
                 )
             finally:
                 temp_manifest.unlink(missing_ok=True)
@@ -1134,6 +1173,7 @@ def main() -> int:
                 progress_path=args.progress.expanduser().resolve() if args.progress else None,
                 output_dir=args.output_dir.expanduser().resolve(),
                 exec_timeout=args.timeout,
+                allow_fallback=not args.no_fallback,
             )
             print(json.dumps(progress, ensure_ascii=False))
             return 0 if progress["status"] == "completed" else 1
@@ -1150,6 +1190,7 @@ def main() -> int:
                 exec_timeout=args.timeout,
                 reroll=args.reroll,
                 cascade=args.cascade,
+                allow_fallback=not args.no_fallback,
             )
             print(json.dumps(result, ensure_ascii=False))
             return 0 if result["status"] == "completed" else 1

@@ -32,6 +32,9 @@ if command == "usage":
     print("Active assignments: 0")
 elif command == "new":
     record("new", args=args)
+    if os.environ.get("FAKE_503_ON_A100") == "1" and "--gpu" in args and args[args.index("--gpu") + 1] == "A100":
+        print("Failed to issue request POST: 503 Service Unavailable", file=sys.stderr)
+        sys.exit(1)
     print("Session created")
 elif command == "stop":
     record("stop", args=args)
@@ -436,6 +439,11 @@ class RunnerTests(unittest.TestCase):
 
         # Check final merged output exists
         self.assertTrue(Path(result["merged_output"]).is_file())
+
+    def test_start_session_auto_fallback_on_503(self) -> None:
+        with patch.dict(os.environ, {"FAKE_503_ON_A100": "1"}):
+            allocated_gpu = runner.start_session("fallback-session", gpu="A100", high_mem=True)
+            self.assertEqual(allocated_gpu, "L4")
 
 
 if __name__ == "__main__":
