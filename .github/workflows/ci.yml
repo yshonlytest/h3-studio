@@ -18,25 +18,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: "Set up Python ${{ matrix.python-version }}"
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Install dependencies
+      - name: "Install dependencies"
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Lint with ruff (Blocking: E, F, I, B + complexity/size gates)
+      - name: "Lint with ruff (Blocking: E, F, I, B + complexity/size gates)"
         run: |
           ruff check .
 
-      - name: Leak check for hardcoded user paths
+      - name: "Leak check for hardcoded user paths"
         run: |
           ! grep -rn "/Users/" pipeline tests examples README.md
 
-      - name: Run unit test suite
+      - name: "Run unit test suite"
         run: |
           python -m unittest discover -s tests
