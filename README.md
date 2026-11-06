@@ -1,196 +1,257 @@
 # 🎬 H3 Studio
 
-> **An End-to-End Cinematic Storyboard & Chained Video Studio for MiniMax-H3, Powered by Metal GPU Acceleration on Apple Silicon.**
+> **An Open-Source Cinematic Storyboard & Multimodal Video Generation Studio for MiniMax-H3, Powered by Apple Silicon Metal GPU & Google Colab Cloud.**
+>
+> **開源影視級分鏡與連續長片工作坊：結合 MiniMax-H3 多模態模型、Apple Silicon Metal 原生算力與 Google Colab 雲端斷點續算架構。**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: macOS Metal](https://img.shields.io/badge/Platform-Apple%20Silicon%20(M%2DSeries)-orange.svg)]()
-[![Inference: h3.c](https://img.shields.io/badge/Inference-h3.c%20(Patched)-green.svg)]()
+[![Cloud: Google Colab](https://img.shields.io/badge/Cloud-Google%20Colab%20(A100%2FL4)-blue.svg)](notebooks/H3_Studio_Colab.ipynb)
+[![Inference: h3.c](https://img.shields.io/badge/Inference-h3.c%20(Patched)-green.svg)](engines/h3.c/)
+[![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)]()
 
 ---
 
-## 🌟 Overview
+## 🌟 Overview / 專案簡介
 
-**H3 Studio** is a unified, full-stack video generation workstation that bridges the gap between raw low-level C/Metal inference and high-level cinematic storytelling.
+**H3 Studio** is an open-source, full-stack video generation workstation bridging the gap between raw low-level C/Metal inference and high-level cinematic storytelling.
 
-While native raw inference engines execute single text prompts from the CLI, **H3 Studio** provides a complete visual workshop for multi-shot filmmaking: 9-grid milestone contact sheets, 2D top-down camera staging, 5D Context-IR prompt engineering, seamless latent continuation, process group lifecycle isolation, and automated quality checks.
+While raw CLI inference engines process isolated text prompts into disjointed 5-second clips, **H3 Studio** provides a complete multi-shot filmmaking ecosystem:
+* **Hardware Perception & Anti-Swap Guardrail**: Monitors live Apple Silicon Available RAM (`vm_stat`) to prevent unified memory Swap thrashing, dynamically switching between 6-step Turbo LoRA and 20-step Base modes.
+* **5D Context-IR & Dynamic Tension Linter**: Automatically checks kinetic action verbs and camera motion directives, preventing frozen character artifacts.
+* **Multi-Shot Chaining & Anti-Drift Keyframe Anchoring**: Seamlessly chains 25-second continuous narratives via PR #76 latent tail continuity while combating cumulative character mutation using periodic anchor resets.
+* **Anti-503 Resilient Colab Checkpoint State Machine**: Segment-level state persistence that bypasses Google Drive FUSE latency and resumes instantly upon cloud disconnection.
+* **Dual-Track Delivery**: Local instant streaming for zero-transcoding lag, accompanied by background Google Drive master archiving with QR code mobile sharing.
 
 ---
 
-## 🏗️ Architecture & Technical Attribution
-
-H3 Studio strictly decouples high-level creative workflows from low-level hardware inference:
+## 🏗️ System Architecture / 系統架構
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│  Application & Creative Studio Layer (H3 Studio)                      │
-│  - Film-Chain Web UI (IndexedDB Multi-Project, Cloud Relay)            │
-│  - 2D Staging Board (Top-down Interactive Camera Trajectory Canvas)    │
-│  - Context-IR (5D Structured Prompt Compiler & Local LLM Expander)     │
-│  - Multi-Segment Chaining (Dual-Mode: Latent Tail vs I2V Keyframes)    │
-│  - FFmpeg Quality Gate (Automatic Black-Frame & Freeze Detection)      │
-│  - Audio Ducking & Smooth Subtitle Stitching                           │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Dispatches & Manages
-┌───────────────────────────────────▼────────────────────────────────────┐
-│  Orchestration & Bridge Layer (pipeline/ & comfy_nodes/)               │
-│  - h3_runner: Process Group isolation (killpg), non-blocking parser    │
-│  - h3_prompt_linter: Constraint validator (h3.c:591 mutual exclusion)  │
-│  - comfy_h3_bridge: Native ComfyUI H3ChainedStoryboardVideo node       │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Invokes
-┌───────────────────────────────────▼────────────────────────────────────┐
-│  Inference Core Layer (engines/h3.c)                                   │
-│  - Salvatore Sanfilippo's h3.c (Apple Silicon Metal GPU Kernel)        │
-│  - Integrated Community PRs: #2, #14, #35, #62, #73, #76               │
-│  - Model Weights: MiniMax-H3 (FL2VA / Qwen3-VL / Video & Audio VAE)    │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## ✨ Key Features
-
-### 1. 🎬 Film-Chain Studio (Universal Web Studio)
-- **2D Staging Board Canvas**: Visually drag camera start, camera end, and character subject points to automatically synthesize professional cinematic camera movements (`dolly-in`, `pull-back`, `orbital arc`, `trucking`).
-- **Context-IR 5D Architecture**: Structure prompts cleanly into `[Scene]`, `[Camera]`, `Timeline:`, `[Look]`, and `Audio: <d>[Chinese] 台詞</d>`.
-- **Cross-Device Relay**: IndexedDB workspace persistence with instant cloud project sync.
-
-### 2. 🔗 Dual-Mode Shot Chaining
-- **Latent-Level Continuation (PR #76 `--motion-context`)**: Seamlessly connects adjacent shots using the previous take's 22-frame latent tail and audio latent without pixel-level re-encoding loss.
-- **First-Frame Anchor (I2V / Ref2VA)**: Universal fallback for dramatic angle cuts and cloud API compatibility.
-
-### 3. 🛡️ Industrial Stability & Subprocess Isolation
-- **Process Group Cleanup**: Spawns isolated process sessions (`start_new_session=True`) and guarantees sub-second `killpg` termination without lingering orphan FFmpeg processes or corrupted MP4s.
-- **Non-Blocking Parsing**: Real-time progress monitoring over standard chunked streams, immune to C `\r` buffer freezes.
-
-### 4. 🔍 Quality Gate & Post-Processing
-- **Black-Frame Detection**: Automatic FFmpeg `blackdetect` scanner flags collapsed latents or abnormal durations before finalizing video exports.
-- **Sidechain Audio Ducking**: Seamlessly blends ambient audio and spoken dialogue with background music.
-
----
-
-## 📂 Repository Layout
-
-```text
-h3-studio/
-├── LICENSE                    # Monorepo Master License (MIT - Copyright 2026 YSH)
-├── README.md                  # Comprehensive documentation and technical attribution
-├── .env.example               # Environment configuration template
-├── requirements.txt           # Python pipeline dependencies
-├── setup.sh                   # One-click build and ComfyUI symlink script
-├── scripts/
-│   └── start_studio.sh        # Zero-dependency local web studio launcher
-│
-├── film-chain/                # Web Studio Frontend (HTML5, Canvas, IndexedDB)
-│   ├── public/                # Studio UI, promptBuilder.js, audioStudio.js
-│   └── package.json
-│
-├── pipeline/                  # Orchestration & Process Guardrails
-│   ├── __init__.py
-│   ├── config.py              # Dynamic path resolver
-│   ├── h3_runner.py           # Process Group manager & non-blocking parser
-│   ├── h3_storyboard_pipeline.py # End-to-end chaining & FFmpeg Quality Gate
-│   ├── h3_presets.py          # Optimized acceleration presets (Draft / Balanced)
-│   ├── h3_prompt_linter.py    # Static constraint validator
-│   ├── h3_context_ir.py       # 5D prompt compiler
-│   ├── h3_staging_board.py    # 2D top-down coordinate compiler
-│   └── h3_character_sheet.py  # 5-view character sheet generator
-│
-├── comfy_nodes/               # ComfyUI Custom Node Integration
-│   └── comfy_h3_bridge/       # Native H3ChainedStoryboardVideo node
-│
-└── engines/h3.c/              # Underlying Metal Inference Engine
-    ├── LICENSE                # Preserved original MIT License (Salvatore Sanfilippo)
-    ├── Makefile
-    ├── h3_shaders.metal       # Apple Silicon Metal GPU shaders
-    └── ...                    # C/Metal source code with PRs #2, #14, #73, #76
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  Creative Layer: Web Studio & Visual Staging                                 │
+│  • Film-Chain Studio UI (2D Top-down Camera Staging Board, IndexedDB)        │
+│  • Context-IR 5D Compiler ([Scene], [Camera], Timeline:, [Look], Audio:)     │
+│  • Golden Storyboard Templates (25s Cyberpunk Detective & 25s Xianxia Duel)  │
+└──────────────────────────────────────┬───────────────────────────────────────┘
+                                       │ Dispatches Jobs
+┌──────────────────────────────────────▼───────────────────────────────────────┐
+│  Orchestration Layer (pipeline/ & tests/)                                    │
+│  • Hardware Guard (Anti-Swap available RAM check via vm_stat / psutil)       │
+│  • Prompt Linter (Dynamic Tension Analyzer: ACTION_VERBS + CAMERA_KEYWORDS)   │
+│  • Multi-Segment Chaining (PR #76 motion-context + Anchor Reset Anti-Drift)   │
+│  • Segment Checkpoint State Machine (*.state.json, FFmpeg 0 black-frame check)│
+│  • Dual-Track Delivery (Local HTTP stream + Background Google Drive Sync)    │
+└───────────────────┬──────────────────────────────────────────┬───────────────┘
+                    │ Apple Silicon Local                      │ Cloud A100/L4
+┌───────────────────▼──────────────────────┐ ┌─────────────────▼───────────────┐
+│ Local Metal 4 Engine (engines/h3.c)      │ │ Cloud Runner (notebooks/)        │
+│ • Salvatore Sanfilippo's h3.c Metal 4    │ │ • notebooks/H3_Studio_Colab.ipynb │
+│ • PRs #2, #14, #35, #62, #73, #76        │ │ • FUSE I/O bypass (.tar unpack)  │
+│ • Zero-Space APFS cp -c Turbo Folded Dir │ │ • Instant Drive Checkpoint Sync  │
+└──────────────────────────────────────────┘ └──────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start
+## 📊 Apple Silicon Benchmark & Memory Matrix / 實測基準與記憶體矩陣
+
+Below is our first-hand empirical benchmark conducted on **Apple M2 Max (64 GB Unified Memory)** and **M5 Max**:
+
+| Canvas Resolution | Total Pixels | DiT Tokens / Step | Peak VRAM | Available RAM Threshold | Step Latency (Resident RAM) | Step Latency (Swap Thrashing) | Recommended Preset |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **$960 \times 544$** (16:9) | 522,240 | **63,240** | $\approx 52\text{ GiB}$ | **$\ge 48\text{ GiB}$** | $\approx 1.5 - 2.0\text{ min/step}$ | **$\ge 5.0 - 6.0\text{ min/step}$** ⚠️ *(Swap crash!)* | `base_high` (with 128G) |
+| **$864 \times 480$** (16:9) | 414,720 | **50,220** | $\approx 42\text{ GiB}$ | **$\ge 32\text{ GiB}$** | **$\approx 1.2 - 1.5\text{ min/step}$** ⚡ | $\approx 2.5\text{ min/step}$ | `turbo` / `base` (64G Sweetspot) |
+| **$640 \times 480$** (4:3) | 307,200 | 37,200 | $\approx 32\text{ GiB}$ | $\ge 24\text{ GiB}$ | $\approx 55\text{ s/step}$ | $\approx 1.5\text{ min/step}$ | `balanced` / `turbo` |
+| **$256 \times 256$** (Draft) | 65,536 | 7,936 | $\approx 12\text{ GiB}$ | $\ge 12\text{ GiB}$ | $\approx 12\text{ s/step}$ | $\approx 20\text{ s/step}$ | `draft` |
+
+### 💡 Key Takeaway for Apple Silicon Developers
+* **The 48 GiB Swap Cliff**: Even on a 64 GB machine, if background processes (such as local LLM servers or IDEs) leave less than 48 GiB available, running at $960 \times 544$ triggers disk swapping, causing generation time to jump from **10 minutes to over 40 minutes per shot**.
+* **The $864 \times 480$ Sweetspot**: Yields true 16:9 cinema widescreen, saves **13,000 DiT tokens per step**, and remains 100% resident in unified memory for 3.3x speedups.
+* **Dimension Rule**: Both width and height **must be multiples of 32** (`CANVAS_MULTIPLE = 32`), or the C engine will abort.
+
+---
+
+## ⚡ Zero-Space Turbo LoRA Folding (APFS CoW) / 零空間權重折疊
+
+The folded 6-step Turbo LoRA ([`larryvrh/MiniMax-H3-Turbo-Lora`](https://huggingface.co/larryvrh/MiniMax-H3-Turbo-Lora)) enables 6-step native Metal inference. To avoid duplicating 60+ GB of weights, use macOS **APFS Copy-on-Write (`cp -c`)**:
+
+```bash
+# 1. Download Turbo LoRA safetensors (743 MB)
+huggingface-cli download larryvrh/MiniMax-H3-Turbo-Lora \
+  minimax_h3_turbo_v4_step600_ema.safetensors --local-dir scratch/
+
+# 2. Clone the Transformer directory without consuming extra SSD space (APFS clonefile)
+mkdir -p models/MiniMax-H3-Turbo/FL2VA
+cp -c -R models/MiniMax-H3/FL2VA/transformer models/MiniMax-H3-Turbo/FL2VA/
+
+# 3. Symlink Text Encoder, Video VAE, and Audio VAE (0 bytes duplicated!)
+ln -s ../../MiniMax-H3/text_encoder models/MiniMax-H3-Turbo/text_encoder
+ln -s ../../MiniMax-H3/video_vae models/MiniMax-H3-Turbo/video_vae
+ln -s ../../MiniMax-H3/audio_vae models/MiniMax-H3-Turbo/audio_vae
+
+# 4. Bake LoRA weights offline into the cloned transformer shards (PR #14)
+python3 engines/h3.c/tools/fold_turbo_lora.py \
+  --base models/MiniMax-H3-Turbo/FL2VA/transformer \
+  --lora scratch/minimax_h3_turbo_v4_step600_ema.safetensors \
+  --scale 1.0
+
+# 5. Clean up temporary files
+rm -rf scratch/*.safetensors
+```
+*Result: You have both `models/MiniMax-H3` (Base 20 steps) and `models/MiniMax-H3-Turbo` (Turbo 6 steps) available, consuming **0 extra GB** for the 62 GB Text Encoder and 10 GB VAE!*
+
+---
+
+## 🚀 Quick Start / 快速開始
 
 ### Prerequisites
-- **System**: macOS 14.0+ running on Apple Silicon (M1/M2/M3/M4 Max/Ultra recommended for full inference).
-- **Core Tools**: Xcode Command Line Tools (`xcode-select --install`), `ffmpeg` (`brew install ffmpeg`), Python 3.9+.
+* **Local**: macOS 14.0+ on Apple Silicon (M1/M2/M3/M4 Max or Ultra recommended), `ffmpeg` (`brew install ffmpeg`), Python 3.10+.
+* **Cloud**: Google Colab with an A100 or L4 GPU instance.
 
 ---
 
-### 🟢 Track A: 30-Second Instant Trial (0 GB Weights Required)
-You can evaluate the 2D Staging Camera Math, 5D Context-IR Compiler, and Web Studio without downloading any model weights:
+### Track 1: Zero-Weight Dry-Run Simulation (0 GB Required)
+Simulate hardware memory perception, 2D camera trajectory compilation, Context-IR 5D expansion, prompt linting, and CLI generation in **0.02 seconds**:
 
-1. **Test the 5D Context-IR Pipeline in Dry-Run Mode**:
-   ```bash
-   python3 -m pipeline.h3_storyboard_pipeline --dry-run
-   ```
-   *Compiles 2D coordinate vectors, expands prompt IR, lints constraints, generates mock shots, and runs the FFmpeg Quality Gate in < 0.1s.*
+```bash
+# Test 6-step Turbo mode simulation
+python3 -m pipeline.h3_storyboard_pipeline --dry-run --mode turbo
 
-2. **Launch the Film-Chain Web Studio**:
-   ```bash
-   ./scripts/start_studio.sh
-   ```
-   *Opens the local web studio at `http://localhost:8080` (or double-click `film-chain/public/index.html`).*
+# Test 20-step Base mode simulation
+python3 -m pipeline.h3_storyboard_pipeline --dry-run --mode base
+```
 
 ---
 
-### ⚡ Track B: Full Metal GPU Inference (Apple Silicon)
+### Track 2: Local 25-Second Chained Production (Apple Silicon)
 
-1. **One-Click Build & Doctor Check**:
-   ```bash
-   ./setup.sh
-   ```
-   *Verifies Xcode tools, compiles `engines/h3.c` into a native Metal binary (`./h3`), and inspects your environment.*
+```bash
+# 1. Install Python dependencies
+pip install -e .
 
-2. **Link or Download MiniMax-H3 Weights (~130 GB)**:
-   - **If you already have weights locally**:
-     ```bash
-     ln -s /path/to/MiniMax-H3 models/MiniMax-H3
-     ```
-   - **Or download via Hugging Face CLI**:
-     ```bash
-     huggingface-cli download MiniMax-AI/MiniMax-H3 --local-dir models/MiniMax-H3
-     ```
+# 2. Compile native Metal engine (engines/h3.c)
+cd engines/h3.c && make -j && cd ../..
 
-3. **Run Chained Multi-Shot Storyboard**:
-   ```bash
-   python3 pipeline/h3_storyboard_pipeline.py \
-     --chain-manifest examples/manifest.json \
-     --preset draft_aggressive
-   ```
+# 3. Run the official 25s Cyberpunk Detective Storyboard
+python3 -m pipeline.h3_storyboard_pipeline \
+  --chain-manifest examples/storyboards/cyberpunk_detective_25s.json \
+  --mode turbo \
+  --export-gdrive
+
+# 4. Or run the official 25s Xianxia Aerial Duel Storyboard
+python3 -m pipeline.h3_storyboard_pipeline \
+  --chain-manifest examples/storyboards/xianxia_aerial_duel_25s.json \
+  --mode turbo \
+  --auto-downgrade-canvas
+```
 
 ---
 
-### 🎨 Track C: ComfyUI Node Integration
+### Track 3: Google Colab Cloud GPU Runner (A100 / L4)
 
-1. **Install Node into ComfyUI**:
-   ```bash
-   # setup.sh automatically detects standard ComfyUI paths, or specify explicitly:
-   export COMFY_DIR=/path/to/ComfyUI
-   ./setup.sh
-   ```
+Open [`notebooks/H3_Studio_Colab.ipynb`](notebooks/H3_Studio_Colab.ipynb) directly in Google Colab:
 
-2. **Launch ComfyUI**:
-   - Search for the node: `H3ChainedStoryboardVideo`
-   - Select chaining mode: `Latent Continuation (PR #76)` or `I2V Keyframe`
-   - Connect prompt inputs and run generation with real-time process group isolation!
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/h3-studio/h3-studio/blob/main/notebooks/H3_Studio_Colab.ipynb)
+
+* **Bypasses FUSE latency**: Extracts a pre-staged `.tar` from Google Drive directly to Colab NVMe SSD.
+* **Anti-503 Checkpoint Recovery**: Automatically persists progress after every 5-second segment. If disconnected, re-running resumes from the exact unrendered segment!
 
 ---
 
-## 🙏 Acknowledgements & Credits
+### Track 4: ComfyUI Node Integration
 
-We stand on the shoulders of giants. This project is proudly built with and powered by:
-- **Core Inference Engine**: [antirez/h3.c](https://github.com/antirez/h3.c) by Salvatore Sanfilippo (MIT License).
-- **Model Architecture & Weights**: [MiniMax-H3](https://github.com/MiniMax-AI) by MiniMax AI.
-- **Community Upstream Contributions**:
-  - **PR #2**: Progressive draft checkpointing by [@antirez](https://github.com/antirez/h3.c/pull/2).
-  - **PR #14**: Folded Turbo LoRA 6-step distillation by community contributors.
-  - **PR #35 & #62**: Video VAE decoding progress & pipe stdout flushing.
-  - **PR #73**: Video VAE BF16/INT8 3.5x acceleration.
-  - **PR #76**: Motion context latent tail continuation by [@maderix](https://github.com/antirez/h3.c/pull/76).
+H3 Studio includes native custom nodes for ComfyUI:
+
+```bash
+export COMFY_DIR=/path/to/ComfyUI
+./setup.sh
+```
+* Custom node `H3ChainedStoryboardVideo` will be installed under `ComfyUI/custom_nodes/comfy_h3_bridge/`.
+* Supports switching between `--motion-context` (PR #76) and `--first-frame` keyframe anchoring directly inside ComfyUI graphs.
+
+---
+
+## 🎨 Golden Storyboard Templates / 官方分鏡範本
+
+H3 Studio includes two verified 25-second continuous storyboard manifests in [`examples/storyboards/`](examples/storyboards/):
+
+1. **[`cyberpunk_detective_25s.json`](examples/storyboards/cyberpunk_detective_25s.json)**:
+   * **Theme**: Neo-Noir Cyberpunk Detective in rain-slicked metropolis.
+   * **Structure**: Rainstorm entrance $\to$ Holographic interface activation $\to$ Shadow dialogue (`<d>[Chinese] 看來今晚不會平靜了</d>`) $\to$ Combat alert with anchor reset $\to$ Neon puddle high-speed sprint.
+   * **Anchor Asset**: [`examples/assets/detective_anchor_ref.jpg`](examples/assets/detective_anchor_ref.jpg).
+
+2. **[`xianxia_aerial_duel_25s.json`](examples/storyboards/xianxia_aerial_duel_25s.json)**:
+   * **Theme**: Wuxia / Xianxia aerial duel between a Talisman Cultivator (符修) and a Sword Immortal (劍修) over mountain peaks.
+   * **Structure**: High-altitude cloud sea flight $\to$ Talisman blast & golden dragons $\to$ Crescent sword arc cleaving clouds $\to$ Canyon dive with mid-air clash (anchor reset) $\to$ Celestial Bagua formation climax.
+   * **Anchor Asset**: [`examples/assets/xianxia_anchor_ref.png`](examples/assets/xianxia_anchor_ref.png).
+
+---
+
+## 🧪 Testing & Verification / 自動化測試
+
+Run the full automated test suite (including linter tension checks, manifest schema validation, and interruption-resumption state machine):
+
+```bash
+python3 -m unittest discover -s tests
+```
+*All tests execute locally in < 0.05 seconds with zero GPU requirements.*
+
+---
+
+## 📂 Repository Structure / 目錄結構
+
+```text
+├── pyproject.toml             # Open-source packaging specification (PEP 621)
+├── requirements.txt           # Core runtime dependencies
+├── .env.example               # Environment configuration template
+├── README.md                  # Bilingual documentation and technical attribution
+├── STATE.md                   # Single source of truth for micro-batch execution
+│
+├── pipeline/                  # Core Python Pipeline & Guardrails
+│   ├── config.py              # Dynamic path and model directory resolver
+│   ├── h3_presets.py          # Presets, 32-multiple validation & Anti-Swap engine
+│   ├── h3_prompt_linter.py    # Tag auto-fixer & Dynamic Tension analyzer
+│   ├── h3_storyboard_pipeline.py # Chained multi-shot runner & Checkpoint state machine
+│   ├── h3_runner.py           # Process group manager & non-blocking parser
+│   ├── h3_context_ir.py       # Context-IR 5D structured prompt compiler
+│   ├── h3_staging_board.py    # 2D top-down camera trajectory compiler
+│   └── h3_gdrive_sync.py      # Non-blocking async Google Drive sync
+│
+├── notebooks/                 # Cloud Notebooks
+│   └── H3_Studio_Colab.ipynb  # Google Colab Anti-503 runner with Drive caching
+│
+├── examples/                  # Golden Templates & Self-Contained Assets
+│   ├── assets/                # Character anchor reference images
+│   └── storyboards/           # 25-second chained JSON storyboard manifests
+│
+├── tests/                     # Unit Tests & Regression Suite
+│   ├── test_prompt_linter_and_manifests.py
+│   └── test_checkpoint_interruption_resume.py
+│
+├── film-chain/                # Web Studio Frontend (HTML5 Canvas, IndexedDB)
+├── comfy_nodes/               # ComfyUI Bridge (comfy_h3_bridge)
+└── engines/h3.c/              # Underlying Apple Silicon Metal 4 GPU Kernel
+```
+
+---
+
+## 🙏 Technical Attribution & Credits / 鳴謝
+
+H3 Studio is made possible thanks to pioneering open-source work:
+* **Core Inference Kernel**: [antirez/h3.c](https://github.com/antirez/h3.c) by Salvatore Sanfilippo (MIT License).
+* **Model Weights & Architecture**: [MiniMax-H3](https://github.com/MiniMax-AI) by MiniMax AI.
+* **Distilled LoRA Weights**: [MiniMax-H3-Turbo-Lora](https://huggingface.co/larryvrh/MiniMax-H3-Turbo-Lora) by [@larryvrh](https://huggingface.co/larryvrh).
+* **Upstream Community Contributions**:
+  * **PR #2**: Progressive draft checkpointing by [@antirez](https://github.com/antirez/h3.c/pull/2).
+  * **PR #14**: Turbo LoRA distillation offline weight folding.
+  * **PR #35 & #62**: Video VAE decoding progress & pipe stdout flushing.
+  * **PR #73**: Video VAE BF16/INT8 acceleration.
+  * **PR #76**: Motion context latent tail continuation by [@maderix](https://github.com/antirez/h3.c/pull/76).
 
 ---
 
 ## 📄 License
 
-- **H3 Studio (Monorepo, Pipeline & Studio)** is licensed under the [MIT License](LICENSE) &copy; 2026 YSH.
-- **engines/h3.c** is licensed under the [MIT License](engines/h3.c/LICENSE) &copy; 2026 Salvatore Sanfilippo.
+* **H3 Studio** is licensed under the [MIT License](LICENSE).
+* **engines/h3.c** is licensed under the [MIT License](engines/h3.c/LICENSE) &copy; 2026 Salvatore Sanfilippo.

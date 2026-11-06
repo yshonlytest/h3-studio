@@ -24,66 +24,33 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-try:
-    from .config import (
-        DEFAULT_FFMPEG_AUDIO_ARGS,
-        DEFAULT_FFMPEG_AUDIO_TRIM_FIRST_FRAME,
-        DEFAULT_FFMPEG_ENCODE_ARGS,
-        DEFAULT_FFMPEG_TAIL_SEEK,
-        get_comfy_dir,
-        get_h3_binary_path,
-        get_h3_model_dir,
-        get_output_dir,
-    )
-    from .h3_presets import (
-        BASE,
-        CANVAS_MULTIPLE,
-        PRESETS,
-        TURBO,
-        RenderRequest,
-        build_cli_args,
-        get_system_memory_status,
-        internal_canvas,
-        recommend_safe_canvas,
-        validate_dimensions,
-    )
-    from .h3_prompt_linter import LintInput, lint_prompt
-    from .h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
-    from .h3_gdrive_sync import dispatch_async_upload, sync_upload
-    from .h3_job_spec import ChainedSegmentContext, SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
-    from .h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
-except ImportError:
-    from config import (
-        DEFAULT_FFMPEG_AUDIO_ARGS,
-        DEFAULT_FFMPEG_AUDIO_TRIM_FIRST_FRAME,
-        DEFAULT_FFMPEG_ENCODE_ARGS,
-        DEFAULT_FFMPEG_TAIL_SEEK,
-        get_comfy_dir,
-        get_h3_binary_path,
-        get_h3_model_dir,
-        get_output_dir,
-    )
-    from h3_presets import (
-        BASE,
-        CANVAS_MULTIPLE,
-        PRESETS,
-        TURBO,
-        RenderRequest,
-        build_cli_args,
-        get_system_memory_status,
-        internal_canvas,
-        recommend_safe_canvas,
-        validate_dimensions,
-    )
-    from h3_prompt_linter import LintInput, lint_prompt
-    from h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
-    from h3_job_spec import ChainedSegmentContext, SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
-    from h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
-    try:
-        from h3_gdrive_sync import dispatch_async_upload, sync_upload
-    except ImportError:
-        dispatch_async_upload = None  # type: ignore
-        sync_upload = None  # type: ignore
+from pipeline.config import (
+    DEFAULT_FFMPEG_AUDIO_ARGS,
+    DEFAULT_FFMPEG_AUDIO_TRIM_FIRST_FRAME,
+    DEFAULT_FFMPEG_ENCODE_ARGS,
+    DEFAULT_FFMPEG_TAIL_SEEK,
+    get_comfy_dir,
+    get_h3_binary_path,
+    get_h3_model_dir,
+    get_output_dir,
+)
+from pipeline.h3_presets import (
+    BASE,
+    CANVAS_MULTIPLE,
+    PRESETS,
+    TURBO,
+    RenderRequest,
+    build_cli_args,
+    get_system_memory_status,
+    internal_canvas,
+    recommend_safe_canvas,
+    validate_dimensions,
+)
+from pipeline.h3_prompt_linter import LintInput, lint_prompt
+from pipeline.h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
+from pipeline.h3_gdrive_sync import dispatch_async_upload, sync_upload
+from pipeline.h3_job_spec import ChainedSegmentContext, SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
+from pipeline.h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
 
 COMFY_DIR = get_comfy_dir()
 INPUT_DIR = COMFY_DIR / "input"
@@ -867,12 +834,8 @@ def _apply_cli_preset(args: argparse.Namespace) -> tuple[int, int]:
 
 def run_dry_run_demo(args: argparse.Namespace | None = None) -> None:
     """Zero-weight pipeline simulation demonstrating Hardware Perception, Staging Board, Context-IR, Linter, and Mode Switching."""
-    try:
-        from .h3_context_ir import ContextIR, compile_context_ir
-        from .h3_staging_board import CameraTrack, Point2D, compile_camera_direction
-    except ImportError:
-        from h3_context_ir import ContextIR, compile_context_ir
-        from h3_staging_board import CameraTrack, Point2D, compile_camera_direction
+    from pipeline.h3_context_ir import ContextIR, compile_context_ir
+    from pipeline.h3_staging_board import CameraTrack, Point2D, compile_camera_direction
 
     target_mode = getattr(args, "mode", "turbo") if args else "turbo"
     target_w = getattr(args, "width", 864) if args else 864

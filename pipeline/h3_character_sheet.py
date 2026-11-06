@@ -7,12 +7,8 @@ import logging
 from pathlib import Path
 import subprocess
 
-try:
-    from .h3_presets import DRAFT_AGGRESSIVE
-    from .h3_runner import H3JobSpec, RunnerConfig, run_job
-except ImportError:
-    from h3_presets import DRAFT_AGGRESSIVE
-    from h3_runner import H3JobSpec, RunnerConfig, run_job
+from pipeline.h3_presets import DRAFT_AGGRESSIVE
+from pipeline.h3_runner import H3JobSpec, RunnerConfig, run_job
 
 LOGGER = logging.getLogger(__name__)
 

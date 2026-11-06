@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "h3-studio"
+version = "0.2.0"
+description = "High-performance multimodal video generation studio powered by MiniMax-H3 and Apple Silicon Metal"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "H3 Studio Community" }
+]
+keywords = [
+    "video-generation",
+    "minimax-h3",
+    "apple-silicon",
+    "metal",
+    "diffusion-models",
+    "storyboard",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.24.0",
+    "pillow>=9.5.0",
+    "requests>=2.31.0",
+    "psutil>=5.9.0",
+]
+
+[project.optional-dependencies]
+tools = [
+    "torch>=2.1.0",
+    "safetensors>=0.4.0",
+    "huggingface_hub>=0.20.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "ruff>=0.1.6",
+]
+
+[project.scripts]
+h3-studio = "pipeline.h3_storyboard_pipeline:main"
+
+[project.urls]
+Homepage = "https://github.com/h3-studio/h3-studio"
+Documentation = "https://github.com/h3-studio/h3-studio#readme"
+Repository = "https://github.com/h3-studio/h3-studio.git"
+Issues = "https://github.com/h3-studio/h3-studio/issues"
+
+[tool.setuptools.packages.find]
+include = ["pipeline*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

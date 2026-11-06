@@ -292,3 +292,14 @@
   - **驗證通過**：
     - AST 腳本掃描全部 5 支 Python 檔案：`✅ SUCCESS: All non-exempt functions strictly <= 80 lines and <= 5 arguments!`
     - `python3 -m unittest discover -s tests` 12 項單元測試全數通過（0.034s）。
+
+- [x] **Phase 4（套件匯入標準化與依賴同步）**：
+  - **完成項目**：
+    1. 在 `pyproject.toml` 宣告 CLI 進入點 `[project.scripts] h3-studio = "pipeline.h3_storyboard_pipeline:main"`。
+    2. 徹底消除全模組之 `try/except ImportError` 雙軌冗餘，全面統一採用乾淨的 `from pipeline.xxx import ...`。
+    3. 依據裁決保留 `requirements.txt` 之核心實體套件清單（相容 Colab 快速安裝），並加上與 `pyproject.toml` 同步之註解標頭。
+    4. 更新 `README.md` 指令示範為標準 `python3 -m pipeline.h3_storyboard_pipeline`。
+  - **驗證通過**：
+    - `python3 -m py_compile pipeline/*.py` 全模組編譯通過。
+    - `python3 -m unittest discover -s tests` 12 項單元測試全數通過（0.020s）。
+    - `python3 -m pipeline.h3_storyboard_pipeline --chain-manifest examples/storyboards/cyberpunk_detective_25s.json --dry-run` 執行正確。

@@ -8,10 +8,7 @@ import logging
 import urllib.error
 import urllib.request
 
-try:
-    from .h3_prompt_linter import normalize_prompt_tags
-except ImportError:
-    from h3_prompt_linter import normalize_prompt_tags
+from pipeline.h3_prompt_linter import normalize_prompt_tags
 
 LOGGER = logging.getLogger(__name__)
 CONTINUITY_PREFIX = (

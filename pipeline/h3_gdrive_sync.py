@@ -15,15 +15,9 @@ from datetime import datetime
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
-try:
-    from pipeline.config import DEFAULT_GDRIVE_CACHE, DEFAULT_SCRATCH_DIR, get_gdrive_public_share
-    CACHE_FILE = DEFAULT_GDRIVE_CACHE
-except ImportError:
-    DEFAULT_SCRATCH_DIR = Path("scratch")
-    CACHE_FILE = DEFAULT_SCRATCH_DIR / "gdrive_folder_cache.json"
+from pipeline.config import DEFAULT_GDRIVE_CACHE, DEFAULT_SCRATCH_DIR, get_gdrive_public_share
 
-    def get_gdrive_public_share() -> bool:
-        return False
+CACHE_FILE = DEFAULT_GDRIVE_CACHE
 
 
 @dataclass(frozen=True)
