@@ -367,3 +367,14 @@
     - `python3 -m unittest discover -s tests` 28/28 單元測試 100% 通過（耗時 0.053s）。
     - 雙軌 Review 評判皆提升至 **`PASS`** 綠燈標準。
 
+- [x] **Phase 11（Web UI 雙模並行整合與本機 Metal Daemon - Commit `e4dbb20`）**：
+  - **完成項目**：
+    1. 建立零依賴本機守護進程 [`pipeline/h3_server.py`](pipeline/h3_server.py)：採用 Python 標準庫 `ThreadingHTTPServer`，提供 `/api/status`（記憶體狀態）、`/api/lint`（提示詞動態張力）、`/api/render/start`（發起渲染）、`/api/render/events`（SSE 即時串流）、`/api/render/cancel`（中斷任務）與 `/api/videos/*`（MP4 串流）。
+    2. 整合 CLI 命令列：在 [`pipeline/h3_storyboard_pipeline.py`](pipeline/h3_storyboard_pipeline.py) 新增 `--serve`、`--port`、`--host` 參數，支援 `h3-studio --serve` 一鍵拉起。
+    3. 漸進式 Web UI 增量掛載：建立 [`film-chain/public/h3ServeBridge.js`](film-chain/public/h3ServeBridge.js) 並注入 [`film-chain/public/index.html`](film-chain/public/index.html)，無守護進程時靜默降級維持純靜態設計器，守護進程在線時自動解鎖 Metal 原生渲染、動態張力檢查與進度條 HUD。
+    4. 建立單元測試套件 [`tests/test_h3_server.py`](tests/test_h3_server.py)：採用純記憶體 `MockSocket` 達成沙盒內的極速隔離測試。
+  - **驗證通過**：
+    - `python3 -m unittest discover -s tests` 34/34 單元測試 100% 通過（耗時 0.046s）。
+    - CLI `--help` 正確顯示 `--serve` 選項。
+
+
