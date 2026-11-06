@@ -5,31 +5,31 @@
 
 ## 1. 系統目前狀態 (Current Status)
 - **架構升級**：已成功從 2,100 行單檔巨石程式碼，重構為具有領域規格、核心模組分離、與自動化測試保護的現代化架構。
-- **測試狀態**：`npm test` 執行通過率 **100% (14/14 tests passed, 0 failures)**。
+- **測試狀態**：以 `cd film-chain && npm test` 實際結果為準（測試清單見 `package.json`，不在此寫死數量）。
 - **雙模可用性**：
   - 本地開發者 / CI 環境：可使用 Node.js 直接執行 `npm test`。
-  - 一般使用者：雙擊 `一鍵啟動_H3分鏡工作坊.command` 即開即用，無需 npm build 或本機伺服器架設。
+  - 一般使用者：雙擊專案根目錄 `一鍵啟動_本地ComfyUI與工作坊.command` 即開即用，無需 npm build。
+- **規範來源**：工程規範以 [docs/STANDARDS.md](../docs/STANDARDS.md) 為準；專案整體狀態見 [docs/dev/STATE.md](../docs/dev/STATE.md)。
 
 ---
 
 ## 2. 檔案目錄結構 (Project Topology)
 ```text
-MiniMax-H3-h3c-ComfyUI/
-├── H3_Storyboard_Studio.html           # 前端視覺與互動主入口
-├── 一鍵啟動_H3分鏡工作坊.command        # 本地雙擊一鍵自動啟動 ComfyUI + 打開網頁
+film-chain/
+├── public/index.html                   # 前端視覺與互動主入口（約 5000+ 行單體，需 grep 後切片讀取）
+├── public/h3ServeBridge.js             # 連接本機 pipeline/h3_server.py 守護進程（離線時靜默降級）
 ├── package.json                        # 測試指令與專案中繼資料 (npm test)
 ├── GLOSSARY.md                         # 領域詞彙辭典 (Ubiquitous Language)
 ├── SPEC.md                             # 系統架構、API 合約與資料模型規格書
 ├── TICKETS.md                          # 工程實作工單與驗收紀錄
 ├── HANDOFF.md                          # 本交接文件
-├── src/
-│   └── core/
-│       ├── timecodeHelper.js           # 時間軸、分段秒數與尾幀單調遞增推算
-│       ├── promptBuilder.js            # 導演 System Prompt、連貫前綴與對白標籤
-│       ├── comfyPayload.js             # ComfyUI /prompt 節點圖組裝與防呆驗證
-│       └── cloudDiagnostics.js         # 網路、跨域 (CORS) 與金鑰錯誤繁中引導
-└── tests/
-    └── core.test.js                    # 零外部依賴之 Node 原生單元測試套件
+├── public/src/core/                    # UMD 純函數模組（實際位置；亦含 audioStudio / cloudApiAdapter / projectStore）
+│   ├── timecodeHelper.js               # 時間軸、分段秒數與尾幀單調遞增推算
+│   ├── promptBuilder.js                # 導演 System Prompt、連貫前綴與對白標籤
+│   ├── comfyPayload.js                 # ComfyUI /prompt 節點圖組裝與防呆驗證
+│   └── cloudDiagnostics.js             # 網路、跨域 (CORS) 與金鑰錯誤繁中引導
+├── src/worker.js                       # Cloudflare Worker
+└── tests/                              # 零外部依賴之 Node 原生單元測試套件（*.test.js）
 ```
 
 ---
@@ -46,5 +46,5 @@ MiniMax-H3-h3c-ComfyUI/
 ---
 
 ## 4. 維護與後續擴充指引
-- 若需調整分鏡長度（例如支援 10 秒 chunk 或 3 秒 chunk）：修改 `src/core/timecodeHelper.js` 的 `SEGMENT_DURATION_SECONDS`，並執行 `npm test` 檢驗回歸。
-- 若需增加新的雲端影片 API 提供商：在 `src/core/cloudDiagnostics.js` 補充該提供商的錯誤特徵，並於 `H3_Storyboard_Studio.html` 中的 `callCloudVideoSegment` 擴充端點調用。
+- 若需調整分鏡長度（例如支援 10 秒 chunk 或 3 秒 chunk）：修改 `public/src/core/timecodeHelper.js` 的 `SEGMENT_DURATION_SECONDS`，並執行 `npm test` 檢驗回歸。
+- 若需增加新的雲端影片 API 提供商：在 `public/src/core/cloudDiagnostics.js` 補充該提供商的錯誤特徵，並於 `public/index.html` 中的 `callCloudVideoSegment` 擴充端點調用。

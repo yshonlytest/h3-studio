@@ -8,8 +8,9 @@
 ## 1. 架構原則 (Architecture Principles)
 
 ### 1.1 純邏輯與副作用解耦
-- 所有核心計算（時間軸切分、Prompt 組裝、ComfyUI 節點生成、錯誤診斷）必須置於 `src/core/` 且為**無狀態純函數 (Pure Functions)**。
-- 前端 DOM 操作、瀏覽器事件監聽、Canvas 繪圖等副作用代碼一律限制在 `H3_Storyboard_Studio.html` 或專案外層腳本中，嚴禁侵入 `src/core/`。
+- 所有核心計算（時間軸切分、Prompt 組裝、ComfyUI 節點生成、錯誤診斷）必須置於 `public/src/core/` 且為**無狀態純函數 (Pure Functions)**。
+- 前端 DOM 操作、瀏覽器事件監聽、Canvas 繪圖等副作用代碼一律限制在 `public/index.html`、`public/h3ServeBridge.js` 或專案外層腳本中，嚴禁侵入 `public/src/core/`。
+- 量化紅線（函式長度、參數數量等）以 [docs/STANDARDS.md](../docs/STANDARDS.md) 為單一來源。
 
 ### 1.2 UMD 雙模相容性規範 (Dual-Mode Compatibility)
 - `src/core/` 下的所有模組必須使用 UMD (Universal Module Definition) 樣板：

@@ -17,10 +17,7 @@ Thank you for your interest in contributing to H3 Studio! We welcome improvement
    ```
 
 3. **Coding Standards**:
-   - Every new Python module must include `from __future__ import annotations` as line 1.
-   - Maintain function simplicity (target $\le 50$ lines, strict upper bound $\le 80$ lines).
-   - Functions taking $> 3$ parameters should encapsulate inputs using `@dataclass(frozen=True)`.
-   - Never commit hardcoded personal filesystem paths (e.g. absolute user home paths).
+   - All rules (function length, parameters, error handling, paths) live in [docs/STANDARDS.md](docs/STANDARDS.md), the single source of truth.
 
 4. **Running Tests**:
    ```bash
@@ -34,6 +31,6 @@ Thank you for your interest in contributing to H3 Studio! We welcome improvement
 
 ## Pull Request Guidelines
 
-- Ensure all 26+ unit tests pass.
+- Ensure the full unit test suite passes (see `docs/STANDARDS.md`).
 - Keep commits atomic with conventional commit format (e.g. `feat: ...`, `fix: ...`).
 - Submit PRs targeting the `main` branch.

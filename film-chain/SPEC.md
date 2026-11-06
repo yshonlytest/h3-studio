@@ -62,15 +62,16 @@ interface StoryboardSegment {
         "width": 640,
         "height": 480,
         "frames": 81,
-        "steps": 12,
-        "layers": 16,
+        "steps": 16,
+        "layers": "45",
         "reuse": 2,
-        "core_reuse": 1,
-        "token_reduction": 0.2,
-        "render_width": 640,
-        "render_height": 480,
+        "core_reuse": 0,
+        "token_reduction": false,
+        "render_width": 0,
+        "render_height": 0,
         "seed": 42,
-        "ssd_streaming": true
+        "ssd_streaming": true,
+        "chain_mode": "motion_context"
       },
       "_meta": { "title": "H3 Chained Storyboard Video" }
     },
@@ -89,6 +90,27 @@ interface StoryboardSegment {
 }
 ```
 
+> 上述數值為 `public/src/core/comfyPayload.js` 的 `DEFAULT_BASE_CONFIG` / `DEFAULT_SPEED_CONFIG` 預設（單一事實來源是程式碼）。
+> 驗證邊界：`layers ∈ {"40","45","50"}`、`reuse ∈ [1,3]`、`core_reuse ∈ [0,6]`、`steps ≥ 2`、`end_panel ∈ [1,9]`。
+> `chain_mode`：`motion_context`（潛空間接力，預設）或 `first_frame`。
+
+#### 2.1.1 Python CLI 預設（與上方 ComfyUI 預設刻意不同）
+`pipeline/h3_storyboard_pipeline.py` 的 turbo 路線預設為 864×480、`--steps 6`、`--layers 50`、`--reuse 0`、`--frames 124`；`--mode base` 則為 20 步、45 層、`reuse 2`。權威定義見 `pipeline/h3_presets.py`。畫布寬高必須為 32 的倍數。
+> ⚠️ 待決策：JS 預設（640×480、16 步）與 CLI turbo 預設不一致，是否統一待確認。
+
+#### 2.1.2 本機守護進程 API（`pipeline/h3_server.py`，`--serve`，預設 `127.0.0.1:8080`）
+| 方法 | 路徑 | 用途 |
+| :--- | :--- | :--- |
+| GET | `/health`、`/api/health` | 存活檢查 |
+| GET | `/status`、`/api/status` | 記憶體與 Swap 風險狀態 |
+| GET | `/api/render/events` | SSE 渲染進度串流 |
+| GET | `/api/videos/<name>` | 讀取產出影片 |
+| POST | `/api/lint` | 提示詞動態張力檢查 |
+| POST | `/api/render/start` | 發起渲染 |
+| POST | `/api/render/cancel` | 取消渲染 |
+
+前端 `public/h3ServeBridge.js` 在守護進程離線時須靜默降級為純靜態設計器。
+
 ### 2.2 雲端 API 調用契約 (Cloud Video APIs)
 
 - **ByteDance Ark / Seedance** (`/contents/generations/tasks`):
@@ -105,7 +127,7 @@ interface StoryboardSegment {
 
 | 錯誤類型 | 檢測特徵 | 診斷回報與引導動作 |
 | :--- | :--- | :--- |
-| **ComfyUI 未啟動 / 連線被拒** | `Failed to fetch` 且 URL 包含 `8188` | 提示「本地 ComfyUI 服務尚未開啟」，建議在終端機執行或雙擊 `一鍵啟動_H3分鏡工作坊.command`。 |
+| **ComfyUI 未啟動 / 連線被拒** | `Failed to fetch` 且 URL 包含 `8188` | 提示「本地 ComfyUI 服務尚未開啟」，建議雙擊專案根目錄 `一鍵啟動_本地ComfyUI與工作坊.command`。 |
 | **ComfyUI 跨域阻擋 (CORS)** | `TypeError: Failed to fetch` | 提醒 ComfyUI 啟動參數需加上 `--enable-cors-header "*"`。 |
 | **Gemini / OpenAI API 401/403** | `status === 401 || status === 403` | 提示「API Key 無效或額度不足」，自動引導點擊齒輪或頂部安全卡片重設。 |
 | **雲端 API CORS 限制** | 呼叫第三方直接端點被瀏覽器封鎖 | 引導切換至提供 CORS 標頭之 API 代理或使用地端工作流。 |

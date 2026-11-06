@@ -206,8 +206,11 @@ python3 -m unittest discover -s tests
 ├── requirements.txt           # Core runtime dependencies
 ├── .env.example               # Environment configuration template
 ├── README.md                  # Bilingual documentation and technical attribution
+├── AGENTS.md                  # Coding-agent relay rules (must-read)
 ├── docs/                      # Technical Documentation
-│   ├── dev/STATE.md           # Single source of truth for micro-batch execution
+│   ├── dev/STATE.md           # Project state index (current stage, next task, doc map)
+│   ├── ref/                   # Hardware / engine reference (read on demand)
+│   ├── archive/               # Completed-phase history (read-only)
 │   └── H3_WORKFLOW_OPTIMIZATION_RESEARCH.md
 │
 ├── pipeline/                  # Core Python Pipeline & Guardrails
