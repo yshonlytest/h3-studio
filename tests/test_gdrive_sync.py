@@ -15,8 +15,20 @@ class TestGDriveSyncOptIn(unittest.TestCase):
         self.tmp_dir = tempfile.TemporaryDirectory()
         self.test_file = Path(self.tmp_dir.name) / "sample_video.mp4"
         self.test_file.write_bytes(b"dummy video content")
+        self.scratch_patcher = patch(
+            "pipeline.h3_gdrive_sync.get_scratch_dir",
+            return_value=Path(self.tmp_dir.name),
+        )
+        self.scratch_patcher.start()
+        self.default_scratch_patcher = patch(
+            "pipeline.h3_gdrive_sync.DEFAULT_SCRATCH_DIR",
+            Path(self.tmp_dir.name),
+        )
+        self.default_scratch_patcher.start()
 
     def tearDown(self) -> None:
+        self.default_scratch_patcher.stop()
+        self.scratch_patcher.stop()
         self.tmp_dir.cleanup()
 
     @patch("pipeline.h3_gdrive_sync._find_gdrive_binary", return_value=None)

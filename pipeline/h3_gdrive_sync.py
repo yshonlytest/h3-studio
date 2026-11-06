@@ -15,7 +15,12 @@ from datetime import datetime
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
-from pipeline.config import DEFAULT_GDRIVE_CACHE, DEFAULT_SCRATCH_DIR, get_gdrive_public_share
+from pipeline.config import (
+    DEFAULT_GDRIVE_CACHE,
+    DEFAULT_SCRATCH_DIR,
+    get_gdrive_public_share,
+    get_scratch_dir,
+)
 
 CACHE_FILE = DEFAULT_GDRIVE_CACHE
 
@@ -157,7 +162,7 @@ def sync_upload(
         return GDriveUploadResult(ok=False, error=f"File not found: {target_path}", timestamp=now_str)
 
     folder_id = get_or_create_folder(folder_name)
-    scratch_dir = DEFAULT_SCRATCH_DIR / "gdrive_upload_staging"
+    scratch_dir = get_scratch_dir() / "gdrive_upload_staging"
     scratch_dir.mkdir(parents=True, exist_ok=True)
     staged_filename = f"{target_path.stem}_{now_str}{target_path.suffix}"
     staged_path = scratch_dir / staged_filename
@@ -202,7 +207,7 @@ def dispatch_async_upload(
     on_complete: callable | None = None,
 ) -> subprocess.Popen:
     """Non-blocking detached background process upload with dedicated log file."""
-    scratch_dir = DEFAULT_SCRATCH_DIR / "upload_logs"
+    scratch_dir = get_scratch_dir() / "upload_logs"
     scratch_dir.mkdir(parents=True, exist_ok=True)
     log_file = scratch_dir / f"upload_{file_path.stem}.log"
     log_fp = open(log_file, "a", encoding="utf-8")

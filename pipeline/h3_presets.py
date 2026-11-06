@@ -164,6 +164,10 @@ PRESETS: dict[str, H3Preset] = {
     for p in (TURBO, TURBO_FAST, BASE, BASE_HIGH, DRAFT, DRAFT_FALLBACK, BALANCED)
 }
 
+# Backwards compatibility aliases
+DRAFT_AGGRESSIVE: H3Preset = DRAFT_FALLBACK
+
+
 
 # ------------------------------------------------------------------------------
 # Dimension Validation & Dynamic Canvas Adjustment

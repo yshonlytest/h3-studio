@@ -6,7 +6,7 @@
   "height": 480,
   "frames": 124,
   "steps": 6,
-  "layers": "50",
+  "layers": 50,
   "reuse": 0,
   "seed": 20261106,
   "output_prefix": "storyboard_runs/cyberpunk_detective_25s",

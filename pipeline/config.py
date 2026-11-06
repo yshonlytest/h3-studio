@@ -9,7 +9,19 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Scratch and Cache Directories (Relative to REPO_ROOT)
-DEFAULT_SCRATCH_DIR = REPO_ROOT / "scratch"
+def get_scratch_dir() -> Path:
+    """Resolve scratch/staging directory with environment override."""
+    env_dir = os.environ.get("H3_SCRATCH_DIR")
+    if env_dir:
+        cand = Path(env_dir).expanduser().resolve()
+        cand.mkdir(parents=True, exist_ok=True)
+        return cand
+    cand_default = REPO_ROOT / "scratch"
+    cand_default.mkdir(parents=True, exist_ok=True)
+    return cand_default
+
+
+DEFAULT_SCRATCH_DIR = get_scratch_dir()
 DEFAULT_GDRIVE_CACHE = DEFAULT_SCRATCH_DIR / "gdrive_folder_cache.json"
 
 # Shared FFmpeg Audio/Video Defaults (Anti-Shotgun Surgery)
