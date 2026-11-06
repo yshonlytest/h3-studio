@@ -333,3 +333,12 @@
     - `NoopExecutor` 模擬分鏡串接成功。
     - `python3 -m unittest discover -s tests` 26 項單元測試全數 PASS。
     - `python3 -m pipeline.h3_storyboard_pipeline --chain-manifest examples/storyboards/cyberpunk_detective_25s.json --dry-run` 完整無誤。
+
+- [x] **Phase 8（CI、Ruff 與 Pre-commit 守門機制）**：
+  - **完成項目**：
+    1. 完善 `pyproject.toml` 中的 `[tool.ruff.lint]`：僅以 `["E", "F", "I", "B"]` 作為阻斷式規則，複雜度 `C90` 與 `PLR` 設為非阻斷指標。
+    2. 建立 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：矩陣覆蓋 Ubuntu & macOS（Python 3.10 ~ 3.12），依序執行依賴安裝、Ruff 阻斷檢查、個人路徑洩漏檢查與單元測試。
+    3. 建立 [`.pre-commit-config.yaml`](.pre-commit-config.yaml)：整合 Ruff、大檔案上限 500KB 攔截、nbstripout 與本地 `/Users/` 敏感路徑 grep 守門 hook。
+  - **驗證通過**：
+    - 本地個人路徑檢驗通過（Tracked 檔案零洩漏）。
+    - `python3 -m unittest discover -s tests` 26 項全域單元測試全數通過。

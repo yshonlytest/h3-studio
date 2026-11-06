@@ -67,5 +67,15 @@ include = ["pipeline*"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint]
+# Mandatory blocking rules for CI
+select = ["E", "F", "I", "B"]
 ignore = ["E501"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-statements = 80
