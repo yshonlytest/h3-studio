@@ -938,6 +938,9 @@ def run_dry_run_demo(args: argparse.Namespace | None = None) -> None:
 def build_arg_parser() -> argparse.ArgumentParser:
     """Build declarative CLI argument parser for H3 Studio pipeline."""
     parser = argparse.ArgumentParser(description="Run 9-Grid Storyboard -> ComfyUI H3 FL2VA Video Pipeline")
+    parser.add_argument("--serve", action="store_true", help="Launch local HTTP/SSE daemon for Web UI integration")
+    parser.add_argument("--port", type=int, default=8080, help="Port for the daemon server (default: 8080)")
+    parser.add_argument("--host", default="127.0.0.1", help="Host address for the daemon server (default: 127.0.0.1)")
     parser.add_argument("--dry-run", action="store_true", help="Run zero-weight pipeline simulation (Hardware Perception, 2D Staging, 5D Context-IR, Linter, CLI sequence)")
     parser.add_argument("--mode", choices=["turbo", "base"], default=os.environ.get("H3_ACTIVE_MODE", "turbo"), help="Execution engine mode: turbo (6-step folded LoRA) or base (20-step undistilled)")
     parser.add_argument("--auto-downgrade-canvas", action="store_true", help="Auto-downgrade canvas from >864x480 to 864x480 if available memory < 48 GiB (anti-swap)")
@@ -1043,6 +1046,11 @@ def _execute_single_shot_cli(args: argparse.Namespace, render_w: int, render_h: 
 def main():
     parser = build_arg_parser()
     args = parser.parse_args()
+
+    if getattr(args, "serve", False):
+        from pipeline.h3_server import run_daemon
+        run_daemon(host=args.host, port=args.port)
+        return
 
     # Dimension and memory safety guardrails
     try:
