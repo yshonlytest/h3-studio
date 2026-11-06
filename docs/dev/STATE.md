@@ -13,8 +13,8 @@
   - [x] Step 2：規範單一來源 `docs/STANDARDS.md`（CONTRIBUTING 已改為連結）
   - [x] Step 2b：`film-chain/HANDOFF.md`、`CODING_STANDARDS.md` 路徑與入口檔名已更新
   - [x] Step 2c：`film-chain/SPEC.md` 已對照 `comfyPayload.js` / `h3_presets.py` / `h3_server.py` 更新（TICKETS.md 後半尚未核對）
-  - [x] Step 3：CI 閘門已轉阻擋（`pyproject.toml` baseline 6 檔；`ruff check .` 全綠、34 測試通過）
-  - [ ] Step 3b：逐步縮減 baseline（11 處 PLR0913 / 6 C901 / 6 PLR0912 / 6 PLR0915，集中於 `h3_storyboard_pipeline.py`、`comfy_h3_bridge/__init__.py`）
+  - [x] Step 3：CI 閘門已轉阻擋（pyproject.toml baseline 初期 6 檔；ruff check . 全綠、34 測試通過）
+  - [ ] Step 3b：逐步縮減 baseline（已拔除 `h3_prompt_linter.py`，剩餘 5 檔；集中於 `h3_storyboard_pipeline.py`、`comfy_h3_bridge/__init__.py`）
   - [x] Step 4：`docs/adr/`（範本 + ADR-0001）與 `docs/templates/REVIEW_FINDINGS.md`；下次 Code Review 起使用
   - [ ] Step 5：架構債排程（`film-chain/public/index.html` 5189 行拆分、`h3.c` 雙來源釐清）
 

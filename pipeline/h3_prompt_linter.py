@@ -103,7 +103,9 @@ def lint_prompt(inp: LintInput) -> LintReport:
     errors: list[str] = []
 
     mode = _check_conditioning_rules(inp, errors)
-    _check_picture_tags(fixed, inp.image_ref_count, errors, warnings)
+    pic_errors, pic_warnings = _check_picture_tags(fixed, inp.image_ref_count)
+    errors.extend(pic_errors)
+    warnings.extend(pic_warnings)
 
     if not fixed:
         errors.append("Prompt cannot be empty.")
@@ -165,16 +167,17 @@ def _check_conditioning_rules(inp: LintInput, errors: list[str]) -> str:
 def _check_picture_tags(
     prompt: str,
     image_ref_count: int,
-    errors: list[str],
-    warnings: list[str],
-) -> None:
+) -> tuple[list[str], list[str]]:
+    pic_errors: list[str] = []
+    pic_warnings: list[str] = []
     referenced = [int(m.group(1)) for m in PICTURE_TAG_RE.finditer(prompt)]
     for idx in referenced:
         if idx < 1 or idx > image_ref_count:
-            errors.append(
+            pic_errors.append(
                 f"Prompt references <Picture {idx}>, but only {image_ref_count} image reference(s) are attached."
             )
     if image_ref_count > 0 and not referenced:
-        warnings.append(
+        pic_warnings.append(
             f"{image_ref_count} image reference(s) attached, but prompt has no <Picture N> anchor tag."
         )
+    return pic_errors, pic_warnings

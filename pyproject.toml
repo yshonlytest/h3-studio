@@ -79,7 +79,6 @@ ignore = ["E501"]
 "pipeline/h3_storyboard_pipeline.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
 "pipeline/h3_gdrive_sync.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
 "pipeline/h3_runner.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
-"pipeline/h3_prompt_linter.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
 "comfy_nodes/comfy_h3_bridge/__init__.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
 "engines/h3.c/tools/fold_turbo_lora.py" = ["C901", "PLR0912", "PLR0913", "PLR0915"]
 
