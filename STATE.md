@@ -323,3 +323,13 @@
   - **驗證通過**：
     - AST 全模組檢查零違規。
     - `python3 -m unittest discover -s tests` 26 項單元測試全數通過（0.037s）。
+
+- [x] **Phase 7（Dry-run 與真實流程合一：引入 PipelineExecutor 協議）**：
+  - **完成項目**：
+    1. 建立 [`pipeline/h3_executor.py`](pipeline/h3_executor.py)：以 `typing.Protocol` 定義執行器協議 `PipelineExecutor`。
+    2. 實作 `H3DirectExecutor`（生產環境調度真實 Metal DiT 原生引擎）與 `NoopExecutor`（零 GPU 負載的模擬測試執行器）。
+    3. 升級 `run_chained_manifest`：支援透過依賴注入傳入 `executor: PipelineExecutor | None = None`，乾跑或模擬可直接共用真實分鏡串接狀態機。
+  - **驗證通過**：
+    - `NoopExecutor` 模擬分鏡串接成功。
+    - `python3 -m unittest discover -s tests` 26 項單元測試全數 PASS。
+    - `python3 -m pipeline.h3_storyboard_pipeline --chain-manifest examples/storyboards/cyberpunk_detective_25s.json --dry-run` 完整無誤。

@@ -51,6 +51,7 @@ from pipeline.h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
 from pipeline.h3_gdrive_sync import dispatch_async_upload, sync_upload
 from pipeline.h3_job_spec import ChainedSegmentContext, SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
 from pipeline.h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
+from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor
 
 COMFY_DIR = get_comfy_dir()
 INPUT_DIR = COMFY_DIR / "input"
@@ -674,7 +675,10 @@ def _merge_and_finalize_storyboard(
     return merged_file
 
 
-def run_chained_manifest(manifest_path: Path) -> Path:
+def run_chained_manifest(
+    manifest_path: Path,
+    executor: PipelineExecutor | None = None,
+) -> Path:
     """
     Run a multi-segment (e.g. 5s + 5s + 5s) chained video generation job from a JSON manifest.
     Each segment can either:
@@ -682,6 +686,7 @@ def run_chained_manifest(manifest_path: Path) -> Path:
       - set `"use_prev_last_frame": true` to automatically extract the last frame of the previous segment!
       - optionally specify `last_frame` to anchor the ending pose of that segment.
     """
+    active_executor = executor or H3DirectExecutor()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     segments = manifest.get("segments", [])
     if not segments:
@@ -794,9 +799,9 @@ def run_chained_manifest(manifest_path: Path) -> Path:
         if low_memory_detected:
             print(f"[Memory Guard][Segment {idx}] ⚠️ Low unified memory: {current_mem.available_gib:.1f} GiB available. Watch for swap risk.", flush=True)
 
-        seg_video = run_h3_direct(job=seg_job)
+        seg_video = active_executor.execute(seg_job)
         trim_count = seg.get("trim_first_frames", default_trim)
-        if trim_count > 0:
+        if trim_count > 0 and not isinstance(active_executor, NoopExecutor):
             trim_initial_frames(seg_video, frames_to_trim=trim_count)
 
         report = verify_video_health(seg_video)
