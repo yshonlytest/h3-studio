@@ -51,6 +51,7 @@ try:
     from .h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
     from .h3_gdrive_sync import dispatch_async_upload, sync_upload
     from .h3_job_spec import SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
+    from .h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
 except ImportError:
     from config import (
         DEFAULT_FFMPEG_AUDIO_ARGS,
@@ -77,6 +78,7 @@ except ImportError:
     from h3_prompt_linter import LintInput, lint_prompt
     from h3_runner import H3JobSpec, ProgressEvent, RunnerConfig, run_job
     from h3_job_spec import SegmentInputs, SegmentJob, SegmentOutputs, SegmentRender
+    from h3_state import ChainState, compute_config_hash, is_segment_done, load_state, save_state
     try:
         from h3_gdrive_sync import dispatch_async_upload, sync_upload
     except ImportError:
@@ -624,203 +626,62 @@ def run_h3_direct(
     return out_video
 
 
-def run_chained_manifest(manifest_path: Path) -> Path:
-    """
-    Run a multi-segment (e.g. 5s + 5s + 5s) chained video generation job from a JSON manifest.
-    Each segment can either:
-      - specify its own `first_frame`, OR
-      - set `"use_prev_last_frame": true` to automatically extract the last frame of the previous segment!
-      - optionally specify `last_frame` to anchor the ending pose of that segment.
-    """
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    segments = manifest.get("segments", [])
-    if not segments:
-        raise ValueError("Manifest must contain a non-empty 'segments' list.")
-
-    width = manifest.get("width", 640)
-    height = manifest.get("height", 480)
-    frames = manifest.get("frames", 124)
-    steps = manifest.get("steps", 20)
-    layers = str(manifest.get("layers", "45"))
-    reuse = manifest.get("reuse", 2)
-    core_reuse = manifest.get("core_reuse", 0)
-    token_reduction = bool(manifest.get("token_reduction", False))
-    render_width = manifest.get("render_width", 0)
-    render_height = manifest.get("render_height", 0)
-    base_seed = manifest.get("seed", 20260931)
-    output_prefix = manifest.get("output_prefix", "storyboard_runs/chained_full")
-    manifest_mode = manifest.get("mode", os.environ.get("H3_ACTIVE_MODE", "turbo"))
-    manifest_model_dir = manifest.get("model_dir") or str(get_h3_model_dir(manifest_mode))
-
-    try:
-        width, height = validate_dimensions(width, height)
-    except ValueError as ve:
-        sys.exit(f"Manifest Dimension Error: {ve}")
-
-    width, height, swap_warn = recommend_safe_canvas(
-        width, height, auto_downgrade=bool(manifest.get("auto_downgrade", False))
-    )
-    if swap_warn:
-        print(f"\n⚠️  {swap_warn}\n", flush=True)
-
+def _resolve_segment_anchoring(
+    seg: dict,
+    idx: int,
+    manifest: dict,
+    prev_video: Path | None,
+    prev_context: Path | None,
+    output_prefix: str,
+) -> tuple[Path | None, Path | None, int]:
+    """Resolve first_frame, motion_context, and trim count for a segment."""
+    anchor_reset = bool(seg.get("anchor_reset", False))
     manifest_anchor_ref = manifest.get("anchor_ref_image")
-    force_rerun = bool(manifest.get("force_rerun", False))
-    state_file = OUTPUT_DIR / f"{Path(output_prefix).name}.state.json"
-    checkpoint_state: dict = {
-        "manifest_path": str(manifest_path),
-        "output_prefix": output_prefix,
-        "completed_segments": {},
-    }
-    if not force_rerun and state_file.is_file():
-        try:
-            loaded_state = json.loads(state_file.read_text(encoding="utf-8"))
-            if isinstance(loaded_state, dict) and "completed_segments" in loaded_state:
-                checkpoint_state = loaded_state
-                cached_count = len(checkpoint_state["completed_segments"])
-                print(f"[Checkpoint] Found state file: {state_file.name} ({cached_count} completed segments cached)", flush=True)
-        except Exception as err:
-            print(f"[Checkpoint] Warning: could not load {state_file.name}: {err}", flush=True)
+    chain_mode = seg.get("chain_mode", "motion_context" if idx > 1 else "first_frame")
+    use_prev_motion = bool(seg.get("use_prev_motion_context") or (idx > 1 and chain_mode == "motion_context"))
+    use_prev_last = bool(seg.get("use_prev_last_frame") or (idx > 1 and chain_mode == "first_frame"))
 
-    generated_videos: list[Path] = []
-    prev_video: Path | None = None
-    prev_context: Path | None = None
+    if anchor_reset and (seg.get("first_frame") or manifest_anchor_ref):
+        anchor_target = seg.get("first_frame") or manifest_anchor_ref
+        anchor_path = Path(anchor_target).expanduser().resolve()
+        if anchor_path.is_file():
+            print(f"[Anchor Guard] Segment {idx} triggered Character Anchor Reset -> {anchor_path.name}", flush=True)
+            return anchor_path, None, 1
 
-    for idx, seg in enumerate(segments, start=1):
-        print(f"\n==========================================", flush=True)
-        print(f"🎬 Starting Segment {idx}/{len(segments)}: {seg.get('title', f'part_{idx}')}", flush=True)
-        print(f"==========================================", flush=True)
+    if use_prev_motion:
+        if prev_context is None and prev_video is None:
+            raise ValueError(f"Segment {idx} requested motion_context, but no previous context/video exists.")
+        ctx = prev_context if (prev_context and prev_context.is_file()) else prev_video
+        return None, ctx, 0
 
-        str_idx = str(idx)
-        current_save_context = TEMP_DIR / f"{Path(output_prefix).name}_seg{idx}.h3ctx"
+    if use_prev_last:
+        if prev_video is None:
+            raise ValueError(f"Segment {idx} requested use_prev_last_frame=True, but there is no previous video.")
+        chain_frame_path = INPUT_DIR / f"{Path(output_prefix).name}_seg{idx-1}_last_frame.png"
+        return extract_last_frame(prev_video, chain_frame_path), None, 1
 
-        # Checkpoint Resume Guard: verify if segment was already completed and valid
-        if str_idx in checkpoint_state["completed_segments"]:
-            cached_info = checkpoint_state["completed_segments"][str_idx]
-            cached_video = Path(cached_info.get("video_path", ""))
-            if cached_video.is_file() and cached_video.stat().st_size > 1000:
-                health_check = verify_video_health(cached_video)
-                if health_check.is_valid and not health_check.warnings:
-                    print(f"[Checkpoint] ⚡ Segment {idx}/{len(segments)} already generated and verified ({cached_video.name}). Skipping!", flush=True)
-                    generated_videos.append(cached_video)
-                    prev_video = cached_video
-                    cached_ctx = Path(cached_info.get("context_path", ""))
-                    if cached_ctx.is_file():
-                        prev_context = cached_ctx
-                    elif current_save_context.is_file():
-                        prev_context = current_save_context
-                    continue
-                else:
-                    print(f"[Checkpoint] ⚠️ Cached segment {idx} failed health verification ({health_check.warnings}). Re-rendering...", flush=True)
+    ff_str = seg.get("first_frame") or manifest.get("grid_image")
+    if not ff_str:
+        raise ValueError(f"Segment {idx} must provide 'first_frame' or enable chaining.")
+    return Path(ff_str).expanduser().resolve(), None, 1
 
-        anchor_reset = bool(seg.get("anchor_reset", False))
-        chain_mode = seg.get("chain_mode", "motion_context" if idx > 1 else "first_frame")
-        use_prev_motion = bool(seg.get("use_prev_motion_context") or (idx > 1 and chain_mode == "motion_context"))
-        use_prev_last = bool(seg.get("use_prev_last_frame") or (idx > 1 and chain_mode == "first_frame"))
 
-        first_frame: Path | None = None
-        motion_context: Path | None = None
-        default_trim = 0
-
-        if anchor_reset and (seg.get("first_frame") or manifest_anchor_ref):
-            anchor_target = seg.get("first_frame") or manifest_anchor_ref
-            anchor_path = Path(anchor_target).expanduser().resolve()
-            if anchor_path.is_file():
-                print(f"[Anchor Guard] Segment {idx} triggered Character Anchor Reset -> {anchor_path.name}", flush=True)
-                first_frame = anchor_path
-                motion_context = None
-                default_trim = 1
-        elif use_prev_motion:
-            if prev_context is None and prev_video is None:
-                raise ValueError(f"Segment {idx} requested motion_context, but no previous context/video exists.")
-            motion_context = prev_context if (prev_context and prev_context.is_file()) else prev_video
-            default_trim = 0
-        elif use_prev_last:
-            if prev_video is None:
-                raise ValueError(f"Segment {idx} requested use_prev_last_frame=True, but there is no previous video.")
-            chain_frame_path = INPUT_DIR / f"{Path(output_prefix).name}_seg{idx-1}_last_frame.png"
-            first_frame = extract_last_frame(prev_video, chain_frame_path)
-            default_trim = 1
-        else:
-            ff_str = seg.get("first_frame") or manifest.get("grid_image")
-            if not ff_str:
-                raise ValueError(f"Segment {idx} must provide 'first_frame' or enable chaining.")
-            first_frame = Path(ff_str).expanduser().resolve()
-            default_trim = 1
-
-        last_frame = Path(seg["last_frame"]).expanduser().resolve() if seg.get("last_frame") else None
-        prompt_text = seg["prompt"].strip()
-        seg_prefix = f"{output_prefix}_part{idx}"
-        seg_seed = seg.get("seed", base_seed + idx - 1)
-        seg_frames = seg.get("frames", frames)
-        trim_count = seg.get("trim_first_frames", default_trim)
-
-        seg_job = SegmentJob(
-            inputs=SegmentInputs(
-                prompt_text=prompt_text,
-                first_frame_path=first_frame,
-                last_frame_path=last_frame,
-                motion_context_path=motion_context,
-            ),
-            render=SegmentRender(
-                width=width,
-                height=height,
-                frames=seg_frames,
-                steps=steps,
-                layers=layers,
-                reuse=reuse,
-                core_reuse=core_reuse,
-                token_reduction=token_reduction,
-                render_width=render_width,
-                render_height=render_height,
-                seed=seg_seed,
-                model_dir=manifest_model_dir,
-            ),
-            outputs=SegmentOutputs(
-                output_prefix=seg_prefix,
-                save_context_path=current_save_context,
-            ),
-        )
-        seg_video = run_h3_direct(job=seg_job)
-        if trim_count > 0:
-            trim_initial_frames(seg_video, frames_to_trim=trim_count)
-
-        report = verify_video_health(seg_video)
-        if report.warnings:
-            for w in report.warnings:
-                print(f"[HealthCheck][Segment {idx}] ⚠️ {w}", flush=True)
-        else:
-            print(f"[HealthCheck][Segment {idx}] ✅ Video healthy ({report.duration_seconds:.2f}s, no black/frozen frames)", flush=True)
-
-        generated_videos.append(seg_video)
-        prev_video = seg_video
-        prev_context = current_save_context
-
-        # Immediately persist segment checkpoint state
-        checkpoint_state["completed_segments"][str_idx] = {
-            "video_path": str(seg_video),
-            "context_path": str(current_save_context) if current_save_context.is_file() else "",
-            "timestamp": time.time(),
-            "duration": report.duration_seconds,
-            "is_valid": report.is_valid,
-        }
-        checkpoint_state["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        try:
-            state_file.write_text(json.dumps(checkpoint_state, indent=2, ensure_ascii=False), encoding="utf-8")
-        except Exception as e:
-            print(f"[Checkpoint] Warning: could not write state file {state_file}: {e}", flush=True)
-
-    merged_file: Path
+def _merge_and_finalize_storyboard(
+    generated_videos: list[Path],
+    manifest: dict,
+    output_prefix: str,
+    state: ChainState,
+    state_file: Path,
+) -> Path:
+    """Concatenate segment videos, apply optional BGM, and trigger cloud upload."""
     if len(generated_videos) == 1:
         merged_file = generated_videos[0]
     else:
         final_output = next_output_filepath(f"{output_prefix}_merged")
         merged_file = concat_videos(generated_videos, final_output)
 
-    checkpoint_state["merged_video"] = str(merged_file)
-    try:
-        state_file.write_text(json.dumps(checkpoint_state, indent=2, ensure_ascii=False), encoding="utf-8")
-    except Exception:
-        pass
+    state.merged_video = str(merged_file)
+    save_state(state_file, state)
 
     merged_report = verify_video_health(merged_file)
     if merged_report.warnings:
@@ -842,6 +703,145 @@ def run_chained_manifest(manifest_path: Path) -> Path:
         dispatch_async_upload(merged_file, folder_name=folder_name)
 
     return merged_file
+
+
+def run_chained_manifest(manifest_path: Path) -> Path:
+    """
+    Run a multi-segment (e.g. 5s + 5s + 5s) chained video generation job from a JSON manifest.
+    Each segment can either:
+      - specify its own `first_frame`, OR
+      - set `"use_prev_last_frame": true` to automatically extract the last frame of the previous segment!
+      - optionally specify `last_frame` to anchor the ending pose of that segment.
+    """
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    segments = manifest.get("segments", [])
+    if not segments:
+        raise ValueError("Manifest must contain a non-empty 'segments' list.")
+
+    width, height = validate_dimensions(manifest.get("width", 640), manifest.get("height", 480))
+    width, height, swap_warn = recommend_safe_canvas(
+        width, height, auto_downgrade=bool(manifest.get("auto_downgrade", False))
+    )
+    if swap_warn:
+        print(f"\n⚠️  {swap_warn}\n", flush=True)
+
+    output_prefix = manifest.get("output_prefix", "storyboard_runs/chained_full")
+    manifest_mode = manifest.get("mode", os.environ.get("H3_ACTIVE_MODE", "turbo"))
+    manifest_model_dir = manifest.get("model_dir") or str(get_h3_model_dir(manifest_mode))
+    base_seed = manifest.get("seed", 20260931)
+    frames = manifest.get("frames", 124)
+    steps = manifest.get("steps", 20)
+    layers = str(manifest.get("layers", "45"))
+    reuse = manifest.get("reuse", 2)
+    core_reuse = manifest.get("core_reuse", 0)
+    token_reduction = bool(manifest.get("token_reduction", False))
+    render_w = manifest.get("render_width", 0)
+    render_h = manifest.get("render_height", 0)
+
+    cfg_hash = compute_config_hash(manifest)
+    state_file = OUTPUT_DIR / f"{Path(output_prefix).name}.state.json"
+    force_rerun = bool(manifest.get("force_rerun", False))
+
+    loaded_state = load_state(state_file) if not force_rerun else None
+    if loaded_state:
+        if loaded_state.config_hash and loaded_state.config_hash != cfg_hash:
+            print(f"[Checkpoint] ⚠️ Config changed since last run (hash: {loaded_state.config_hash} -> {cfg_hash}). Re-running.", flush=True)
+            loaded_state = None
+        else:
+            print(f"[Checkpoint] Found state file: {state_file.name} ({len(loaded_state.completed_segments)} completed segments cached)", flush=True)
+
+    state = loaded_state or ChainState(
+        manifest_path=str(manifest_path),
+        output_prefix=output_prefix,
+        config_hash=cfg_hash,
+    )
+
+    generated_videos: list[Path] = []
+    prev_video: Path | None = None
+    prev_context: Path | None = None
+
+    for idx, seg in enumerate(segments, start=1):
+        print(f"\n==========================================", flush=True)
+        print(f"🎬 Starting Segment {idx}/{len(segments)}: {seg.get('title', f'part_{idx}')}", flush=True)
+        print(f"==========================================", flush=True)
+
+        str_idx = str(idx)
+        current_save_context = TEMP_DIR / f"{Path(output_prefix).name}_seg{idx}.h3ctx"
+
+        # Checkpoint Resume Guard: verify if segment was already completed and valid
+        if str_idx in state.completed_segments:
+            cached_info = state.completed_segments[str_idx]
+            cached_video = Path(cached_info.get("video_path", ""))
+            if cached_video.is_file() and cached_video.stat().st_size > 1000:
+                health_check = verify_video_health(cached_video)
+                if health_check.is_valid and not health_check.warnings:
+                    print(f"[Checkpoint] ⚡ Segment {idx}/{len(segments)} already generated and verified ({cached_video.name}). Skipping!", flush=True)
+                    generated_videos.append(cached_video)
+                    prev_video = cached_video
+                    cached_ctx = Path(cached_info.get("context_path", ""))
+                    prev_context = cached_ctx if cached_ctx.is_file() else (current_save_context if current_save_context.is_file() else None)
+                    continue
+                print(f"[Checkpoint] ⚠️ Cached segment {idx} failed health verification ({health_check.warnings}). Re-rendering...", flush=True)
+
+        first_frame, motion_context, default_trim = _resolve_segment_anchoring(
+            seg, idx, manifest, prev_video, prev_context, output_prefix
+        )
+        last_frame = Path(seg["last_frame"]).expanduser().resolve() if seg.get("last_frame") else None
+        seg_job = SegmentJob(
+            inputs=SegmentInputs(
+                prompt_text=seg["prompt"].strip(),
+                first_frame_path=first_frame,
+                last_frame_path=last_frame,
+                motion_context_path=motion_context,
+            ),
+            render=SegmentRender(
+                width=width,
+                height=height,
+                frames=seg.get("frames", frames),
+                steps=steps,
+                layers=layers,
+                reuse=reuse,
+                core_reuse=core_reuse,
+                token_reduction=token_reduction,
+                render_width=render_w,
+                render_height=render_h,
+                seed=seg.get("seed", base_seed + idx - 1),
+                model_dir=manifest_model_dir,
+            ),
+            outputs=SegmentOutputs(
+                output_prefix=f"{output_prefix}_part{idx}",
+                save_context_path=current_save_context,
+            ),
+        )
+
+        seg_video = run_h3_direct(job=seg_job)
+        trim_count = seg.get("trim_first_frames", default_trim)
+        if trim_count > 0:
+            trim_initial_frames(seg_video, frames_to_trim=trim_count)
+
+        report = verify_video_health(seg_video)
+        if report.warnings:
+            for w in report.warnings:
+                print(f"[HealthCheck][Segment {idx}] ⚠️ {w}", flush=True)
+        else:
+            print(f"[HealthCheck][Segment {idx}] ✅ Video healthy ({report.duration_seconds:.2f}s, no black/frozen frames)", flush=True)
+
+        generated_videos.append(seg_video)
+        prev_video = seg_video
+        prev_context = current_save_context
+
+        # Immediately persist segment checkpoint state atomically
+        state.completed_segments[str_idx] = {
+            "video_path": str(seg_video),
+            "context_path": str(current_save_context) if current_save_context.is_file() else "",
+            "timestamp": time.time(),
+            "duration": report.duration_seconds,
+            "is_valid": report.is_valid,
+        }
+        state.updated_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        save_state(state_file, state)
+
+    return _merge_and_finalize_storyboard(generated_videos, manifest, output_prefix, state, state_file)
 
 
 def _apply_cli_preset(args: argparse.Namespace) -> tuple[int, int]:

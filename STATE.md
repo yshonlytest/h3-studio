@@ -270,3 +270,14 @@
   - **驗證通過**：
     - `python3 -m unittest tests/test_h3_state.py` 4 項單元測試全數通過（0.003s）。
     - `python3 -m unittest discover -s tests` 12 項全域單元測試全數 PASS（0.017s）。
+
+- [x] **Phase 3-B（將 h3_state 接回 run_chained_manifest 並解耦子函式）**：
+  - **完成項目**：
+    1. 將 `pipeline/h3_state.py` 正式接入 `pipeline/h3_storyboard_pipeline.py`，支援原子寫入與 config_hash 變更重跑防護。
+    2. 抽出錨定邏輯子函式 `_resolve_segment_anchoring()`（38 行，包含角色設定圖重錨定、前鏡潛空間延續與尾幀提取）。
+    3. 抽出收尾合併子函式 `_merge_and_finalize_storyboard()`（37 行，包含 concat_videos、健康檢查、BGM 壓制與異步雲端備份）。
+    4. 大幅精簡 `run_chained_manifest`，將狀態管理完全代理給 `ChainState` 與 `save_state`。
+  - **驗證通過**：
+    - `python3 -m py_compile pipeline/h3_storyboard_pipeline.py` 通過。
+    - `python3 -m unittest discover -s tests` 12 項全域單元測試全數 PASS（0.017s）。
+    - `python3 pipeline/h3_storyboard_pipeline.py --chain-manifest examples/storyboards/cyberpunk_detective_25s.json --dry-run` 輸出正常。
