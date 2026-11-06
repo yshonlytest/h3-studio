@@ -13,9 +13,12 @@
 
 ## [PINNED_CONTEXT]
 - **本機硬體實測規格**：Apple M2 Max (`applegpu_g14s`)，64.0 GiB 統一記憶體，macOS 27.0.1。
-- **本地模型權重盤點（`/Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/MiniMax-H3`）**：
+- **本地模型權重盤點（`models/MiniMax-H3`）**：
   - ✅ 已安裝：`Qwen3-VL encoder` (62.13 GiB)、`FL2VA DiT` (61.73 GiB)、`video VAE` (9.70 GiB)、`audio VAE` (0.56 GiB)。
-  - ⚠️ 未安裝：`Ref2VA DiT` (0 files) 與 `Turbo LoRA` 摺疊權重（因此本機實測一律走 `FL2VA` + `--first-frame` 或 PR #76 `--motion-context`）。
+  - ✅ 已完成折疊：`MiniMax-H3-Turbo`（利用 APFS CoW clonefile 摺疊 259 個 Turbo LoRA 增量權重，零雙倍空間浪費，支援 5-6 steps 極速原生 Metal 推理）。
+  - ✅ 雲端同步：已完成 `pipeline/h3_gdrive_sync.py`，支援 Google Drive 專屬 `H3-Studio` 資料夾快取去重、時間戳防覆蓋、非阻塞異步上傳。
+  - ✅ 25 秒仙俠史詩全鏈路實測通過：`MiniMax-H3-Turbo` 864×480 (16:9 電影寬螢幕) + 5 段 PR #76 潛空間接力 + Google Drive 自動同步完成。
+  - ⚠️ 未安裝：`Ref2VA DiT` (0 files，本機實測維持走 `FL2VA` + `--first-frame` 或 PR #76 `--motion-context`)。
 - **Code Review 雙軸全數修復（Pass Checklist）**：
   - ✅ `h3.c:649` & `h3.c:660` 對齊：`h3_storyboard_pipeline.py` 遇到 `--checkpoint-after-step` / `--resume` 時自動約束 `reuse=1` 與 `core_reuse=1`，並自動補全 `.ckpt` 輸出路徑。
   - ✅ 消除 Primitive Obsession：引入 `@dataclass(frozen=True) StoryboardJobRequest` 封裝執行參數。
@@ -24,7 +27,7 @@
   - ✅ 外部 Subprocess 超時保護：所有次要 `ffmpeg` 子行程皆補上 `timeout=30.0` ~ `timeout=120.0` 防鎖定保護。
   - ✅ 前端 Payload 補齊：`comfyPayload.js` 補充節點 `1` 的 `chain_mode` 宣告。
   - ✅ 工作區衛生：自動清除 `ComfyUI/temp/` 殘留之 `.h3ctx` 測試檔。
-- **核心 C/Metal 引擎狀態（`/Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3.c`）**：
+- **核心 C/Metal 引擎狀態（`engines/h3.c`）**：
   - 分支：`main`（Commit `269f13e`），`./h3` 與 `libh3.a` 已編譯完成並通過 `2002/2002` C 單元測試。
   - 已整合 PR：
     - **PR #2**：`--checkpoint <path>` / `--resume <path>` / `--checkpoint-after-step <K>`
@@ -38,11 +41,11 @@
 ## 已完成階段（Completed Phases — 勿重複施作）
 - [x] **Pre-P0（上游 6 大 PR 整合編譯）**：完成於 `MiniMax-H3-h3c-ComfyUI/h3.c` (`269f13e`)。
 - [x] **P0 核心模組建立**：
-  - [`h3_presets.py`](file:///Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3_presets.py)（定義 `DRAFT`, `DRAFT_AGGRESSIVE`, `DRAFT_FALLBACK`, `BALANCED` 與 `internal_canvas`）
-  - [`h3_runner.py`](file:///Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3_runner.py)（實作 `run_job`, `_drain_fd_chunks`, `terminate_process_group`, `cleanup_artifacts`, `H3InteractiveSession`）
-  - [`h3_prompt_linter.py`](file:///Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3_prompt_linter.py)（實作 `LintInput`, `LintReport`, `lint_prompt`, `normalize_prompt_tags`）
+  - [`h3_presets.py`](pipeline/h3_presets.py)（定義 `DRAFT`, `DRAFT_AGGRESSIVE`, `DRAFT_FALLBACK`, `BALANCED` 與 `internal_canvas`）
+  - [`h3_runner.py`](pipeline/h3_runner.py)（實作 `run_job`, `_drain_fd_chunks`, `terminate_process_group`, `cleanup_artifacts`, `H3InteractiveSession`）
+  - [`h3_prompt_linter.py`](pipeline/h3_prompt_linter.py)（實作 `LintInput`, `LintReport`, `lint_prompt`, `normalize_prompt_tags`）
 - [x] **P0 全鏈路串接與 M2 Max 真機實測（Phase P0-Final）**：
-  - 已串接 [`h3_storyboard_pipeline.py`](file:///Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3_storyboard_pipeline.py)、[`comfy_h3_bridge/__init__.py`](file:///Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/ComfyUI/custom_nodes/comfy_h3_bridge/__init__.py)、[`comfyPayload.js`](file:///Users/ysh/Documents/H3C/film-chain/public/src/core/comfyPayload.js) 與 [`film-chain/public/index.html`](file:///Users/ysh/Documents/H3C/film-chain/public/index.html)。
+  - 已串接 [`h3_storyboard_pipeline.py`](pipeline/h3_storyboard_pipeline.py)、[`comfy_h3_bridge/__init__.py`](comfy_nodes/comfy_h3_bridge/__init__.py)、[`comfyPayload.js`](film-chain/public/src/core/comfyPayload.js) 與 [`film-chain/public/index.html`](film-chain/public/index.html)。
   - 真機實測通過：Linter 攔截測試通過、`SIGTERM` 中斷於 `0.19s` 清空進程群組與暫存 MP4、`--preset draft_aggressive` 於 `36.2s` 跑完 207 筆進度事件並產出裁切後 MP4。
 
 ---
@@ -52,7 +55,7 @@
 ### Phase P1：Context-IR 五維度結構化提示詞 + 5 幀角色設定圖（共 4 個微步驟）
 
 - [x] **Micro-Step P1.1：建立 Python 後端 `h3_context_ir.py`（5 維度結構化組裝與本地 LLM 擴寫）**
-  - **目標檔案**：新增 `/Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3_context_ir.py`
+  - **目標檔案**：新增 `pipeline/h3_context_ir.py`
   - **實作規格**：
     1. 第一行寫 `from __future__ import annotations`。
     2. 定義 `@dataclass(frozen=True) class ContextIR`：包含 5 個欄位 `scene: str`（場景）、`action: str`（動作与時序）、`camera: str`（運鏡與景別）、`look: str`（光影與材質）、`audio: str`（環境音與 `<d>[Chinese] 台詞</d>`）、以及選填 `continuity_from_prev: bool = False`。
@@ -63,11 +66,11 @@
        - 使用標準庫 `urllib.request` 發送 OpenAI 相容格式 POST 請求給本地 `llama-server`（或 Ollama），請模型將五維度中文/短句擴寫為英文 H3 Prompt；若連線失敗（` urllib.error.URLError` 或 `TimeoutError`），記錄 `logging.warning` 並優雅降級回傳 `compile_context_ir(ir)`。
   - **立即驗證指令**：
     ```bash
-    /usr/bin/python3 -c 'import sys; sys.path.insert(0, "/Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI"); from h3_context_ir import ContextIR, compile_context_ir, expand_with_local_llm; ir = ContextIR(scene="Okinawa plaza at night", action="0-5s: <Picture 1 Shisa waves paw", camera="Medium tracking shot", look="Warm lantern glow", audio="Night breeze", continuity_from_prev=True); out = expand_with_local_llm(ir, "http://127.0.0.1:9/invalid"); assert "<Picture 1>" in out and "continuing seamlessly" in out; print("P1.1 OK:", out)'
+    /usr/bin/python3 -c 'import sys; sys.path.insert(0, "./MiniMax-H3-h3c-ComfyUI"); from h3_context_ir import ContextIR, compile_context_ir, expand_with_local_llm; ir = ContextIR(scene="Okinawa plaza at night", action="0-5s: <Picture 1 Shisa waves paw", camera="Medium tracking shot", look="Warm lantern glow", audio="Night breeze", continuity_from_prev=True); out = expand_with_local_llm(ir, "http://127.0.0.1:9/invalid"); assert "<Picture 1>" in out and "continuing seamlessly" in out; print("P1.1 OK:", out)'
     ```
 
 - [x] **Micro-Step P1.2：在前端 `promptBuilder.js` 新增 `compileContextIR` 輔助函式**
-  - **目標檔案**：`/Users/ysh/Documents/H3C/film-chain/public/src/core/promptBuilder.js`
+  - **目標檔案**：`./film-chain/public/src/core/promptBuilder.js`
   - **讀取切片**：先用 `read_file` 讀取 `StartLine: 135, EndLine: 170`。
   - **實作規格**：
     1. 在 `promptBuilder.js` 新增 `compileContextIR(fields, segmentIndex)`（`fields` 為 `{ scene, action, camera, look, audio }`）：
@@ -77,18 +80,18 @@
   - **立即驗證方式**：使用 `read_file`（`StartLine: 145, EndLine: 195`）確認 `compileContextIR` 已加入 `promptBuilder.js` 並匯出（勿在標準沙盒 `run_command` 讀取 `src/core/*.js`）。
 
 - [x] **Micro-Step P1.3：在前端 `film-chain/public/index.html` 分鏡卡加入可折疊「Context-IR 五維度快速填表」**
-  - **目標檔案**：`/Users/ysh/Documents/H3C/film-chain/public/index.html`
+  - **目標檔案**：`./film-chain/public/index.html`
   - **讀取切片**：先用 `read_file` 讀取 `StartLine: 2920, EndLine: 2990`（嚴禁讀整檔）。
   - **實作規格**：
     1. 在 `appendSegmentCardDOM(seg, idx)` (約 L2921-2945) 的 `<textarea class="seg-prompt-input">` 上方，加入一個輕量 `<details style="margin-bottom:6px; font-size:0.78rem;">` 區塊（「🧭 Context-IR 五維度結構化填表（選填，點擊一鍵合成至下方 Prompt）」），內含 5 個小型 `<input>`（`.ir-scene`, `.ir-action`, `.ir-camera`, `.ir-look`, `.ir-audio`）與一個按鈕 `onclick="applyContextIRToCard(this, ${idx})"`。
     2. 在 `appendSegmentCardDOM` 下方新增函式 `applyContextIRToCard(btnEl, idx)`（$\le 25$ 行）：讀取該卡片內 5 個 `.ir-*` 輸入值，呼叫 `H3PromptBuilder.compileContextIR(fields, idx)` 並經過 `lintH3PromptText()` 後寫入該卡片的 `.seg-prompt-input`，接著呼叫 `syncSegmentsFromDOM()`。
   - **立即驗證指令**：
     ```bash
-    grep -n "applyContextIRToCard" /Users/ysh/Documents/H3C/film-chain/public/index.html
+    grep -n "applyContextIRToCard" ./film-chain/public/index.html
     ```
 
 - [x] **Micro-Step P1.4：建立 `h3_character_sheet.py`（5 幀極速角色設定圖生成與第 1 幀高清抽取）**
-  - **目標檔案**：新增 `/Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3_character_sheet.py`
+  - **目標檔案**：新增 `pipeline/h3_character_sheet.py`
   - **實作規格**：
     1. 依據案例 03（`H3-Character-Sheet-Designer`）最佳實踐：不開白模引導、預設鎖定 5~7 核心視角（`front view, side view, back view, 3/4 face close-up, full-body standing`）、固定 `--frames 5` 算圖並用 `ffmpeg -y -i <mp4> -vf "select=eq(n\,0)" -frames:v 1 <out_png>` 抽取第 1 幀作為高清角色設定圖。
     2. 定義 `@dataclass(frozen=True) class CharacterSheetSpec`：`subject_desc: str`, `output_png: Path`, `first_frame_anchor: Path | None = None`, `ref_images: list[Path] = field(default_factory=list)`, `views_count: int = 5`, `width: int = 640`, `height: int = 480`, `seed: int = 42`。
@@ -98,7 +101,7 @@
        - 呼叫 `h3_runner.run_job` 搭配 `DRAFT_AGGRESSIVE`（`--frames 5 --steps 6 --layers 40 --reuse 2`）生成 5 幀暫存 MP4，再用 `ffmpeg` 抽出第 0 幀存為 `spec.output_png`，並刪除暫存 MP4。
   - **立即驗證指令**：
     ```bash
-    /usr/bin/python3 -c 'import sys; from pathlib import Path; sys.path.insert(0, "/Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI"); from h3_character_sheet import CharacterSheetSpec, build_character_sheet_prompt; p = build_character_sheet_prompt(CharacterSheetSpec(subject_desc="Okinawa ceramic Shisa lion-dog", output_png=Path("/tmp/out.png"), views_count=6)); assert "no 3D mannequin" in p and "6" in p; print("P1.4 OK:", p)'
+    /usr/bin/python3 -c 'import sys; from pathlib import Path; sys.path.insert(0, "./MiniMax-H3-h3c-ComfyUI"); from h3_character_sheet import CharacterSheetSpec, build_character_sheet_prompt; p = build_character_sheet_prompt(CharacterSheetSpec(subject_desc="Okinawa ceramic Shisa lion-dog", output_png=Path("/tmp/out.png"), views_count=6)); assert "no 3D mannequin" in p and "6" in p; print("P1.4 OK:", p)'
     ```
 
 ---
@@ -106,7 +109,7 @@
 ### Phase P2：分鏡雙模接力（`--motion-context` 無損潛空間接力 + Henninges 轉場法，共 4 個微步驟）
 
 - [x] **Micro-Step P2.1：升級 `h3_storyboard_pipeline.py` 的 `run_chained_manifest()` 支援雙模接力與 `--save-context` / `--motion-context`**
-  - **目標檔案**：`/Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3_storyboard_pipeline.py`
+  - **目標檔案**：`pipeline/h3_storyboard_pipeline.py`
   - **讀取切片**：先用 `read_file` 讀取 `StartLine: 375, EndLine: 465`。
   - **實作規格**：
     1. 在 `run_chained_manifest(manifest_path: Path)` 迴圈中，支援每個 segment 設定 `"chain_mode"`:
@@ -114,11 +117,11 @@
        - `"first_frame"`（向下相容既有模式）：維持 `extract_last_frame(prev_video, ...)` 作為 `first_frame_path`，`default_trim = 1`。
   - **立即驗證指令**：
     ```bash
-    /usr/bin/python3 -m py_compile /Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/h3_storyboard_pipeline.py
+    /usr/bin/python3 -m py_compile pipeline/h3_storyboard_pipeline.py
     ```
 
 - [x] **Micro-Step P2.2：升級 ComfyUI 節點 `H3ChainedStoryboardVideo` 支援 `chain_mode` (`motion_context` vs `first_frame`)**
-  - **目標檔案**：`/Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/ComfyUI/custom_nodes/comfy_h3_bridge/__init__.py`
+  - **目標檔案**：`pipeline/ComfyUI/custom_nodes/comfy_h3_bridge/__init__.py`
   - **讀取切片**：先用 `read_file` 讀取 `StartLine: 430, EndLine: 560`。
   - **實作規格**：
     1. 在 `H3ChainedStoryboardVideo.INPUT_TYPES` 的 `"optional"` 加入 `"chain_mode": (["motion_context", "first_frame"], {"default": "motion_context"})`。
@@ -127,11 +130,11 @@
        - 若 `idx == 1`（第一段吃九宮格首幀），仍使用 `--first-frame` 並加上 `--save-context` 供第 2 段接力。
   - **立即驗證指令**：
     ```bash
-    /usr/bin/python3 -m py_compile /Users/ysh/Documents/H3C/MiniMax-H3-h3c-ComfyUI/ComfyUI/custom_nodes/comfy_h3_bridge/__init__.py
+    /usr/bin/python3 -m py_compile pipeline/ComfyUI/custom_nodes/comfy_h3_bridge/__init__.py
     ```
 
 - [x] **Micro-Step P2.3：在前端 `film-chain/public/index.html` 分鏡卡加入「分鏡接力模式 (`chain_mode`)」下拉選單**
-  - **目標檔案**：`/Users/ysh/Documents/H3C/film-chain/public/index.html`
+  - **目標檔案**：`./film-chain/public/index.html`
   - **讀取切片**：先用 `read_file` 讀取 `StartLine: 2920, EndLine: 3005`。
   - **實作規格**：
     1. 在 `appendSegmentCardDOM(seg, idx)` 中（當 `idx > 0` 時），加入 `<select class="seg-chain-mode-select">` 提供兩個選項：
@@ -140,11 +143,11 @@
     2. 在 `syncSegmentsFromDOM()` 中讀取 `.seg-chain-mode-select` 的值存入 `seg.chain_mode`（第 1 段固定為 `"first_frame"`）。
   - **立即驗證指令**：
     ```bash
-    grep -n "seg-chain-mode-select" /Users/ysh/Documents/H3C/film-chain/public/index.html
+    grep -n "seg-chain-mode-select" ./film-chain/public/index.html
     ```
 
 - [x] **Micro-Step P2.4：M2 Max 真機雙段 `--save-context` $\to$ `--motion-context` 端到端接力實測**
-  - **實測目標**：在 `/Users/ysh/.gemini/antigravity/brain/a607dc47-5c79-456c-80b5-e017b65dce9a/scratch/` 建立一份 2 段式 JSON manifest（`width: 256, height: 256, frames: 25, steps: 4, layers: "40", reuse: 2, render_width: 128, render_height: 128`，Segment 1 使用 `okinawa_shisa_9grid.png`，Segment 2 設定 `"chain_mode": "motion_context"`），以 `BypassSandbox: true` 執行 `h3_storyboard_pipeline.py --chain-manifest`，驗證：
+  - **實測目標**：在 `scratch/` 建立一份 2 段式 JSON manifest（`width: 256, height: 256, frames: 25, steps: 4, layers: "40", reuse: 2, render_width: 128, render_height: 128`，Segment 1 使用 `okinawa_shisa_9grid.png`，Segment 2 設定 `"chain_mode": "motion_context"`），以 `BypassSandbox: true` 執行 `h3_storyboard_pipeline.py --chain-manifest`，驗證：
     1. Segment 1 成功產出 `.h3ctx` 潛空間檔與 `.mp4`。
     2. Segment 2 成功讀取 `.h3ctx` 透過 `--motion-context` 完成算圖並由 `ffmpeg` 拼接出最終 `_merged.mp4`。
     3. 測試完成後立即 `rm -rf` 清除 `scratch/` 與測試輸出目錄。
@@ -183,3 +186,66 @@
     2. 示範完整的 Context-IR 五維度結構（`[Scene]`, `[Camera]`, `Timeline:`, `[Look]`, `Audio:`）、無縫銜接語句、對白標籤（`<d>[Chinese] 看來今晚不會平靜了</d>`）、以及 `chain_mode: "motion_context"`。
     3. 全面更新 Web UI 按鈕（「🎬 電影分鏡範例」）、輸入框 Placeholder、專案預設 Slug 與匯出檔名。
     4. 完成所有修改並通過語法檢查後，已執行 `git add . && git commit -m "..." && git push origin main`（Commit: `ca12339`）。
+
+
+---
+
+### Phase P6：開源現代化與硬體感知架構重構（Open-Source Modernization & Hardware-Aware Architecture）
+
+- [x] **Step 1：全庫去敏化、路徑收斂與 pyproject.toml 建立（先清環境再寫功能）**
+  - **完成項目**：
+    1. 掃描並消除了所有 tracked/pipeline 程式碼中硬編碼的本機絕對路徑（`/Users/ysh/...`），統一透過 `pipeline/config.py` 動態推導 `REPO_ROOT`。
+    2. 更新 `pipeline/h3_gdrive_sync.py` 整合 `DEFAULT_GDRIVE_CACHE` 與佔位符註釋。
+    3. 更新 `.gitignore`，嚴格忽略 `scratch/`、`*.state.json`、`*.gdrive.json`、`gdrive_folder_cache.json`、權重檔與測試輸出。
+    4. 建立開源標準 `pyproject.toml`，區分核心運行（`numpy`, `pillow`, `requests`, `psutil`）與離線工具組（`torch`, `safetensors`, `huggingface_hub`）。
+    5. 更新 `.env.example`，涵蓋權重路徑、模式開關、硬體設定、LLM 端點與 Google Drive 配置。
+  - **驗證通過**：`git grep "/Users/"` 完全乾淨（0 matches）；`py_compile` 全數通過。
+
+- [x] **Step 2：實作「模組 A」——硬體感知與 Base/Turbo 雙軌切換引擎**
+  - **完成項目**：
+    1. 實作 `pipeline/h3_presets.py`：定義 `turbo`（`--steps 6`, 50 layers, 禁用 `--reuse`, 指向 `MiniMax-H3-Turbo`）與 `base`（`--steps 20`, 45 layers, `--reuse 2`, 指向 `MiniMax-H3`）標準 Preset。
+    2. 強制畫布 32 倍數驗證：`validate_dimensions(width, height)`，若不合規自動提示最近有效倍數或報錯。
+    3. 防 Swap 動態記憶體感知：透過 `vm_stat` 實時讀取可用記憶體（Available RAM）。若畫布大於 864x480 且可用 RAM < 48 GiB，自動警示 Swap 風險（1.5m $\to$ 5m/step）；配合 `--auto-downgrade-canvas` 可自動降級至 864x480。
+    4. 升級 `pipeline/h3_storyboard_pipeline.py`：新增 `--mode {turbo,base}`、`--auto-downgrade-canvas`，並更新 `--dry-run` 完整呈現 6 階段硬體與指令模擬。
+  - **驗證通過**：
+    - `python3 pipeline/h3_storyboard_pipeline.py --dry-run --mode turbo` 輸出符合 6 步無 reuse 規範。
+    - `python3 pipeline/h3_storyboard_pipeline.py --dry-run --mode base` 輸出符合 20 步 reuse=2 規範。
+    - 非 32 倍數畫布（如 320x240）被精準攔截並提示 320x256。
+    - 960x544 畫布精準觸發 Available RAM (33.1 GiB < 48 GiB) 之 Swap Alert。
+
+- [x] **Step 3：實作「模組 B」——動態提示詞張力 Linter 與抗漂移分鏡串接**
+  - **完成項目**：
+    1. 升級 `pipeline/h3_prompt_linter.py`：新增動態張力分析器（`analyze_dynamic_tension`），檢查高動能動作動詞（`ACTION_VERBS`）與運鏡指令（`CAMERA_KEYWORDS`）。過於靜態的 Prompt（Score < 0.35）會觸發結構化補強警告，防止生成人物凍結或去噪不全之慘烈畫面。
+    2. 實作關鍵幀抗漂移重錨定（`anchor_reset`）：在 `pipeline/h3_storyboard_pipeline.py` 支援 `anchor_ref_image` 與分鏡級 `anchor_reset: true`，在長片後段（第 4、5 段）自動切斷累積誤差並重新錨定初始角色設定圖，徹底解決角色變臉與服裝飄移。
+    3. 建立標準化中英雙語範本庫：
+       - `examples/storyboards/cyberpunk_detective_25s.json`（賽博霓虹・雨夜風衣偵探 25s）
+       - `examples/storyboards/xianxia_aerial_duel_25s.json`（古典仙俠・崇山空戰 25s）
+       - 配套自包含錨定資產：`examples/assets/detective_anchor_ref.jpg`、`examples/assets/xianxia_anchor_ref.png`。
+    4. 撰寫單元測試 `tests/test_prompt_linter_and_manifests.py`，驗證動態評分與兩套 Manifest 的 32 倍數尺寸、5 段完整性與高張力要求。
+  - **驗證通過**：
+    - 靜態廢話 Prompt 精準被 Linter 攔截（Score: 0.00，觸發 `[Low Dynamic Tension]` 警告）。
+    - 兩套 25 秒官方 Manifest 均獲得 1.00 滿分動態張力評價。
+    - `python3 -m unittest tests/test_prompt_linter_and_manifests.py` 3 項測試於 0.002s 全數 PASS。
+
+- [x] **Step 4：實作「模組 C」——Colab 斷點續算與防 503 狀態機**
+  - **完成項目**：
+    1. 實作 Segment-level Checkpoint 狀態機（`pipeline/h3_storyboard_pipeline.py`）：每算完一段 5s 分鏡，立即將產出的 `.mp4`、潛空間快照與健康檢查報告持久化至 `output_prefix.state.json`。
+    2. 斷點續算與防 503 重啟保護：重啟執行時，自動掃描既有狀態檔，透過 `verify_video_health()` 驗證完整性（0 黑幀/無解碼潰散），秒級跳過已完成的 Segment，無縫接續至未完成分鏡。
+    3. 撰寫開源標準筆記本 `notebooks/H3_Studio_Colab.ipynb`：
+       - 解決 `/content/content/` 路徑嵌套，嚴格錨定 `/content/H3-Studio`。
+       - 規避 Google Drive FUSE I/O 隨機讀取瓶頸：實作 Drive `.tar` 高速順序複製並解壓至 Colab 本地 NVMe SSD（`/content/models`）。
+       - 成果與 Checkpoint 狀態即時 rsync 寫回 Google Drive，確保遭遇 503 連線中斷時心血零損失。
+    4. 撰寫單元測試 `tests/test_checkpoint_interruption_resume.py`，模擬第 2 段中斷場景，驗證僅執行第 3 段算圖並成功合併。
+  - **驗證通過**：
+    - `python3 -m unittest tests/test_checkpoint_interruption_resume.py` 驗證模擬中斷跳過 Seg 1 & 2，僅執行 Seg 3 並更新全量狀態。
+    - `notebooks/H3_Studio_Colab.ipynb` 通過結構性 JSON 驗證（13 cells，含 GPU 檢查、FUSE 規避、模板選擇、斷點續跑與內嵌播放器）。
+
+- [x] **Phase 1（衛生與隱私防護）**：
+  - **完成項目**：
+    1. 確認 `.gitignore`：已覆蓋 `**/__pycache__/`, `**/outputs/`, `scratch/`, `*.state.json`, `.env`。
+    2. Google Drive 公開分享改為 opt-in：在 `pipeline/config.py` 實作 `get_gdrive_public_share()`（讀取 `H3_GDRIVE_PUBLIC_SHARE`，預設為 `False`）；更新 `.env.example` 並註記預設私有與轉碼延遲警示。
+    3. 移除誤導性回退 URL：在 `pipeline/h3_gdrive_sync.py` 中，未公開分享或取得 URL 失敗時一律將 `web_url` 設為 `None`（不拼接無效的 drive.google.com/file/d/...），呼叫端安全處理私有備份提示。
+    4. 撰寫單元測試 `tests/test_gdrive_sync.py`：mock 測試預設不發布、開啟環境變數才發布、以及 missing gdrive binary 之安全回退。
+  - **驗證通過**：
+    - `python3 -m unittest tests/test_gdrive_sync.py` 3 項測試全數通過。
+    - `python3 -m unittest discover -s tests` 8 項全域單元測試全數通過（0.018s）。

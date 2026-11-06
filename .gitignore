@@ -51,7 +51,14 @@
 !docs/assets/*.gif
 !film-chain/public/assets/demo/*.mp4
 
-# 6. 系統檔、敏感環境變數與本地 Agent 工作狀態
+# 6. 暫存沙盒與執行狀態 (Scratch & Runtime State)
+scratch/
+**/scratch/
+*.state.json
+*.gdrive.json
+gdrive_folder_cache.json
+
+# 7. 系統檔、敏感環境變數與本地 Agent 工作狀態
 **/.DS_Store
 .env
 .env.*
@@ -62,4 +69,3 @@ AGENTS.md
 **/.agents/
 **/.git_backup/
 *.command
-
