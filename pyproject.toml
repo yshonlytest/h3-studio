@@ -67,6 +67,10 @@ include = ["pipeline*"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+extend-exclude = [
+    "film-chain",
+    "*.ipynb",
+]
 
 [tool.ruff.lint]
 # Mandatory blocking rules for CI (thresholds follow docs/STANDARDS.md)
