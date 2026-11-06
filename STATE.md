@@ -303,3 +303,13 @@
     - `python3 -m py_compile pipeline/*.py` 全模組編譯通過。
     - `python3 -m unittest discover -s tests` 12 項單元測試全數通過（0.020s）。
     - `python3 -m pipeline.h3_storyboard_pipeline --chain-manifest examples/storyboards/cyberpunk_detective_25s.json --dry-run` 執行正確。
+
+- [x] **Phase 5（補齊五大核心單元測試）**：
+  - **完成項目**：
+    1. `tests/test_presets.py`：驗證 32 倍數畫布校驗、最近有效解析度推薦、以及 Turbo（禁用 reuse）與 Base 預設參數對齊。
+    2. `tests/test_memory.py`：以標準 `vm_stat` 輸出字串驗證多級頁面計算，並以 Mock 驗證統一記憶體不足時自動觸發安全降級。
+    3. `tests/test_anchor.py`：驗證第 4 段分鏡在觸發 `anchor_reset=True` 時重置 `first_frame` 且切斷 `motion_context`。
+    4. `tests/test_linter.py`：驗證中英雙語高動態 Prompt 評分 $\ge 0.35$ 與靜態 Prompt 結構化警告攔截。
+    5. 全部測試全面採用 `tempfile.TemporaryDirectory` 與 mock 物件，零依賴真實算圖與真實權重。
+  - **驗證通過**：
+    - `python3 -m unittest discover -s tests` 26 項全域單元測試 100% 通過（0.030s）。
