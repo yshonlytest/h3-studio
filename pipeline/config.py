@@ -100,3 +100,7 @@ def get_gdrive_public_share() -> bool:
     """Check if Google Drive uploaded files should be shared publicly (opt-in)."""
     val = os.environ.get("H3_GDRIVE_PUBLIC_SHARE", "").strip().lower()
     return val in ("1", "true", "yes")
+
+
+# Linter quality thresholds:
+TENSION_MIN_SCORE: float = 0.35

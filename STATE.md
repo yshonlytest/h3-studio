@@ -313,3 +313,13 @@
     5. 全部測試全面採用 `tempfile.TemporaryDirectory` 與 mock 物件，零依賴真實算圖與真實權重。
   - **驗證通過**：
     - `python3 -m unittest discover -s tests` 26 項全域單元測試 100% 通過（0.030s）。
+
+- [x] **Phase 6（流程強化：錨定策略、記憶體重查、上傳追蹤與詞表模組化）**：
+  - **完成項目**：
+    1. 實作可設定錨定策略：支援 `--anchor-every N` 與 manifest `anchor_every`，自動週期性執行角色錨定重置。
+    2. 分段動態記憶體重查：在每個 Segment 算圖前主動呼叫 `get_system_memory_status()`，低於 48 GiB 門檻時列印 `[Memory Guard]` 警告並在 State 標記 `low_memory_warning: true`。
+    3. 非阻塞上傳日誌導流：`dispatch_async_upload()` 輸出定向至 `scratch/upload_logs/upload_<stem>.log`，State 支援記錄 `upload_status`。
+    4. Linter 詞表解耦至純 Python 常數檔 [`pipeline/tension_keywords.py`](pipeline/tension_keywords.py)，閾值集中至 `pipeline/config.py`，避開 JSON 打包遺漏問題。
+  - **驗證通過**：
+    - AST 全模組檢查零違規。
+    - `python3 -m unittest discover -s tests` 26 項單元測試全數通過（0.037s）。

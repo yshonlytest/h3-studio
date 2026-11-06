@@ -606,6 +606,10 @@ def _resolve_segment_anchoring(
     use_prev_motion = bool(seg.get("use_prev_motion_context") or (idx > 1 and chain_mode == "motion_context"))
     use_prev_last = bool(seg.get("use_prev_last_frame") or (idx > 1 and chain_mode == "first_frame"))
 
+    anchor_every = int(manifest.get("anchor_every", 0))
+    if anchor_every > 0 and idx > 1 and (idx - 1) % anchor_every == 0:
+        anchor_reset = True
+
     if anchor_reset and (seg.get("first_frame") or manifest_anchor_ref):
         anchor_target = seg.get("first_frame") or manifest_anchor_ref
         anchor_path = Path(anchor_target).expanduser().resolve()
@@ -784,6 +788,12 @@ def run_chained_manifest(manifest_path: Path) -> Path:
             ),
         )
 
+        # Re-check system memory before heavy generation
+        current_mem = get_system_memory_status()
+        low_memory_detected = current_mem.is_swap_risk
+        if low_memory_detected:
+            print(f"[Memory Guard][Segment {idx}] ⚠️ Low unified memory: {current_mem.available_gib:.1f} GiB available. Watch for swap risk.", flush=True)
+
         seg_video = run_h3_direct(job=seg_job)
         trim_count = seg.get("trim_first_frames", default_trim)
         if trim_count > 0:
@@ -807,6 +817,8 @@ def run_chained_manifest(manifest_path: Path) -> Path:
             "timestamp": time.time(),
             "duration": report.duration_seconds,
             "is_valid": report.is_valid,
+            "low_memory_warning": low_memory_detected,
+            "upload_status": "none",
         }
         state.updated_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         save_state(state_file, state)
@@ -944,6 +956,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--resume", help="Path to resume from a checkpoint file (.ckpt)")
     parser.add_argument("--prepare-only", action="store_true", help="Only copy image and write workflow JSON without running inference")
     parser.add_argument("--export-gdrive", action="store_true", help="Automatically trigger non-blocking Google Drive sync upon completion")
+    parser.add_argument("--anchor-every", type=int, default=0, help="Automatically reset character anchor every N segments (default: 0 = follow manifest)")
     parser.add_argument("--model-dir", help="Override MiniMax-H3 model directory (e.g. models/MiniMax-H3-Turbo)")
     return parser
 

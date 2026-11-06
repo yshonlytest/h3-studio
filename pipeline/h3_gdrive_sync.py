@@ -201,16 +201,20 @@ def dispatch_async_upload(
     folder_name: str = "H3-Studio",
     on_complete: callable | None = None,
 ) -> subprocess.Popen:
-    """Non-blocking detached background process upload. Returns Popen handle immediately."""
-    manifest_log = file_path.with_suffix(".gdrive.json")
+    """Non-blocking detached background process upload with dedicated log file."""
+    scratch_dir = DEFAULT_SCRATCH_DIR / "upload_logs"
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+    log_file = scratch_dir / f"upload_{file_path.stem}.log"
+    log_fp = open(log_file, "a", encoding="utf-8")
+
     cmd = [sys.executable, "-m", "pipeline.h3_gdrive_sync", str(file_path.resolve()), folder_name]
     proc = subprocess.Popen(
         cmd,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=log_fp,
+        stderr=log_fp,
         start_new_session=True,
     )
-    print(f"[GDrive Sync] ☁️ Spawned detached background upload process (PID: {proc.pid}) for {file_path.name}", flush=True)
+    print(f"[GDrive Sync] ☁️ Spawned detached background upload process (PID: {proc.pid}) for {file_path.name} (log: {log_file.name})", flush=True)
     return proc
 
 

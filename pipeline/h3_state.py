@@ -21,7 +21,9 @@ class SegmentRecord:
     timestamp: float = 0.0
     duration: float = 0.0
     is_valid: bool = True
-    upload_status: str = "none"
+    upload_status: str = "none"  # "none", "pending", "ok", "failed"
+    upload_url: str = ""
+    low_memory_warning: bool = False
 
 
 @dataclass
