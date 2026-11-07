@@ -2178,7 +2178,7 @@
         const banner = document.getElementById("heartbeatWarningBanner");
         if (banner) banner.style.display = "none";
       } catch (e) {
-        alert(`發送中止信號失敗: ${e.message}`);
+        showToast(`⚠️ 發送中止信號失敗: ${e.message}`);
       }
     }
 
@@ -2553,10 +2553,10 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
         if (successful && onSuccess) {
           onSuccess();
         } else if (!successful) {
-          alert("複製失敗，請手動全選下方方框複製。");
+          showToast("⚠️ 複製失敗，請手動全選下方方框複製。");
         }
       } catch (err) {
-        alert("複製失敗，請手動全選下方方框複製：" + err.message);
+        showToast("⚠️ 複製失敗，請手動全選下方方框複製：" + err.message);
       }
     }
 
@@ -4038,7 +4038,7 @@ Return ONLY valid JSON matching this schema:
     function confirmStep2AndProceed() {
       const segs = syncSegmentsFromDOM();
       if (!segs.length) {
-        alert("請先至少保留或新增 1 個分鏡段落！");
+        showToast("⚠️ 請先至少保留或新增 1 個分鏡段落！");
         return;
       }
       document.getElementById("step3Card").scrollIntoView({ behavior: "smooth" });
@@ -4054,7 +4054,7 @@ Return ONLY valid JSON matching this schema:
       const replanBtn = document.getElementById("replanBtn");
 
       if (!desc) {
-        alert("請先在步驟一輸入原始的「中文情節描述」！");
+        showToast("⚠️ 請先在步驟一輸入原始的「中文情節描述」！");
         document.getElementById("chineseDesc").focus();
         return;
       }
@@ -4096,12 +4096,12 @@ Return ONLY valid JSON matching this schema:
             currentPlan = plan;
           }
           renderPlanUI(currentPlan);
-          alert(`✅ 已成功依 ${currentSeconds} 秒重新規劃 ${plan.segments.length} 段分鏡腳本！\n步驟四影片段落數亦已同步更新。`);
+          showToast(`✅ 已成功依 ${currentSeconds} 秒重新規劃 ${plan.segments.length} 段分鏡腳本！`);
         } else {
           throw new Error("AI 回傳的腳本結構不完整，請重試");
         }
       } catch (err) {
-        alert(`❌ 重設分鏡失敗：${err.message}`);
+        showToast(`❌ 重設分鏡失敗：${err.message}`);
       } finally {
         replanBtn.disabled = false;
         replanBtn.textContent = originalText;
@@ -4521,7 +4521,7 @@ Return ONLY valid JSON matching this schema:
     async function executeCloudVideoStep() {
       const segs = syncSegmentsFromDOM();
       if (!segs.length) {
-        alert("請先在步驟一產出或新增至少 1 個分鏡段落");
+        showToast("⚠️ 請先在步驟一產出或新增至少 1 個分鏡段落");
         return;
       }
 
@@ -4545,7 +4545,7 @@ Return ONLY valid JSON matching this schema:
       }
 
       if (!apiKey) {
-        alert("請先填入對應的雲端 API Key！");
+        showToast("⚠️ 請先填入對應的雲端 API Key！");
         const keyInput = document.getElementById("cloudDirectApiKey");
         if (keyInput) keyInput.focus();
         return;
@@ -4643,7 +4643,7 @@ Return ONLY valid JSON matching this schema:
         if (err.name === "AbortError" || err.message.includes("中止")) {
           showToast("⏹️ 雲端任務已由使用者中止");
         } else {
-          alert(`雲端生成失敗: ${err.message}`);
+          showToast(`❌ 雲端生成失敗: ${err.message}`);
         }
       } finally {
         startBtn.disabled = false;
@@ -4684,7 +4684,7 @@ Return ONLY valid JSON matching this schema:
 
     async function mergeAndDownloadCloudClips(autoDownload = true, seekTime = null) {
       if (!currentPlaylist.length) {
-        alert("目前沒有分段影片清單可合併");
+        showToast("⚠️ 目前沒有分段影片清單可合併");
         return;
       }
       if (currentPlaylist.length === 1 || currentPlaylist[0].title.includes("完整合併總影片")) {
@@ -4789,7 +4789,7 @@ Return ONLY valid JSON matching this schema:
         playVideoInStage(finalUrl, "🎬 前端無縫合併完成品", true, seekTime);
         return finalUrl;
       } catch (err) {
-        alert(`前端合併失敗：${err.message}`);
+        showToast(`❌ 前端合併失敗：${err.message}`);
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -4837,7 +4837,7 @@ Return ONLY valid JSON matching this schema:
       const seed = seedEl ? parseInt(seedEl.value, 10) : 20260931 + idx;
 
       if (!promptText) {
-        alert("請輸入重抽提示詞！");
+        showToast("⚠️ 請輸入重抽提示詞！");
         return;
       }
 
@@ -4882,7 +4882,7 @@ Return ONLY valid JSON matching this schema:
           showToast(`✅ Part ${idx + 1} 重抽已下發！已更新終端指令，Colab 將自動接單。`);
           document.getElementById("step3Card").scrollIntoView({ behavior: "smooth" });
         } catch (e) {
-          alert(`發布重抽任務失敗: ${e.message}`);
+          showToast(`❌ 發布重抽任務失敗: ${e.message}`);
         }
       } else if (activeRoute === "cloud") {
         const select = document.getElementById("cloudProviderSelect");
@@ -4892,7 +4892,7 @@ Return ONLY valid JSON matching this schema:
         const apiKey = provider === "minimax" ? p.minimaxKey : p.falKey;
 
         if (!apiKey) {
-          alert("請先填入對應的雲端 API Key！");
+          showToast("⚠️ 請先填入對應的雲端 API Key！");
           return;
         }
 
@@ -5203,7 +5203,7 @@ Return ONLY valid JSON matching this schema:
 
       if (typeof H3AudioStudio !== "undefined") {
         H3AudioStudio.speakWebSpeech({ text: item.text }).catch(err => {
-          alert(`語音播放失敗: ${err.message}`);
+          showToast(`❌ 語音播放失敗: ${err.message}`);
         });
       }
     }
@@ -5236,7 +5236,7 @@ Return ONLY valid JSON matching this schema:
         customBgmAudioBuffer = await actx.decodeAudioData(arrayBuf);
         showToast(`🎵 已載入自訂音樂檔: ${file.name} (${Math.round(customBgmAudioBuffer.duration)}秒)`);
       } catch (err) {
-        alert(`自訂音樂檔解碼失敗: ${err.message}`);
+        showToast(`❌ 自訂音樂檔解碼失敗: ${err.message}`);
       }
     }
 
@@ -5270,7 +5270,7 @@ Return ONLY valid JSON matching this schema:
         if (style === "custom") {
           buffer = customBgmAudioBuffer;
           if (!buffer) {
-            alert("請先選擇並上傳本地音樂檔案！");
+            showToast("⚠️ 請先選擇並上傳本地音樂檔案！");
             return;
           }
         } else if (typeof H3AudioStudio !== "undefined") {
@@ -5294,13 +5294,13 @@ Return ONLY valid JSON matching this schema:
         if (btn) btn.textContent = "⏹️ 停止試聽";
         showToast("🎶 正在試聽背景襯樂...");
       } catch (err) {
-        alert(`襯樂播放失敗: ${err.message}`);
+        showToast(`❌ 襯樂播放失敗: ${err.message}`);
       }
     }
 
     function downloadSubtitleFile(format) {
       if (!currentDialogueItems.length) {
-        alert("目前沒有台詞可輸出字幕");
+        showToast("⚠️ 目前沒有台詞可輸出字幕");
         return;
       }
       let content = "";
@@ -5311,7 +5311,7 @@ Return ONLY valid JSON matching this schema:
         content = H3AudioStudio.generateVtt(currentDialogueItems);
       }
       if (!content) {
-        alert("尚無有效對白文字可導出字幕！");
+        showToast("⚠️ 尚無有效對白文字可導出字幕！");
         return;
       }
 
@@ -5370,7 +5370,7 @@ Return ONLY valid JSON matching this schema:
         SHISA_DEFAULT_CONFIG.merged_video_path;
 
       if (!sourceVideoUrl) {
-        alert("尚未載入或生成任何基礎影片！請先完成步驟三或四。");
+        showToast("⚠️ 尚未載入或生成任何基礎影片！請先完成步驟三或四。");
         return;
       }
 
@@ -5633,7 +5633,7 @@ Return ONLY valid JSON matching this schema:
         playCompletionChime();
         stage.scrollIntoView({ behavior: "smooth" });
       } catch (err) {
-        alert(`合成成片失敗: ${err.message}`);
+        showToast(`❌ 合成成片失敗: ${err.message}`);
         stageText.textContent = "❌ 合成中斷";
         logText.textContent = err.message;
       } finally {
@@ -5896,7 +5896,7 @@ Return ONLY valid JSON matching this schema:
       if (typeof H3ProjectStore === "undefined") return;
       const list = await H3ProjectStore.listProjects();
       if (list.length <= 1) {
-        alert("這是最後一個專案，無法刪除！您可直接點擊「➕ 新增空白專案」或修改內容。");
+        showToast("⚠️ 這是最後一個專案，無法刪除！您可直接點擊「➕ 新增空白專案」或修改內容。");
         return;
       }
       if (!confirm(`確定要刪除專案「${currentActiveProjectName}」嗎？此動作無法復原。`)) {
@@ -5924,7 +5924,7 @@ Return ONLY valid JSON matching this schema:
         a.click();
         showToast(`📤 已匯出完整專案檔：${slug}.filmchain.json`);
       } catch (err) {
-        alert(`匯出失敗：${err.message}`);
+        showToast(`❌ 匯出失敗：${err.message}`);
       }
     }
 
@@ -5938,7 +5938,7 @@ Return ONLY valid JSON matching this schema:
         await applyProjectStateToUI(restored);
         showToast(`📥 成功匯入並還原專案：「${restored.name}」`);
       } catch (err) {
-        alert(`匯入專案失敗：${err.message}`);
+        showToast(`❌ 匯入專案失敗：${err.message}`);
       } finally {
         input.value = "";
       }
@@ -5970,7 +5970,7 @@ Return ONLY valid JSON matching this schema:
       if (count > 0) {
         showToast(`📦 正在為您下載 ${count} 項專案產出素材...`);
       } else {
-        alert("目前尚無可下載的九宮格或影片素材！");
+        showToast("⚠️ 目前尚無可下載的九宮格或影片素材！");
       }
     }
 
@@ -5987,7 +5987,7 @@ Return ONLY valid JSON matching this schema:
         if (dialog) dialog.showModal();
         showToast("✅ 跨裝置雲端接力連結已生成！");
       } catch (err) {
-        alert(`雲端同步失敗：${err.message}`);
+        showToast(`❌ 雲端同步失敗：${err.message}`);
       }
     }
 
@@ -6041,7 +6041,7 @@ Return ONLY valid JSON matching this schema:
         if (dialog && dialog.open) dialog.close();
         showToast(`✅ 已成功替換 Panel #${currentEditingPanelIndex} 並重新縫合九宮格！`);
       } catch (err) {
-        alert(`替換單格圖片失敗：${err.message}`);
+        showToast(`❌ 替換單格圖片失敗：${err.message}`);
       } finally {
         input.value = "";
       }

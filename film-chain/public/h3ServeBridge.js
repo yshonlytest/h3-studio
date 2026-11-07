@@ -162,7 +162,7 @@
     if (typeof window.showToast === 'function') {
       window.showToast(msg);
     } else {
-      alert(msg);
+      console.warn(msg);
     }
   }
 
