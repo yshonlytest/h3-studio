@@ -3,7 +3,9 @@ from __future__ import annotations
 import io
 import json
 import unittest
+from unittest.mock import patch
 
+from pipeline.h3_gdrive_sync import GDriveUploadResult
 from pipeline.h3_server import EventBroadcaster, H3DaemonHandler
 
 
@@ -120,6 +122,27 @@ class TestH3Server(unittest.TestCase):
         self.assertIn("event: test_event", msg)
         self.assertIn('"val": 42', msg)
         broadcaster.unsubscribe(q)
+
+    def test_gdrive_upload_endpoint(self) -> None:
+        fake_res = GDriveUploadResult(
+            ok=True,
+            file_id="fake_id_123",
+            web_url="https://drive.google.com/file/d/fake_id_123/view",
+            folder_id="folder_abc",
+            timestamp="20261107_235000",
+        )
+        raw_video = b"fake-mp4-binary-payload"
+        raw = (
+            b"POST /api/gdrive/upload?filename=test_master.mp4&folder=H3-Studio HTTP/1.1\r\n"
+            b"Host: localhost\r\n"
+            b"Content-Type: application/octet-stream\r\n"
+            b"Content-Length: " + str(len(raw_video)).encode("utf-8") + b"\r\n\r\n" + raw_video
+        )
+        with patch("pipeline.h3_server.sync_upload", return_value=fake_res) as mock_sync:
+            resp = self._call_handler(raw)
+            self.assertEqual(mock_sync.call_count, 1)
+        self.assertIn("200 OK", resp)
+        self.assertIn('"file_id": "fake_id_123"', resp)
 
 
 if __name__ == "__main__":

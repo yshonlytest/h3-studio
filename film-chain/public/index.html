@@ -801,17 +801,6 @@
       </div>
     </div>
     <div class="header-actions">
-      <div style="display:inline-flex; align-items:center;">
-        <span id="comfyStatusBadge" class="badge warn" onclick="checkComfyConnection()" style="cursor:pointer;">檢查本機 H3 / ComfyUI...</span>
-        <span class="info-tip" role="button" tabindex="0" aria-label="查看本機 H3 Metal 與 ComfyUI 服務狀態說明">ⓘ
-          <span class="tooltip-content">
-            <strong>🖥️ 本機 H3 Metal 守護進程 (8080) / ComfyUI (8188)</strong><br>
-            • 綠燈 🟢：本機 H3 Metal 守護進程 (`h3_server`) 或 ComfyUI 已連線。<br>
-            • 黃燈 ⚪：未連線。若使用本機推論，請執行 <code>./scripts/start_studio.sh</code> 或雙擊啟動腳本。<br>
-            <span style="color:#7dd3fc; font-size:0.75rem; display:block; margin-top:4px;">💡 提示：若使用「路線 1 (Google Colab)」或「路線 2 (雲端 API)」，無需啟動本機服務亦可創作！</span>
-          </span>
-        </span>
-      </div>
       <button type="button" onclick="loadDefaultDemo()">🎬 載入示範專案</button>
     </div>
   </header>
@@ -1054,18 +1043,22 @@
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div>
               <label>🧠 劇本模型</label>
-              <select id="promptProviderSelect" onchange="saveLocalPrefs()">
+              <select id="promptProviderSelect" onchange="onPromptProviderChange()">
                 <option value="agent-llm" selected>🤖 Agent 訂閱代寫（免 API Key）</option>
                 <option value="local-llm">🖥️ 本機 5D 引擎 (免 Key)</option>
                 <option value="gemini">Gemini 3.8 Flash (推薦)</option>
                 <option value="gemini-pro">Gemini 3.1 Pro</option>
                 <option value="openai">OpenAI (GPT-4o / 4.1)</option>
               </select>
+              <div id="agentWriteHint" style="display:none; margin-top:6px; padding:7px 10px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); border-radius:8px; font-size:0.72rem; color:#fcd34d; line-height:1.5;">
+                🤖 <strong>免 API 流程（4 步）</strong>：① 按下方「生成分鏡腳本」→ 產生 <strong>Agent 任務包</strong>於步驟一最下方，一鍵複製 ② 貼給你的 Agent（Claude Code / Antigravity / Codex），它用你的<strong>訂閱額度</strong>生成分鏡 JSON（九宮格模式下還會替你產 3×3 PNG）③ 把 JSON 貼進「📄 貼上 Agent 分鏡 JSON」匯入（九宮格可找 Agent 轉 dataURL 直接附入） ④ 到步驟二檢視微調後步驟三渲染。
+              </div>
             </div>
             <div id="imageProviderCol">
               <label id="imageProviderLabel">🎨 九宮格生圖模型</label>
               <select id="imageProviderSelect" onchange="saveLocalPrefs()">
-                <option value="manual" selected>🔗 免生圖（潛空間 / 手動）</option>
+                <option value="agent-image" selected>🤖 Agent 訂閱代產（免 API Key）</option>
+                <option value="manual">🔗 免生圖（手動上傳）</option>
                 <option value="nano-banana-2">Nano Banana 2 (Flash 生圖)</option>
                 <option value="nano-banana-pro">Nano Banana Pro</option>
                 <option value="openai-image">OpenAI (gpt-image-1)</option>
@@ -1462,7 +1455,10 @@
       <div class="video-player-stage">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
           <strong style="font-size:0.88rem; color:#e2e8f0;">🏆 基礎無縫合併影片預覽與下載</strong>
-          <a id="downloadVideoBtn" class="btn primary" href="#" download style="padding:5px 14px; font-size:0.8rem; display:none;">⬇️ 下載 MP4</a>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <a id="downloadVideoBtn" class="btn primary" href="#" download style="padding:5px 14px; font-size:0.8rem; display:none;">⬇️ 下載 MP4</a>
+            <button type="button" id="saveMainToDriveBtn" class="btn" onclick="saveVideoToGoogleDrive('main')" style="padding:5px 14px; font-size:0.8rem; display:none; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14);">☁️ 儲存到雲端硬碟</button>
+          </div>
         </div>
         <div style="position:relative; width:100%; border-radius:8px; overflow:hidden;">
           <video id="mainVideoPlayer" controls playsinline preload="metadata" style="width:100%; display:block;"></video>
@@ -1624,7 +1620,10 @@
       <div id="masterFinalVideoStage" style="display:none; background:#06090f; border:1px solid #10b981; border-radius:12px; padding:14px; text-align:center;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
           <strong style="font-size:0.92rem; color:#6ee7b7;">🌟 廣播級最終成片（聲影字幕多軌合一）</strong>
-          <a id="downloadMasterVideoBtn" class="btn success" href="#" download="filmchain_master_cinematic.mp4" style="padding:6px 16px; font-size:0.84rem; font-weight:700;">⬇️ 下載最終影視成片 MP4</a>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <a id="downloadMasterVideoBtn" class="btn success" href="#" download="filmchain_master_cinematic.mp4" style="padding:6px 16px; font-size:0.84rem; font-weight:700;">⬇️ 下載最終影視成片 MP4</a>
+            <button type="button" id="saveMasterToDriveBtn" class="btn" onclick="saveVideoToGoogleDrive('master')" style="padding:6px 14px; font-size:0.82rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;">☁️ 儲存到雲端硬碟</button>
+          </div>
         </div>
         <div style="position:relative; width:100%; border-radius:8px; overflow:hidden;">
           <video id="masterFinalVideoPlayer" controls playsinline preload="metadata" style="width:100%; max-height:480px; display:block; background:#000;"></video>
@@ -1790,6 +1789,34 @@
     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
       <button type="button" onclick="document.getElementById('agentStoryboardImportDialog').close()" style="padding:7px 16px; font-size:0.85rem;">取消</button>
       <button type="button" class="success" onclick="importAgentStoryboardJSON()" style="padding:7px 18px; font-size:0.85rem;">⟳ 匯入到網頁</button>
+    </div>
+  </dialog>
+
+  <!-- ☁️ 儲存到雲端硬碟選單 Modal (Google Drive / Dropbox / iCloud / OneDrive) -->
+  <dialog id="cloudDriveSaveDialog" style="width:min(460px, 92vw); padding:20px 22px; border-radius:16px; background:#0f172a; border:1px solid #38bdf8; color:#f8fafc; box-shadow:0 20px 50px rgba(0,0,0,0.85);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #1e293b; padding-bottom:10px;">
+      <h3 style="margin:0; font-size:1.02rem; color:#7dd3fc;">☁️ 儲存影片至雲端硬碟</h3>
+      <button type="button" class="btn" onclick="document.getElementById('cloudDriveSaveDialog').close()" style="padding:3px 9px; font-size:0.78rem;">✕</button>
+    </div>
+    <p style="font-size:0.8rem; color:#94a3b8; line-height:1.5; margin:0 0 14px 0;">
+      請選擇您偏好的雲端硬碟儲存方式（免在網頁輸入雲端帳密）：
+    </p>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button type="button" class="btn" onclick="executeCloudSaveOption('picker')" style="display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:11px 14px; text-align:left; background:#091426; border:1px solid #38bdf8; border-radius:10px;">
+        <span style="font-size:0.88rem; font-weight:700; color:#7dd3fc;">📂 另存至電腦雲端同步資料夾（Google Drive / Dropbox / iCloud / OneDrive）</span>
+        <span style="font-size:0.75rem; color:#94a3b8;">開啟系統「另存新檔」視窗，直接點選左側欄的雲端硬碟資料夾一步存入</span>
+      </button>
+      <button type="button" class="btn" onclick="executeCloudSaveOption('share')" style="display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:11px 14px; text-align:left; background:#091426; border:1px solid #a855f7; border-radius:10px;">
+        <span style="font-size:0.88rem; font-weight:700; color:#d8b4fe;">📲 系統分享至雲端 App（手機 / 平板 / Mac 原生選單）</span>
+        <span style="font-size:0.75rem; color:#94a3b8;">呼叫 iOS / Android / macOS 系統分享面板，直接傳送至 Google Drive、Dropbox、iCloud 或 AirDrop</span>
+      </button>
+      <button type="button" id="cloudSaveDaemonOptionBtn" class="btn" onclick="executeCloudSaveOption('daemon')" style="display:none; flex-direction:column; align-items:flex-start; gap:3px; padding:11px 14px; text-align:left; background:rgba(16,185,129,0.1); border:1px solid #10b981; border-radius:10px;">
+        <span style="font-size:0.88rem; font-weight:700; color:#6ee7b7;">⚡ 本機守護進程 (8080) 自動直傳 Google Drive</span>
+        <span style="font-size:0.75rem; color:#94a3b8;">已偵測到本機 H3 服務在線，一鍵背景上傳至 Google Drive「H3-Studio」資料夾</span>
+      </button>
+    </div>
+    <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+      <button type="button" class="btn" onclick="document.getElementById('cloudDriveSaveDialog').close()" style="padding:6px 14px; font-size:0.82rem;">取消</button>
     </div>
   </dialog>
 
@@ -2576,6 +2603,8 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
     }
 
     function getPrefs() {
+      const storedPromptProv = localStorage.getItem("h3_prompt_provider") || "agent-llm";
+      const storedImageProv = localStorage.getItem("h3_image_provider") || "agent-image";
       return {
         geminiKey: localStorage.getItem("h3_gemini_key") || "",
         openaiKey: localStorage.getItem("h3_openai_key") || "",
@@ -2587,14 +2616,25 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
         cloudVideoBaseUrl: (localStorage.getItem("h3_cloud_video_base") || "https://ark.cn-beijing.volces.com/api/v3").replace(/\/+$/, ""),
         cloudVideoModel: localStorage.getItem("h3_cloud_video_model") || "doubao-seedance-1-0-pro-250528",
         comfyUrl: (localStorage.getItem("h3_comfy_url") || "http://127.0.0.1:8188").replace(/\/+$/, ""),
-        promptProvider: localStorage.getItem("h3_prompt_provider") || "gemini",
-        imageProvider: localStorage.getItem("h3_image_provider") || "nano-banana-2",
+        promptProvider: ((storedPromptProv === "gemini" || storedPromptProv === "gemini-pro") && !localStorage.getItem("h3_gemini_key")) ||
+                        (storedPromptProv === "openai" && !localStorage.getItem("h3_openai_key"))
+          ? "agent-llm" : storedPromptProv,
+        imageProvider: ((storedImageProv.startsWith("nano-banana") && !localStorage.getItem("h3_gemini_key")) ||
+                        (storedImageProv === "openai-image" && !localStorage.getItem("h3_openai_key")))
+          ? "agent-image" : storedImageProv,
       };
     }
 
     function saveLocalPrefs() {
       localStorage.setItem("h3_prompt_provider", document.getElementById("promptProviderSelect").value);
-      localStorage.setItem("h3_image_provider", document.getElementById("imageProviderSelect").value);
+      localStorage.setItem("h3_image_provider", document.getElementById("imageProviderSelect")?.value || "agent-image");
+    }
+
+    function onPromptProviderChange() {
+      saveLocalPrefs();
+      const hint = document.getElementById("agentWriteHint");
+      const sel = document.getElementById("promptProviderSelect");
+      if (hint && sel) hint.style.display = sel.value === "agent-llm" ? "block" : "none";
     }
 
     // ==================== Info Tip Mobile Modal & Interactions ====================
@@ -2807,11 +2847,20 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       const box = document.getElementById("gridPreviewContainer");
       const img = document.getElementById("plannedGridImg");
       const dl = document.getElementById("downloadGridLink");
-      img.src = dataUrl;
-      dl.href = dataUrl;
+      if (dataUrl) {
+        img.style.display = "";
+        dl.style.display = "";
+        img.src = dataUrl;
+        dl.href = dataUrl;
+      } else {
+        img.style.display = "none";
+        dl.style.display = "none";
+      }
       const paradigm = document.getElementById("chainParadigmSelect")?.value || "latent_chain";
       box.style.display = paradigm === "grid_keyframes" ? "block" : "none";
-      sliceNineGridInBrowser(dataUrl);
+      if (dataUrl) {
+        sliceNineGridInBrowser(dataUrl);
+      }
     }
 
     async function dataUrlToBlob(dataUrl) {
@@ -2830,8 +2879,10 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       const envApi = window.H3LocalEnv;
       if (envApi && await envApi.checkNow()) {
         detectedLocalEngine = "metal";
-        badge.className = "badge ok";
-        badge.textContent = "🟢 本機 H3 Metal 已連線 (8080)";
+        if (badge) {
+          badge.className = "badge ok";
+          badge.textContent = "🟢 本機 H3 Metal 已連線 (8080)";
+        }
         if (engineEl) engineEl.innerHTML = `🟢 當前選用引擎：<strong style="color:#6ee7b7;">H3 Metal 原生守護進程 (127.0.0.1:8080)</strong>`;
         return true;
       }
@@ -2839,15 +2890,19 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
         const res = await fetch(`${comfyUrl}/system_stats`, { method: "GET" });
         if (res.ok) {
           detectedLocalEngine = "comfy";
-          badge.className = "badge ok";
-          badge.textContent = `🟢 本地 ComfyUI 已連線 (${comfyUrl})`;
+          if (badge) {
+            badge.className = "badge ok";
+            badge.textContent = `🟢 本地 ComfyUI 已連線 (${comfyUrl})`;
+          }
           if (engineEl) engineEl.innerHTML = `🟡 當前選用引擎：<strong style="color:#fcd34d;">ComfyUI 節點排程 (${comfyUrl})</strong>`;
           return true;
         }
       } catch (_e) {}
       detectedLocalEngine = "none";
-      badge.className = "badge warn";
-      badge.textContent = "⚪ 本機 H3 (8080) / ComfyUI (8188) 未啟動 (點此重試)";
+      if (badge) {
+        badge.className = "badge warn";
+        badge.textContent = "⚪ 本機 H3 (8080) / ComfyUI (8188) 未啟動 (點此重試)";
+      }
       if (engineEl) engineEl.innerHTML = `⚪ 引擎狀態：<span style="color:#fca5a5;">未偵測到 8080 或 8188 服務（請先執行 ./scripts/start_studio.sh）</span>`;
       return false;
     }
@@ -3250,6 +3305,9 @@ ${desc}${extra}
         if (planBtn) planBtn.textContent = "✨ 生成分鏡腳本（潛空間一鏡到底）";
         if (step2Title) step2Title.textContent = "步驟二：分鏡腳本與運鏡微調（潛空間一鏡到底）";
         if (imgSelect) imgSelect.value = "manual";
+        if (imgSelect) { imgSelect.disabled = true; imgSelect.title = "潛空間一鏡到底不使用九宮格圖，無需選擇生圖模型"; }
+        const imgLabelGray = document.getElementById("imageProviderLabel");
+        if (imgLabelGray) { imgLabelGray.style.opacity = "0.45"; }
         if (shouldOverwriteSegments) {
           modeSelects.forEach((sel) => {
             sel.value = "motion_context";
@@ -3263,7 +3321,10 @@ ${desc}${extra}
         if (barContainer) barContainer.style.display = "flex";
         if (planBtn) planBtn.textContent = "✨ 生成分鏡腳本與九宮格圖";
         if (step2Title) step2Title.textContent = "步驟二：九宮格與分鏡腳本微調";
-        if (imgSelect && imgSelect.value === "manual") imgSelect.value = "nano-banana-2";
+        if (imgSelect) { imgSelect.disabled = false; imgSelect.title = ""; }
+        const imgLabelBright = document.getElementById("imageProviderLabel");
+        if (imgLabelBright) { imgLabelBright.style.opacity = "1"; }
+        if (imgSelect && !imgSelect.value) imgSelect.value = "agent-image";
         if (shouldOverwriteSegments) {
           modeSelects.forEach((sel) => {
             sel.value = "first_frame";
@@ -3687,7 +3748,7 @@ ${desc}${extra}
           plan = await callPlanViaOpenAI(prefs.openaiKey, prefs.openaiBaseUrl, prefs.openaiModel, sysPrompt, desc);
         }
 
-        if (chainParadigm === "grid_keyframes" && imageProv !== "manual") {
+        if (chainParadigm === "grid_keyframes" && (imageProv.startsWith("nano-banana") || imageProv === "openai-image")) {
           renderStep1Progress("🎨 正在生成 3×3 九宮格分鏡圖...");
           let dataUrl;
           if (imageProv.startsWith("nano-banana")) {
@@ -3706,6 +3767,9 @@ ${desc}${extra}
           }
           showGridPreview(dataUrl);
           gridImageBlob = await dataUrlToBlob(dataUrl);
+        } else if (chainParadigm === "grid_keyframes" && imageProv === "agent-image" && plan.grid_image_prompt) {
+          // 🤖 Agent 訂閱代產九宮格：顯示生圖提示區塊（Agent 後續上傳或在 JSON 附 grid_image_dataurl）
+          showGridPreview(null);
         } else if (chainParadigm === "latent_chain") {
           const gridContainer = document.getElementById("gridPreviewContainer");
           if (gridContainer) gridContainer.style.display = "none";
@@ -4909,6 +4973,132 @@ ${desc}${extra}
       const dl = document.getElementById("downloadVideoBtn");
       dl.href = url;
       dl.style.display = "inline-flex";
+      const driveBtn = document.getElementById("saveMainToDriveBtn");
+      if (driveBtn) driveBtn.style.display = "inline-flex";
+    }
+
+    let pendingCloudSaveTarget = "main";
+
+    async function saveVideoToGoogleDrive(target = "main") {
+      const player = document.getElementById(target === "master" ? "masterFinalVideoPlayer" : "mainVideoPlayer");
+      const src = player ? (player.getAttribute("src") || player.src) : "";
+      if (!src) {
+        showToast("⚠️ 尚未載入可儲存的影片！");
+        return;
+      }
+      pendingCloudSaveTarget = target;
+      const daemonBtn = document.getElementById("cloudSaveDaemonOptionBtn");
+      if (daemonBtn) {
+        const envApi = window.H3LocalEnv;
+        const isOnline = envApi ? await envApi.checkNow() : false;
+        daemonBtn.style.display = isOnline ? "flex" : "none";
+      }
+      const dialog = document.getElementById("cloudDriveSaveDialog");
+      if (dialog) dialog.showModal();
+    }
+
+    async function executeCloudSaveOption(mode) {
+      const dialog = document.getElementById("cloudDriveSaveDialog");
+      if (dialog && dialog.open) dialog.close();
+
+      const target = pendingCloudSaveTarget || "main";
+      const player = document.getElementById(target === "master" ? "masterFinalVideoPlayer" : "mainVideoPlayer");
+      const src = player ? (player.getAttribute("src") || player.src) : "";
+      if (!src) {
+        showToast("⚠️ 尚未載入可儲存的影片！");
+        return;
+      }
+
+      const btn = document.getElementById(target === "master" ? "saveMasterToDriveBtn" : "saveMainToDriveBtn");
+      const origText = btn ? btn.textContent : "☁️ 儲存到雲端硬碟";
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "⏳ 處理中...";
+      }
+
+      try {
+        const videoRes = await fetch(src);
+        if (!videoRes.ok) throw new Error(`讀取影片失敗 (${videoRes.status})`);
+        const blob = await videoRes.blob();
+        const slug = (currentPlan?.project_slug || "h3_story").replace(/[^a-zA-Z0-9_-]/g, "_");
+        const ext = blob.type && blob.type.includes("webm") ? "webm" : "mp4";
+        const mimeType = ext === "webm" ? "video/webm" : "video/mp4";
+        const filename = `${slug}_${target === "master" ? "master" : "merged"}.${ext}`;
+
+        if (mode === "picker") {
+          if (typeof window.showSaveFilePicker === "function") {
+            const handle = await window.showSaveFilePicker({
+              suggestedName: filename,
+              types: [{
+                description: "Video File",
+                accept: { [mimeType]: [`.${ext}`] }
+              }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            showToast(`✅ 已成功儲存「${filename}」至您選定的雲端資料夾！`);
+            return;
+          }
+          // 若瀏覽器不支援 showSaveFilePicker（如部分舊版瀏覽器），降級為一般下載
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          a.click();
+          showToast(`📥 您的瀏覽器不支援直接選取資料夾，已為您下載「${filename}」`);
+          return;
+        }
+
+        if (mode === "share") {
+          const fileObj = new File([blob], filename, { type: mimeType });
+          if (navigator.canShare && navigator.canShare({ files: [fileObj] })) {
+            await navigator.share({
+              title: filename,
+              text: "H3 Storyboard Studio 影片成片",
+              files: [fileObj]
+            });
+            showToast("✅ 已透過系統分享選單傳送影片！");
+            return;
+          }
+          showToast("💡 此瀏覽器不支援系統檔案分享，已自動改用「另存新檔」視窗");
+          if (typeof window.showSaveFilePicker === "function") {
+            await executeCloudSaveOption("picker");
+          } else {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+          }
+          return;
+        }
+
+        if (mode === "daemon") {
+          const upRes = await fetch(`http://127.0.0.1:8080/api/gdrive/upload?filename=${encodeURIComponent(filename)}&folder=H3-Studio`, {
+            method: "POST",
+            headers: { "Content-Type": "application/octet-stream" },
+            body: blob,
+          });
+          const data = await upRes.json();
+          if (!upRes.ok || !data.ok) {
+            throw new Error(data.error || `HTTP ${upRes.status}`);
+          }
+          showToast(`✅ 已備份至 Google Drive「H3-Studio」資料夾！${data.web_url ? "（已開啟連結）" : ""}`);
+          if (data.web_url) {
+            window.open(data.web_url, "_blank");
+          }
+        }
+      } catch (err) {
+        if (err && err.name === "AbortError") {
+          showToast("ℹ️ 已取消儲存");
+        } else {
+          showToast(`❌ 雲端硬碟儲存失敗：${err.message}`);
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = origText;
+        }
+      }
     }
 
     function toggleSeamlessPlayback() {
@@ -6476,6 +6666,8 @@ ${desc}${extra}
       selectRoute("colab");
       checkComfyConnection();
       initWorkspaceOnLoad();
+      onPromptProviderChange();
+      onChainParadigmChange(false);
 
       // 步驟三本地面板訂閱本地環境中樞狀態（H3LocalEnv 由 h3ServeBridge.js 掛載）
       const envSubTimer = setInterval(() => {

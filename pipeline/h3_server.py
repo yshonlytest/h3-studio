@@ -18,11 +18,12 @@ from dataclasses import asdict, dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from pipeline.config import REPO_ROOT, get_output_dir, get_scratch_dir
 from pipeline.h3_context_ir import ContextIR, compile_context_ir, expand_with_local_llm
 from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor
+from pipeline.h3_gdrive_sync import sync_upload
 from pipeline.h3_presets import get_system_memory_status
 from pipeline.h3_prompt_linter import LintInput, analyze_dynamic_tension, lint_prompt
 from pipeline.h3_staging_board import CameraTrack, Point2D, compile_camera_direction
@@ -185,6 +186,10 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         url = urlparse(self.path)
+        if url.path == "/api/gdrive/upload":
+            self._handle_gdrive_upload(url.query)
+            return
+
         body = self._read_json_body()
         if body is None and url.path not in ("/api/render/cancel",):
             self._send_json(400, {"error": "Invalid JSON body"})
@@ -293,6 +298,28 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
     def _handle_render_cancel(self) -> None:
         cancelled = HUB.cancel_render_job()
         self._send_json(200, {"ok": cancelled, "message": "Cancelled" if cancelled else "No active job"})
+
+    def _handle_gdrive_upload(self, query_string: str) -> None:
+        qs = parse_qs(query_string)
+        raw_filename = (qs.get("filename") or ["h3_studio_video.mp4"])[0]
+        clean_name = Path(raw_filename).name or "h3_studio_video.mp4"
+        folder_name = (qs.get("folder") or ["H3-Studio"])[0] or "H3-Studio"
+        size = int(self.headers.get("Content-Length") or "0")
+        if size <= 0:
+            self._send_json(400, {"ok": False, "error": "Missing or empty binary body"})
+            return
+        raw_bytes = self.rfile.read(size)
+        stage_dir = get_scratch_dir() / "daemon_gdrive_uploads"
+        stage_dir.mkdir(parents=True, exist_ok=True)
+        temp_file = stage_dir / clean_name
+        temp_file.write_bytes(raw_bytes)
+        try:
+            res = sync_upload(temp_file, folder_name=folder_name)
+            code = 200 if res.ok else 500
+            self._send_json(code, asdict(res))
+        finally:
+            if temp_file.is_file():
+                temp_file.unlink()
 
     def _handle_video_stream(self, filename: str) -> None:
         clean_name = Path(filename).name
