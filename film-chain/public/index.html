@@ -967,23 +967,6 @@
         </details>
       </div>
 
-      <!-- 🤖 路線 3: 本機 H3 Metal / ComfyUI Agent 環境對齊卡片（僅在選取路線 3 時顯示） -->
-      <div id="step1AgentPromptBox" style="display:none; background:#091222; border:1px solid #f59e0b; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div style="font-size:0.86rem; color:#cbd5e1; display:flex; align-items:center; gap:6px;">
-            <span>🤖</span>
-            <span><strong>本機 Metal / ComfyUI 服務一鍵啟動指引</strong>（零雲端費用）</span>
-          </div>
-          <button type="button" id="copyAgentPromptBtn" class="btn" onclick="copyAgentPrompt()" style="padding:6px 14px; font-size:0.82rem; min-height:38px; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fcd34d; font-weight:600;">
-            📋 複製本機對齊指令
-          </button>
-        </div>
-        <details style="margin-top:8px; font-size:0.78rem; color:#94a3b8;">
-          <summary style="cursor:pointer; color:#fcd34d;">▾ 查看本機守護進程啟動指令預覽</summary>
-          <textarea id="agentPromptTextarea" readonly style="margin-top:6px; width:100%; height:68px; background:#050912; color:#94a3b8; border:1px solid #1e293b; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請你下載開源專案 https://github.com/yshonlytest/h3-studio 並執行 `./setup.sh` 編譯 Apple Silicon Metal 引擎 (`engines/h3.c/h3`)，啟動本機守護進程 `python3 -m pipeline.h3_server` (Port 8080，支援 5D Context-IR 擴寫、動態張力檢查與 PR #76 `--motion-context` 潛空間無損接力)，或執行 `python3 -m pipeline.h3_storyboard_pipeline --chain-manifest examples/storyboards/xianxia_aerial_duel_25s.json` 輸出至 `outputs/storyboard_runs/`。</textarea>
-        </details>
-      </div>
-
       <div class="step1-container">
         <!-- Left Column: Reference Image Only -->
         <div class="ref-image-col">
@@ -1370,7 +1353,8 @@
       <div id="panelLocalView" style="display:none;">
         <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.84rem; color: #fcd34d;">
           <strong>🖥️ 本機雙引擎（H3 Metal Direct ＋ ComfyUI）：</strong><br>
-          優先調用 <code>h3_server</code>（Port 8080，輸出至 <code>outputs/storyboard_runs/</code>）；若僅啟動 ComfyUI（Port 8188）則自動回退至節點排程。
+          優先調用 <code>h3_server</code>（Port 8080，輸出至 <code>outputs/storyboard_runs/</code>）；若僅啟動 ComfyUI（Port 8188）則自動回退至節點排程。<br>
+          💡 環境安裝與守護進程狀態請看右下角「<strong>本地環境中樞</strong>」徽章，此處僅顯示引擎判定與預估時長。
         </div>
 
         <div class="form-group">
@@ -1946,9 +1930,7 @@
 
       // Update Step 1 Prompt Boxes
       const colabBox = document.getElementById("step1ColabPromptBox");
-      const localBox = document.getElementById("step1AgentPromptBox");
       if (colabBox) colabBox.style.display = isColab ? "block" : "none";
-      if (localBox) localBox.style.display = isLocal ? "block" : "none";
 
       // Update Step 3 View Panels
       const panelColab = document.getElementById("panelColabView");
@@ -2517,34 +2499,6 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       a.click();
     }
 
-    function copyAgentPrompt() {
-      const textarea = document.getElementById("agentPromptTextarea");
-      if (!textarea) return;
-      const textToCopy = textarea.value;
-
-      function onCopySuccess() {
-        const btn = document.getElementById("copyAgentPromptBtn");
-        if (!btn) return;
-        const originalText = btn.textContent;
-        btn.textContent = "✅ 已複製 Prompt！";
-        btn.style.borderColor = "#10b981";
-        btn.style.color = "#a7f3d0";
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.borderColor = "#f59e0b";
-          btn.style.color = "#fcd34d";
-        }, 2500);
-      }
-
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(textToCopy).then(onCopySuccess).catch(() => {
-          fallbackCopyText(textarea, onCopySuccess);
-        });
-      } else {
-        fallbackCopyText(textarea, onCopySuccess);
-      }
-    }
-
     function fallbackCopyText(textarea, onSuccess) {
       try {
         textarea.select();
@@ -2810,16 +2764,16 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       const engineEl = document.getElementById("localDetectedEngineBadge");
       const { comfyUrl } = getPrefs();
       updateLocalRenderEstimateUI();
-      try {
-        const daemonRes = await fetch("http://127.0.0.1:8080/api/status", { method: "GET" });
-        if (daemonRes.ok) {
-          detectedLocalEngine = "metal";
-          badge.className = "badge ok";
-          badge.textContent = "🟢 本機 H3 Metal 已連線 (8080)";
-          if (engineEl) engineEl.innerHTML = `🟢 當前選用引擎：<strong style="color:#6ee7b7;">H3 Metal 原生守護進程 (127.0.0.1:8080)</strong>`;
-          return true;
-        }
-      } catch (_e) {}
+
+      // 8080 狀態統一由 H3LocalEnv 狀態核心提供，避免重複輪詢
+      const envApi = window.H3LocalEnv;
+      if (envApi && await envApi.checkNow()) {
+        detectedLocalEngine = "metal";
+        badge.className = "badge ok";
+        badge.textContent = "🟢 本機 H3 Metal 已連線 (8080)";
+        if (engineEl) engineEl.innerHTML = `🟢 當前選用引擎：<strong style="color:#6ee7b7;">H3 Metal 原生守護進程 (127.0.0.1:8080)</strong>`;
+        return true;
+      }
       try {
         const res = await fetch(`${comfyUrl}/system_stats`, { method: "GET" });
         if (res.ok) {
@@ -4240,26 +4194,20 @@ Return ONLY valid JSON matching this schema:
     }
 
     async function executeLocalComfyStep() {
-      const segs = syncSegmentsFromDOM().map((s) => ({ ...s, prompt: lintH3PromptText(s.prompt) }));
-      if (!segs.length) {
+      const segs = syncSegmentsFromDOM().map((s) => ({ ...s, prompt: lintH3PromptText(s.prompt) }));      if (!segs.length) {
         showToast("⚠️ 請先在步驟一產出或新增至少 1 個分鏡段落");
         return;
       }
 
-      // 優先檢查本機 H3 Metal 守護進程 (127.0.0.1:8080)
-      try {
-        const daemonCheck = await fetch("http://127.0.0.1:8080/api/status", { method: "GET" });
-        if (daemonCheck.ok) {
-          renderLocalPipelineTracker(segs, "H3 Metal (8080)");
-          showToast(`🚀 已連線 H3 Metal 原生守護進程 (8080)，開始渲染共 ${segs.length} 段分鏡`);
-          const hudRenderBtn = document.getElementById("h3-hud-render-btn");
-          if (hudRenderBtn) {
-            hudRenderBtn.click();
-            return;
-          }
-        }
-      } catch (_e) {
-        // Fallback to ComfyUI (8188) below
+      // 優先嘗試 H3 Metal 守護進程（狀態一律由 H3LocalEnv 狀態核心統一提供）
+      const envApi = window.H3LocalEnv;
+      const metalOnline = envApi ? await envApi.checkNow() : false;
+      if (metalOnline) {
+        renderLocalPipelineTracker(segs, "H3 Metal (8080)");
+        showToast(`🚀 已連線 H3 Metal 原生守護進程 (8080)，開始渲染共 ${segs.length} 段分鏡`);
+        const started = await envApi.startRender();
+        if (started) return;
+        showToast("⚠️ Metal 守護進程拒絕渲染，改嘗試 ComfyUI 排程...");
       }
 
       const { comfyUrl } = getPrefs();
@@ -4389,6 +4337,9 @@ Return ONLY valid JSON matching this schema:
         startBtn.disabled = false;
       }
     }
+
+    // 統一渲染入口：本地環境中樞（HUD）與步驟三按鈕皆由此函式出發
+    window.h3StudioStartLocalRender = executeLocalComfyStep;
 
     // ==================== Step 3B: Commercial Cloud API Generation (fal.ai / MiniMax) ====================
     let cloudPipelineAbortController = null;
@@ -6238,6 +6189,22 @@ Return ONLY valid JSON matching this schema:
       selectRoute("colab");
       checkComfyConnection();
       initWorkspaceOnLoad();
+
+      // 步驟三本地面板訂閱本地環境中樞狀態（H3LocalEnv 由 h3ServeBridge.js 掛載）
+      const envSubTimer = setInterval(() => {
+        if (!window.H3LocalEnv) return;
+        clearInterval(envSubTimer);
+        window.H3LocalEnv.subscribe((st) => {
+          const engineEl = document.getElementById("localDetectedEngineBadge");
+          if (!engineEl) return;
+          if (st.daemon === "online") {
+            engineEl.innerHTML = `🟢 當前選用引擎：<strong style="color:#6ee7b7;">H3 Metal 原生守護進程 (127.0.0.1:8080)${st.hardware.availableGiB !== null ? ` · 可用 RAM ${st.hardware.availableGiB} GiB` : ""}</strong>`;
+          } else {
+            engineEl.innerHTML = `⚪ 引擎狀態：<span style="color:#fca5a5;">未偵測到本機引擎（請看右下角「本地環境中樞」完成安裝與啟動）</span>`;
+          }
+        });
+      }, 500);
+      setTimeout(() => clearInterval(envSubTimer), 20000);
 
       // 綁定全域自動存檔監聽
       const descEl = document.getElementById("chineseDesc");

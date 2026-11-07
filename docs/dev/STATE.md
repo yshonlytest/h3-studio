@@ -46,3 +46,14 @@
   - **P1 #2（鏈式時間軸視覺化與隱藏無意義 Panel 選單）**：步驟二頂部新增 `#chainTimelineBar` 視覺化接力鏈，潛空間模式下自動隱藏 `Panel 1~9` 選單並改顯示「🔗 承接 Part N 潛空間尾幀」標籤。
   - **P1 #3 & #4（5D 雙向非破壞性同步 + 2D 運鏡板升級）**：修改任一 5D 欄位時僅局部替換對應 `[Scene]` / `[Camera]` / `Timeline:` / `[Look]` / `Audio:` 段落，並提供「↩️ 復原上一版 Prompt」按鈕；2D 運鏡板畫布放大至 `280×160`、熱點半徑 `24px` 含 Hover 光圈。
   - **P2（術語收合、觸控目標放大、手機 Tooltip 彈窗與 Toast 統一）**：首屏 Colab/本機卡技術細節收合進 `<details>`，`.info-tip` 點擊統一開啟說明視窗，消除阻斷式 `alert()`。
+- [x] **C1（本地環境中樞整合：狀態核心 ＋ 移除 UI hack）**：
+  - `film-chain/public/h3ServeBridge.js`：新增 `window.H3LocalEnv` 狀態核心（單一輪詢器，含 `daemon` / `engine` / `hardware.availableGiB` / `job` 狀態、`getState()` / `checkNow()` / `startRender()` / `subscribe()` 公開 API），SSE 事件與 `/api/status` 輪詢皆改寫入狀態核心並通知訂閱者。
+  - `film-chain/public/index.html`：移除 `executeLocalComfyStep()` 內模擬點擊 `#h3-hud-render-btn` 的 hack，改呼叫 `H3LocalEnv.startRender()`；`checkComfyConnection()` 的 8080 檢查改由狀態核心提供，消除重複輪詢。
+  - 驗證：`node --check` 兩檔語法通過；`npm test --prefix film-chain` 53/53 passed。
+- [x] **C2＋C3（HUD 併版升級為「本地環境中樞」與環境就緒精靈）**：
+  - `film-chain/public/h3ServeBridge.js`：HUD 更名「本地環境中樞」，`checkDaemonStatus()` 依狀態切換兩種視圖：**離線** → 環境就緒精靈（四步 checklist：clone → `./setup.sh` Doctor → HF 下載權重 → 啟動 `h3_server`，各步附一鍵複製指令與「重新檢測」按鈕）；**在線** → 引擎／RAM 徽章＋渲染／張力檢查按鈕＋進度列。
+  - HUD「開始本機渲染」改呼叫 `window.h3StudioStartLocalRender()`（index.html 暴露的統一入口，內含 Metal → ComfyUI 自動備援），無該入口時才 fallback 至 `H3LocalEnv.startRender()`。
+- [x] **C4（資訊歸位：刪除步驟一對齊卡、步驟三改為純訂閱者）**：
+  - 刪除 `#step1AgentPromptBox` 與 `copyAgentPrompt()`（環境引導職責移交中樞精靈），`selectRoute` 引用同步清理。
+  - 步驟三本地面板的 `#localDetectedEngineBadge` 改為訂閱 `H3LocalEnv` 狀態即時更新（含可用 RAM），不再自行輪詢；面板文案指引使用者至中樞。
+  - 驗證：`node --check` 通過；前端測試 53/53 passed。

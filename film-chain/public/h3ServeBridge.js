@@ -13,6 +13,35 @@
   let isDaemonOnline = false;
   let activeEventSource = null;
 
+  // ==================== 狀態核心 H3LocalEnv（單一真相） ====================
+  const envState = {
+    daemon: 'checking',
+    engine: 'none',
+    hardware: { availableGiB: null },
+    job: { running: false, currentSegment: 0, totalSegments: 0 }
+  };
+  const envListeners = new Set();
+
+  function publishEnvState() {
+    envListeners.forEach((fn) => {
+      try { fn(H3LocalEnv.getState()); } catch (e) { console.warn('H3LocalEnv listener error:', e); }
+    });
+  }
+
+  const H3LocalEnv = {
+    getState() { return { ...envState, hardware: { ...envState.hardware }, job: { ...envState.job } }; },
+    isDaemonOnline() { return envState.daemon === 'online'; },
+    checkNow: null,
+    startRender: null,
+    subscribe(fn) {
+      if (typeof fn !== 'function') return () => {};
+      envListeners.add(fn);
+      fn(H3LocalEnv.getState());
+      return () => envListeners.delete(fn);
+    }
+  };
+  window.H3LocalEnv = H3LocalEnv;
+
   function createHudElement() {
     if (document.getElementById('h3-daemon-hud')) return;
 
@@ -43,53 +72,77 @@
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span id="h3-hud-indicator" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #64748b;"></span>
-          <strong id="h3-hud-title" style="font-size: 13px;">H3 守護進程偵測中...</strong>
+          <strong id="h3-hud-title" style="font-size: 13px;">本地環境中樞：偵測中...</strong>
         </div>
         <button id="h3-hud-toggle" style="background: none; border: none; color: #93a3bf; cursor: pointer; font-size: 12px;">▾</button>
       </div>
       <div id="h3-hud-body" style="display: flex; flex-direction: column; gap: 8px;">
-        <div id="h3-hud-details" style="font-size: 12px; color: #93a3bf;">檢查 127.0.0.1:8080 連線狀態...</div>
-        <div id="h3-hud-actions" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
-          <button id="h3-hud-render-btn" style="
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-          ">⚡ 原生 Metal 渲染</button>
-          <button id="h3-hud-lint-btn" style="
-            background: #1e293b;
-            color: #e2e8f0;
-            border: 1px solid #334155;
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 12px;
-            cursor: pointer;
-          ">🛡️ 動態張力檢查</button>
+        <div id="h3-hud-wizard" style="display: none; flex-direction: column; gap: 6px;">
+          <div style="font-size: 11px; color: #93c5fd; line-height: 1.6;">
+            🧙‍♂️ <strong>本地環境就緒精靈</strong>（僅限 Apple Silicon Mac）：依序 在終端機 執行以下指令，完成後點「重新檢測」：
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 11px; color: #93a3bf; flex: 1;">1️⃣ 取得專案</span>
+            <button type="button" class="h3-hud-copy" data-cmd="git clone https://github.com/yshonlytest/h3-studio.git && cd h3-studio" style="background: #1e293b; color: #7dd3fc; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer;">複製</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 11px; color: #93a3bf; flex: 1;">2️⃣ 環境 Doctor（需 Xcode CLT + ffmpeg）</span>
+            <button type="button" class="h3-hud-copy" data-cmd="./setup.sh" style="background: #1e293b; color: #7dd3fc; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer;">複製</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 11px; color: #93a3bf; flex: 1;">3️⃣ 下載模型權重（需已顯存足夠磁碟）</span>
+            <button type="button" class="h3-hud-copy" data-cmd='pip install -U "huggingface_hub[cli]" && huggingface-cli download MiniMax-AI/MiniMax-H3 --local-dir models/MiniMax-H3' style="background: #1e293b; color: #7dd3fc; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer;">複製</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 11px; color: #93a3bf; flex: 1;">4️⃣ 啟動守護進程（Port 8080）</span>
+            <button type="button" class="h3-hud-copy" data-cmd="python3 -m pipeline.h3_server" style="background: #1e293b; color: #7dd3fc; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer;">複製</button>
+          </div>
+          <button id="h3-hud-redetect-btn" style="margin-top: 2px; background: rgba(56,189,248,0.2); color: #7dd3fc; border: 1px solid #38bdf8; border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🔄 重新檢測</button>
         </div>
-        <div id="h3-hud-progress-container" style="display: none; flex-direction: column; gap: 4px; margin-top: 6px;">
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #cbd5e1;">
-            <span id="h3-hud-progress-text">準備渲染...</span>
-            <span id="h3-hud-progress-pct">0%</span>
+        <div id="h3-hud-online-body" style="display: none; flex-direction: column; gap: 8px;">
+          <div id="h3-hud-details" style="font-size: 12px; color: #93a3bf;">檢查 127.0.0.1:8080 連線狀態...</div>
+          <div id="h3-hud-actions" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+            <button id="h3-hud-render-btn" style="
+              background: linear-gradient(135deg, #6366f1, #4f46e5);
+              color: #fff;
+              border: none;
+              border-radius: 6px;
+              padding: 6px 12px;
+              font-size: 12px;
+              font-weight: 600;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 4px;
+            ">⚡ 開始本機渲染</button>
+            <button id="h3-hud-lint-btn" style="
+              background: #1e293b;
+              color: #e2e8f0;
+              border: 1px solid #334155;
+              border-radius: 6px;
+              padding: 6px 12px;
+              font-size: 12px;
+              cursor: pointer;
+            ">🛡️ 動態張力檢查</button>
           </div>
-          <div style="width: 100%; height: 6px; background: #0f172a; border-radius: 3px; overflow: hidden;">
-            <div id="h3-hud-progress-bar" style="width: 0%; height: 100%; background: #6366f1; transition: width 0.2s;"></div>
+          <div id="h3-hud-progress-container" style="display: none; flex-direction: column; gap: 4px; margin-top: 6px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #cbd5e1;">
+              <span id="h3-hud-progress-text">準備渲染...</span>
+              <span id="h3-hud-progress-pct">0%</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: #0f172a; border-radius: 3px; overflow: hidden;">
+              <div id="h3-hud-progress-bar" style="width: 0%; height: 100%; background: #6366f1; transition: width 0.2s;"></div>
+            </div>
+            <button id="h3-hud-cancel-btn" style="
+              align-self: flex-end;
+              background: none;
+              border: none;
+              color: #ef4444;
+              font-size: 11px;
+              cursor: pointer;
+              padding: 2px 4px;
+            ">中斷任務</button>
           </div>
-          <button id="h3-hud-cancel-btn" style="
-            align-self: flex-end;
-            background: none;
-            border: none;
-            color: #ef4444;
-            font-size: 11px;
-            cursor: pointer;
-            padding: 2px 4px;
-          ">中斷任務</button>
         </div>
       </div>
     `;
@@ -105,7 +158,33 @@
       toggleBtn.textContent = collapsed ? '▴' : '▾';
     });
 
-    document.getElementById('h3-hud-render-btn').addEventListener('click', handleStartRender);
+    hud.querySelectorAll('.h3-hud-copy').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(btn.dataset.cmd || '');
+          notifyUser('📋 已複製指令到剪貼簿，請到終端機貼上執行');
+        } catch (_e) {
+          notifyUser('⚠️ 複製失敗，請手動輸入指令');
+        }
+      });
+    });
+    const redetectBtn = document.getElementById('h3-hud-redetect-btn');
+    if (redetectBtn) redetectBtn.addEventListener('click', async () => {
+      redetectBtn.textContent = '⏳ 檢測中...';
+      redetectBtn.disabled = true;
+      await checkDaemonStatus();
+      redetectBtn.textContent = '🔄 重新檢測';
+      redetectBtn.disabled = false;
+    });
+
+    document.getElementById('h3-hud-render-btn').addEventListener('click', async () => {
+      if (typeof window.h3StudioStartLocalRender === 'function') {
+        notifyUser('🚀 已呼叫工作坊主渲染流程（Metal → ComfyUI 自動備援）');
+        await window.h3StudioStartLocalRender();
+      } else {
+        await handleStartRender();
+      }
+    });
     document.getElementById('h3-hud-lint-btn').addEventListener('click', handleCheckTension);
     document.getElementById('h3-hud-cancel-btn').addEventListener('click', handleCancelRender);
   }
@@ -116,6 +195,8 @@
     const title = document.getElementById('h3-hud-title');
     const details = document.getElementById('h3-hud-details');
     const actions = document.getElementById('h3-hud-actions');
+    const wizard = document.getElementById('h3-hud-wizard');
+    const onlineBody = document.getElementById('h3-hud-online-body');
 
     try {
       const resp = await fetch(`${DAEMON_URL}/api/status`, { method: 'GET', mode: 'cors' });
@@ -123,23 +204,46 @@
       const data = await resp.json();
 
       isDaemonOnline = true;
+      envState.daemon = 'online';
+      envState.engine = data.engine === 'comfyui' ? 'comfyui' : 'metal';
+      if (data.memory && Number.isFinite(data.memory.available_gib)) {
+        envState.hardware.availableGiB = Number(data.memory.available_gib.toFixed(1));
+      }
+      if (data.job) {
+        envState.job.running = !!data.job.running;
+        envState.job.currentSegment = data.job.current_segment || 0;
+        envState.job.totalSegments = data.job.total_segments || 0;
+      }
+      publishEnvState();
+
       indicator.style.background = '#10b981';
-      title.textContent = 'H3 本機 Metal 守護進程在線';
+      title.textContent = '本地環境中樞：✅ 就緒 (H3 Metal)';
       const availRam = data.memory?.available_gib?.toFixed(1) || '?';
       details.innerHTML = `可用 RAM: <strong style="color: #10b981;">${availRam} GiB</strong> (零 FUSE 延遲已就緒)`;
+      wizard.style.display = 'none';
+      onlineBody.style.display = 'flex';
       actions.style.display = 'flex';
 
       if (data.job?.running) {
         showProgressView(true, `正在執行分鏡 ${data.job.current_segment}/${data.job.total_segments}...`, 50);
         subscribeToEvents();
       }
+      return true;
     } catch (_) {
       isDaemonOnline = false;
+      envState.daemon = 'offline';
+      envState.engine = 'none';
+      envState.hardware.availableGiB = null;
+      envState.job = { running: false, currentSegment: 0, totalSegments: 0 };
+      publishEnvState();
+
       indicator.style.background = '#64748b';
-      title.textContent = 'H3 守護進程：離線';
-      details.textContent = '可執行 python3 -m pipeline.h3_server 開啟原生加速';
-      actions.style.display = 'none';
+      title.textContent = '本地環境中樞：⚠️ 未就緒';
+      details.textContent = '尚未偵測到本機守護進程，請依照就緒精靈完成安裝';
+      wizard.style.display = 'flex';
+      onlineBody.style.display = 'none';
       showProgressView(false);
+      return false;
     }
   }
 
@@ -167,7 +271,7 @@
   }
 
   async function handleStartRender() {
-    if (!isDaemonOnline) return;
+    if (!isDaemonOnline) return false;
 
     let manifestPayload = null;
     if (typeof window.exportChainedManifest === 'function') {
@@ -181,7 +285,7 @@
     if (!manifestPayload) {
       notifyUser("⚠️ 請先在步驟一或步驟二載入或生成分鏡腳本，再點擊啟動 Metal 渲染！");
       showProgressView(false);
-      return;
+      return false;
     }
 
     showProgressView(true, '正在提交分鏡至 H3 Metal 引擎...', 10);
@@ -197,12 +301,14 @@
       if (!resp.ok) {
         notifyUser(`❌ 啟動渲染失敗: ${res.error || res.message}`);
         showProgressView(false);
-        return;
+        return false;
       }
       subscribeToEvents();
+      return true;
     } catch (err) {
       notifyUser(`❌ 連線守護進程發生錯誤: ${err.message}`);
       showProgressView(false);
+      return false;
     }
   }
 
@@ -213,11 +319,17 @@
 
     activeEventSource.addEventListener('job_started', (e) => {
       const d = JSON.parse(e.data);
+      envState.job.running = true;
+      envState.job.currentSegment = 0;
+      envState.job.totalSegments = d.total_segments || 0;
+      publishEnvState();
       showProgressView(true, `開始渲染：${d.title} (共 ${d.total_segments} 鏡)`, 15);
     });
 
     activeEventSource.addEventListener('job_completed', (e) => {
       const d = JSON.parse(e.data);
+      envState.job.running = false;
+      publishEnvState();
       showProgressView(true, `✅ 渲染完成！耗時 ${d.duration_seconds} 秒`, 100);
       setTimeout(() => {
         showProgressView(false);
@@ -227,10 +339,14 @@
 
     activeEventSource.addEventListener('job_error', (e) => {
       const d = JSON.parse(e.data);
+      envState.job.running = false;
+      publishEnvState();
       showProgressView(true, `❌ 渲染錯誤: ${d.error}`, 100);
     });
 
     activeEventSource.addEventListener('job_cancelled', () => {
+      envState.job.running = false;
+      publishEnvState();
       showProgressView(true, '⚠️ 渲染已被使用者中斷', 0);
       setTimeout(() => showProgressView(false), 3000);
     });
@@ -267,10 +383,14 @@
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+      H3LocalEnv.checkNow = checkDaemonStatus;
+      H3LocalEnv.startRender = handleStartRender;
       checkDaemonStatus();
       setInterval(checkDaemonStatus, 15000);
     });
   } else {
+    H3LocalEnv.checkNow = checkDaemonStatus;
+    H3LocalEnv.startRender = handleStartRender;
     checkDaemonStatus();
     setInterval(checkDaemonStatus, 15000);
   }
