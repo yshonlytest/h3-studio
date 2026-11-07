@@ -57,3 +57,10 @@
   - 刪除 `#step1AgentPromptBox` 與 `copyAgentPrompt()`（環境引導職責移交中樞精靈），`selectRoute` 引用同步清理。
   - 步驟三本地面板的 `#localDetectedEngineBadge` 改為訂閱 `H3LocalEnv` 狀態即時更新（含可用 RAM），不再自行輪詢；面板文案指引使用者至中樞。
   - 驗證：`node --check` 通過；前端測試 53/53 passed。
+- [x] **C5（HUD 收納與注意力設計：預設縮小＋切路線發光提醒）**：
+  - `film-chain/public/h3ServeBridge.js`：HUD 預設縮小（標題列可點擊展開），注入 `h3HudGlow` 環繞發光 CSS；新增 `H3LocalEnv.pingAttention()`——離線判定或使用者切到路線 3 時吸附注意力，點開即自動解除。
+  - `film-chain/public/index.html`：`selectRoute('local')` 時呼叫 `window.H3LocalEnv.pingAttention()`。
+- [x] **C6（流程導正：Agent 必須帶使用者開網頁產出自己的影片，禁止偷跑範例）**：
+  - 中樞精靈新增「🤖 複製引導 Prompt 交給 AI Agent」按鈕（`AGENT_ONBOARDING_PROMPT`）：四步架設指令＋環境就緒後引導開啟 `https://film-chain.onlytest.dev/`、選路線 3、修改使用者自己的故事提示詞走完步驟一~四；明文禁止未經同意執行 `examples/storyboards/` 示範（賽博偵探／仙俠），驗收標準為「自訂故事本機渲染成功」。
+  - 步驟三指引卡補警示：Agent 代架環境時勿讓其直接跑範例 storyboard 浪費算力與點數。
+  - 驗證：`node --check` 兩檔語法通過；前端測試 53/53 passed。

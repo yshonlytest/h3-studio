@@ -13,6 +13,29 @@
   let isDaemonOnline = false;
   let activeEventSource = null;
 
+  // 交給 AI Agent（本機 / 遠端虛擬機）代架環境時使用的引導 Prompt
+  const AGENT_ONBOARDING_PROMPT = [
+    '請在這台機器上替我架設 MiniMax-H3 本機渲染環境，完成後「帶我在網頁上操作產出自己的影片」，全程不要自行跑任何範例：',
+    '',
+    '【架設環境】',
+    '1. git clone https://github.com/yshonlytest/h3-studio.git && cd h3-studio',
+    '2. ./setup.sh（編譯 Apple Silicon Metal 引擎 engines/h3.c/h3）',
+    '3. pip install -U "huggingface_hub[cli]" && huggingface-cli download MiniMax-AI/MiniMax-H3 --local-dir models/MiniMax-H3',
+    '4. python3 -m pipeline.h3_server（守護進程監聽 127.0.0.1:8080）',
+    '',
+    '【環境就緒後：帶我操作網頁】',
+    '- 引導我開啟網頁 https://film-chain.onlytest.dev/ ，選「路線 3：本機 Metal / ComfyUI」。',
+    '- 陪我走完網頁五個步驟：步驟一讓我輸入「我自己的」故事大綱與主角參考圖 → 生成分鏡（潛空間一鏡到底或九宮格）→ 步驟三讓我按下「啟動本機渲染」→ 步驟四預覽成片。',
+    '- 過程中協助我修改提示詞、運鏡與參數；影片渲染一律由本機 GPU 執行（零雲端費用）。',
+    '',
+    '【禁止事項】',
+    '- 未經我明確說出「要跑範例」，不得執行 examples/storyboards/ 下任何示範 storyboard（如賽博偵探／仙俠 25 秒），以免白白浪費算力與點數。',
+    '- 若你認為需要測試，必須先說明會消耗什麼資源並取得我的同意。',
+    '',
+    '【驗收標準】',
+    '我的自訂故事在網頁上完成分鏡、由本機渲染並在步驟四播放成功，才算任務完成。'
+  ].join('\n');
+
   // ==================== 狀態核心 H3LocalEnv（單一真相） ====================
   const envState = {
     daemon: 'checking',
@@ -42,8 +65,26 @@
   };
   window.H3LocalEnv = H3LocalEnv;
 
+  function injectHudStyles() {
+    if (document.getElementById('h3-hud-style')) return;
+    const style = document.createElement('style');
+    style.id = 'h3-hud-style';
+    style.textContent = `
+      @keyframes h3HudGlow {
+        0%, 100% { box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 0 rgba(56,189,248,0.55); }
+        50% { box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 9px rgba(56,189,248,0); }
+      }
+      .h3-hud-attention {
+        border-color: #38bdf8 !important;
+        animation: h3HudGlow 1.6s ease-out infinite;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function createHudElement() {
     if (document.getElementById('h3-daemon-hud')) return;
+    injectHudStyles();
 
     const hud = document.createElement('div');
     hud.id = 'h3-daemon-hud';
@@ -97,6 +138,7 @@
             <span style="font-size: 11px; color: #93a3bf; flex: 1;">4️⃣ 啟動守護進程（Port 8080）</span>
             <button type="button" class="h3-hud-copy" data-cmd="python3 -m pipeline.h3_server" style="background: #1e293b; color: #7dd3fc; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer;">複製</button>
           </div>
+          <button type="button" class="h3-hud-copy h3-hud-copy-agent" data-source="agentPrompt" style="margin-top: 2px; background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid #f59e0b; border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🤖 不想自己動手？複製引導 Prompt 交給 AI Agent（會帶你開網頁產出自己的影片）</button>
           <button id="h3-hud-redetect-btn" style="margin-top: 2px; background: rgba(56,189,248,0.2); color: #7dd3fc; border: 1px solid #38bdf8; border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🔄 重新檢測</button>
         </div>
         <div id="h3-hud-online-body" style="display: none; flex-direction: column; gap: 8px;">
@@ -151,18 +193,32 @@
 
     const toggleBtn = document.getElementById('h3-hud-toggle');
     const hudBody = document.getElementById('h3-hud-body');
-    let collapsed = false;
-    toggleBtn.addEventListener('click', () => {
-      collapsed = !collapsed;
+    const hudHeader = hud.firstElementChild;
+    hudHeader.style.cursor = 'pointer';
+    let collapsed = true;
+    function setCollapsed(state) {
+      collapsed = state;
       hudBody.style.display = collapsed ? 'none' : 'flex';
       toggleBtn.textContent = collapsed ? '▴' : '▾';
-    });
+      if (!collapsed) hud.classList.remove('h3-hud-attention');
+    }
+    setCollapsed(true);
+    toggleBtn.addEventListener('click', (e) => { e.stopPropagation(); setCollapsed(!collapsed); });
+    hudHeader.addEventListener('click', () => setCollapsed(!collapsed));
+
+    // 環繞發光提醒：預設縮小時吸附注意力，使用者點開後自動解除
+    function pingAttention() {
+      if (collapsed) hud.classList.add('h3-hud-attention');
+    }
+    hud._pingAttention = pingAttention;
+    window.H3LocalEnv.pingAttention = pingAttention;
 
     hud.querySelectorAll('.h3-hud-copy').forEach((btn) => {
       btn.addEventListener('click', async () => {
+        const text = btn.dataset.source === 'agentPrompt' ? AGENT_ONBOARDING_PROMPT : (btn.dataset.cmd || '');
         try {
-          await navigator.clipboard.writeText(btn.dataset.cmd || '');
-          notifyUser('📋 已複製指令到剪貼簿，請到終端機貼上執行');
+          await navigator.clipboard.writeText(text);
+          notifyUser('📋 已複製。貼給終端機執行，或貼給 AI Agent 照做');
         } catch (_e) {
           notifyUser('⚠️ 複製失敗，請手動輸入指令');
         }
@@ -243,6 +299,7 @@
       wizard.style.display = 'flex';
       onlineBody.style.display = 'none';
       showProgressView(false);
+      H3LocalEnv.pingAttention?.();
       return false;
     }
   }

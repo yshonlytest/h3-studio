@@ -1354,7 +1354,8 @@
         <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.84rem; color: #fcd34d;">
           <strong>🖥️ 本機雙引擎（H3 Metal Direct ＋ ComfyUI）：</strong><br>
           優先調用 <code>h3_server</code>（Port 8080，輸出至 <code>outputs/storyboard_runs/</code>）；若僅啟動 ComfyUI（Port 8188）則自動回退至節點排程。<br>
-          💡 環境安裝與守護進程狀態請看右下角「<strong>本地環境中樞</strong>」徽章，此處僅顯示引擎判定與預估時長。
+          💡 環境安裝與守護進程狀態請看右下角「<strong>本地環境中樞</strong>」徽章，此處僅顯示引擎判定與預估時長。<br>
+          ⚠️ 若環境由 AI Agent 代為架設：中樞精靈按鈕可複製<strong>引導 Prompt</strong>（Agent 會帶您回到本網頁修改自己的故事提示詞），<strong>請勿</strong>讓 Agent 直接執行 <code>examples/storyboards/</code> 範例 storyboard（賽博偵探／仙俠示範），那隻是測試片且會白白消耗算力與點數。
         </div>
 
         <div class="form-group">
@@ -1931,6 +1932,11 @@
       // Update Step 1 Prompt Boxes
       const colabBox = document.getElementById("step1ColabPromptBox");
       if (colabBox) colabBox.style.display = isColab ? "block" : "none";
+
+      // 切到本機路線時，讓右下角「本地環境中樞」發光提醒使用者點開查看
+      if (isLocal && window.H3LocalEnv && typeof window.H3LocalEnv.pingAttention === "function") {
+        window.H3LocalEnv.pingAttention();
+      }
 
       // Update Step 3 View Panels
       const panelColab = document.getElementById("panelColabView");
