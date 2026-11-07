@@ -963,7 +963,9 @@
           <div style="line-height:1.5; margin:6px 0;">
             💡 利用 Google Colab 啟動雲端 GPU（預設 A100，滿載時自動切換至 NVIDIA L4，點數省 50%）。首次使用請執行 <code>colab login</code> 授權。
           </div>
-          <textarea id="colabPromptTextarea" readonly style="width:100%; height:72px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 `film-chain/skills/minimax-h3-colab`（若本機尚未安裝 colab CLI，請執行 `pip install google-colab-cli` 並提示我完成 `colab login` OAuth 授權）。確認具備 Compute Units 餘額後，讀取本專案分鏡任務，調用 Google Colab GPU（預設 A100，若遇尖峰滿載則自動切換至 NVIDIA L4 備援算力）依序渲染 MiniMax H3 影片，完成後自動調用本機 ffmpeg 消除重複首幀並以無縫 concat 合併為完整長影片，回填至網頁播放廳中。</textarea>
+          <textarea id="colabPromptTextarea" readonly style="width:100%; height:96px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 `film-chain/skills/minimax-h3-colab`（若本機尚未安裝 colab CLI，請執行 `pip install google-colab-cli` 並提示我完成 `colab login` OAuth 授權）。分鏡一律以「我在本網頁步驟一/二產出、並由步驟三匯出的 colab_manifest_*.json」為準，調用 Google Colab GPU（預設 A100，滿載自動切換 L4 備援）依序渲染後自動 ffmpeg 消幀拼接，回填網頁播放廳。
+
+【鐵律】未經我明確同意，禁止執行 examples/storyboards/ 下任何示範分鏡（賽博偵探／仙俠），那只會浪費 Compute Units；開跑前先回報預計消耗點數。若你的執行環境對外流量走代理且禁用 WebSocket 升級（colab exec 握手 403），請勿繞過代理：完成安裝與 manifest 準備後，把最終 runner.py chain 指令連同預估成本交回我在本機終端機執行。</textarea>
         </details>
       </div>
 
@@ -2334,11 +2336,17 @@
       const s = slug || (currentPlan ? currentPlan.project_slug : "story_project");
       const sid = getOrCreateSessionId();
 
-      const promptText = `請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 \`film-chain/skills/minimax-h3-colab\`（若本機尚未安裝 colab CLI，請執行 \`pip install google-colab-cli\` 並提示我完成 \`colab login\` OAuth 授權）。確認具備 Compute Units 餘額後，直接執行專案原生自動串接命令：
+      const promptText = `請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 \`film-chain/skills/minimax-h3-colab\`（若本機尚未安裝 colab CLI，請執行 \`pip install google-colab-cli\` 並提示我完成 \`colab login\` OAuth 授權）。
+
+【分鏡來源】本次任務為「我在本網頁產出的自有分鏡」，manifest 檔名 colab_manifest_${s}_${sec}s.json（已由網頁匯出），禁止改用 examples/storyboards/ 任何示範分鏡。
+
+直接執行專案原生自動串接命令：
 
 python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest colab_manifest_${s}_${sec}s.json --session-id ${sid}
 
-此命令會自動在 Colab A100 上依序完成各分鏡渲染、尾幀傳遞、FFmpeg 消幀拼接成 ${s}_${sec}s_seamless_merged.mp4，並即時回報進度與自動回傳至網頁播放廳中！`;
+此命令會自動在 Colab A100 上依序完成各分鏡渲染、尾幀傳遞、FFmpeg 消幀拼接成 ${s}_${sec}s_seamless_merged.mp4，並即時回報進度與自動回傳至網頁播放廳中！
+
+【鐵律】開跑前先回報預計消耗的 Compute Units 並取得我同意。若你的執行環境對外流量走代理且禁用 WebSocket 升級（colab exec 握手 403），請勿繞過代理：完成安裝與 manifest 準備工作後，把上述最終指令連同預估成本交回我在本機終端機執行，並用 colab stop 釋放你建立的閒置 session 以免背景扣點。`;
 
       const textarea1 = document.getElementById("colabPromptTextarea");
       if (textarea1) textarea1.value = promptText;

@@ -64,3 +64,8 @@
   - 中樞精靈新增「🤖 複製引導 Prompt 交給 AI Agent」按鈕（`AGENT_ONBOARDING_PROMPT`）：四步架設指令＋環境就緒後引導開啟 `https://film-chain.onlytest.dev/`、選路線 3、修改使用者自己的故事提示詞走完步驟一~四；明文禁止未經同意執行 `examples/storyboards/` 示範（賽博偵探／仙俠），驗收標準為「自訂故事本機渲染成功」。
   - 步驟三指引卡補警示：Agent 代架環境時勿讓其直接跑範例 storyboard 浪費算力與點數。
   - 驗證：`node --check` 兩檔語法通過；前端測試 53/53 passed。
+- [x] **C7（Colab 路線導正：遠端沙盒 403 教訓落地為 guardrails）**：
+  - `film-chain/skills/minimax-h3-colab/SKILL.md` 新增「Cost & consent guardrails」：禁止未經同意跑 `examples/storyboards/*.json` 示範（燒 Compute Units）、manifest 必須來自使用者自有分鏡（網頁匯出的 `colab_manifest_*.json`）、開跑前回報預估成本、宿主環境代理禁 WebSocket 升級（握手 403 "WebSocket upgrades are not allowed"）時勿繞過——改為完成準備後把最終 `runner.py chain` 指令連成本交回使用者在無限制本機終端執行、結束前 `colab stop` 釋放閒置 session。
+  - `film-chain/public/index.html`：靜態版與動態版 Colab Agent Prompt（`updateColabPromptText`）補分鏡來源鐵律（僅限使用者自有 manifest）＋403 沙盒降級指引＋開跑前點數同意。
+  - 背景：遠端虛擬機實測 Colab CLI REST（new/sessions/stop）正常、OAuth 與 CU 餘額 395.63 正常，但 `agy-plugin-proxy` 封鎖 `wss://*.colab.dev` 的 WebSocket 升級，`colab exec` 於沙盒內不可用，屬環境限制非工具錯誤。
+  - 驗證：`node --check` 通過；前端測試 53/53 passed。
