@@ -965,7 +965,7 @@
           </div>
           <textarea id="colabPromptTextarea" readonly style="width:100%; height:96px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 `film-chain/skills/minimax-h3-colab`（若本機尚未安裝 colab CLI，請執行 `pip install google-colab-cli` 並提示我完成 `colab login` OAuth 授權）。分鏡一律以「我在本網頁步驟一/二產出、並由步驟三匯出的 colab_manifest_*.json」為準，調用 Google Colab GPU（預設 A100，滿載自動切換 L4 備援）依序渲染後自動 ffmpeg 消幀拼接，回填網頁播放廳。
 
-【鐵律】未經我明確同意，禁止執行 examples/storyboards/ 下任何示範分鏡（賽博偵探／仙俠），那只會浪費 Compute Units；開跑前先回報預計消耗點數。若你的執行環境對外流量走代理且禁用 WebSocket 升級（colab exec 握手 403），請勿繞過代理：完成安裝與 manifest 準備後，把最終 runner.py chain 指令連同預估成本交回我在本機終端機執行。</textarea>
+【鐵律】未經我明確同意，禁止執行 examples/storyboards/ 下任何示範分鏡（賽博偵探／仙俠），那只會浪費 Compute Units；開跑前先回報預計消耗點數。若我沒有劇本/生圖 API Key：分鏡提示詞與九宮格圖一律改用你的訂閱額度代產（網頁步驟一選「🤖 Agent 訂閱代寫」走任務包生成，或由你貼 JSON 匯入網頁、九宮格自行生圖後於步驟二上傳），不得因缺 Key 改跑示範分鏡。若你的執行環境對外流量走代理且禁用 WebSocket 升級（colab exec 握手 403），請勿繞過代理：完成安裝與 manifest 準備後，把最終 runner.py chain 指令連同預估成本交回我在本機終端機執行。</textarea>
         </details>
       </div>
 
@@ -1055,8 +1055,9 @@
             <div>
               <label>🧠 劇本模型</label>
               <select id="promptProviderSelect" onchange="saveLocalPrefs()">
+                <option value="agent-llm" selected>🤖 Agent 訂閱代寫（免 API Key）</option>
                 <option value="local-llm">🖥️ 本機 5D 引擎 (免 Key)</option>
-                <option value="gemini" selected>Gemini 3.8 Flash (推薦)</option>
+                <option value="gemini">Gemini 3.8 Flash (推薦)</option>
                 <option value="gemini-pro">Gemini 3.1 Pro</option>
                 <option value="openai">OpenAI (GPT-4o / 4.1)</option>
               </select>
@@ -1077,6 +1078,20 @@
             ✨ 生成分鏡腳本（潛空間一鏡到底）
           </button>
           <div id="planStatusMsg" style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;"></div>
+
+          <!-- 🤖 Agent 訂閱代寫任務包（選 agent-llm 並執行後顯示） -->
+          <div id="agentPlanPackBox" style="display:none; margin-top:10px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:10px; padding:12px 14px;">
+            <div style="font-size:0.85rem; color:#fcd34d; font-weight:600;">🤖 Agent 任務包已生成（免 API Key）</div>
+            <div style="font-size:0.8rem; color:#94a3b8; line-height:1.5; margin-top:4px;">
+              ① 複製整段任務包 → 貼給你的 <strong>Claude Code / Antigravity / Codex 等 Agent</strong>（用你的訂閱額度，不需 API Key）；
+              ② Agent 會回傳一段分鏡 JSON；③ 點下方「貼上 Agent 分鏡 JSON」匯入，效果與 API 路徑完全相同。
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;">
+              <button type="button" class="btn" onclick="copyAgentPlanPack()" style="padding:6px 14px; font-size:0.8rem; min-height:36px; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fcd34d;">📋 複製 Agent 任務包</button>
+              <button type="button" class="btn" onclick="openAgentStoryboardImport('replace')" style="padding:6px 14px; font-size:0.8rem; min-height:36px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;">📄 貼上 Agent 分鏡 JSON</button>
+            </div>
+            <textarea id="agentPlanPackTextarea" readonly spellcheck="false" style="width:100%; height:150px; background:#040a14; color:#fcd34d; border:1px solid #78350f; border-radius:6px; font-family:monospace; font-size:0.72rem; padding:8px 10px; line-height:1.45; resize:vertical;"></textarea>
+          </div>
         </div>
       </div>
     </section>
@@ -1102,6 +1117,13 @@
             <button type="button" class="btn" onclick="document.getElementById('gridImageInput').click()" style="padding:3px 9px; font-size:0.75rem;">📁 更換九宮格圖</button>
             <a id="downloadGridLink" class="btn" href="#" download="storyboard_9grid.png" style="padding:3px 9px; font-size:0.75rem;">⬇️ 下載九宮格大圖</a>
           </div>
+        </div>
+        <div id="gridAgentHint" style="display:none; margin-bottom:8px; padding:8px 10px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); border-radius:8px; font-size:0.78rem; color:#fcd34d; line-height:1.5;">
+          🤖 <strong>無生圖 API？讓 Agent 訂閱額度代產九宮格：</strong>複製下方 <code>grid_image_prompt</code> 貼給你的 Agent，請它用自己的生圖能力（Gemini Canvas / gpt-image 等）產 3×3 PNG（<strong>全圖不可含文字或浮水印</strong>，Panel 1~9 由左至右、由上至下）→ 點上面「📁 更換九宮格圖」上傳；或在分鏡 JSON 附 <code>grid_image_dataurl</code> 匯入時直接帶入。
+        </div>
+        <div id="gridAgentPromptRow" style="display:none; align-items:center; gap:8px; margin-bottom:10px;">
+          <textarea id="gridAgentPromptText" readonly spellcheck="false" style="flex:1; height:52px; background:#040a14; color:#7dd3fc; border:1px solid #1e293b; border-radius:6px; font-family:monospace; font-size:0.7rem; padding:6px 8px; line-height:1.4; resize:none;"></textarea>
+          <button type="button" class="btn" onclick="copyGridImagePrompt()" style="padding:5px 10px; font-size:0.72rem; min-height:36px; background:rgba(56,189,248,0.15); border-color:#38bdf8; color:#7dd3fc;">📋 複製生圖提示</button>
         </div>
         <img id="plannedGridImg" src="" alt="3x3 九宮格分鏡圖" />
         <div id="slicedPanelsContainer" class="sliced-panels-bar"></div>
@@ -1746,6 +1768,31 @@
     </div>
   </dialog>
 
+  <!-- 🤖 Agent 分鏡 JSON 匯入視窗 (Agent Storyboard Importer) -->
+  <dialog id="agentStoryboardImportDialog" style="width:min(560px, 94vw); padding:20px; border-radius:16px; background:#0f172a; border:1px solid #f59e0b; color:#f8fafc; box-shadow:0 20px 50px rgba(0,0,0,0.85);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0; font-size:1.02rem; color:#fcd34d;">🤖 貼上 Agent 分鏡 JSON</h3>
+      <button type="button" class="btn" onclick="document.getElementById('agentStoryboardImportDialog').close()" style="padding:3px 9px; font-size:0.78rem;">✕</button>
+    </div>
+    <p style="font-size:0.8rem; color:#94a3b8; line-height:1.5; margin:0 0 10px 0;">
+      支援整份分鏡 JSON（含 segments；可選帶 <code>grid_image_dataurl</code> 直接灌入九宮格）或純 <code>{ "segments": [...] }</code> 陣列物件。能操作此瀏覽器的 Agent 也可改呼叫 <code>window.H3StudioApplyPlan()</code> 自動帶入，免手動貼上。
+    </p>
+    <div style="display:flex; gap:14px; margin-bottom:10px; font-size:0.82rem;">
+      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+        <input type="radio" name="agentImportMode" value="replace" checked style="width:auto;" /> 覆蓋全部分鏡（重新產生）
+      </label>
+      <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+        <input type="radio" name="agentImportMode" value="append" style="width:auto;" /> 追加段落（＋5 秒/級）
+      </label>
+    </div>
+    <textarea id="agentStoryboardJsonInput" placeholder='{"reasoning_zh":"...","grid_image_prompt":"...","segments":[{"title":"Part 1 (0-5s): ...","end_panel":1,"chain_mode":"first_frame","prompt":"[Scene] ... [Camera] ... Timeline: ... [Look] ... Audio: ..."}]}' spellcheck="false" style="width:100%; height:220px; background:#040a14; color:#93c5fd; border:1px solid #1e293b; border-radius:6px; font-family:monospace; font-size:0.75rem; padding:10px 12px; line-height:1.5; resize:vertical;"></textarea>
+    <div id="agentImportStatus" style="font-size:0.8rem; color:var(--danger); margin-top:6px; min-height:1.2em;"></div>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+      <button type="button" onclick="document.getElementById('agentStoryboardImportDialog').close()" style="padding:7px 16px; font-size:0.85rem;">取消</button>
+      <button type="button" class="success" onclick="importAgentStoryboardJSON()" style="padding:7px 18px; font-size:0.85rem;">⟳ 匯入到網頁</button>
+    </div>
+  </dialog>
+
   <!-- 🎨 九宮格單格局部精修 Modal (Single-Panel Refiner) -->
   <dialog id="singlePanelRefineDialog" style="width:min(480px, 92vw); padding:20px; border-radius:16px; background:#0f172a; border:1px solid #38bdf8; color:#f8fafc; box-shadow:0 20px 50px rgba(0,0,0,0.85);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -2346,7 +2393,7 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
 
 此命令會自動在 Colab A100 上依序完成各分鏡渲染、尾幀傳遞、FFmpeg 消幀拼接成 ${s}_${sec}s_seamless_merged.mp4，並即時回報進度與自動回傳至網頁播放廳中！
 
-【鐵律】開跑前先回報預計消耗的 Compute Units 並取得我同意。若你的執行環境對外流量走代理且禁用 WebSocket 升級（colab exec 握手 403），請勿繞過代理：完成安裝與 manifest 準備工作後，把上述最終指令連同預估成本交回我在本機終端機執行，並用 colab stop 釋放你建立的閒置 session 以免背景扣點。`;
+【鐵律】開跑前先回報預計消耗的 Compute Units 並取得我同意。若我沒有劇本/生圖 API Key：分鏡提示詞與九宮格圖改用你的訂閱額度代產（網頁步驟一選「🤖 Agent 訂閱代寫」走任務包，或你直接呼叫 window.H3StudioApplyPlan() 帶入分鏡、自行生九宮格 PNG 後於步驟二上傳），不得改跑示範分鏡。若你的執行環境對外流量走代理且禁用 WebSocket 升級（colab exec 握手 403），請勿繞過代理：完成安裝與 manifest 準備工作後，把上述最終指令連同預估成本交回我在本機終端機執行，並用 colab stop 釋放你建立的閒置 session 以免背景扣點。`;
 
       const textarea1 = document.getElementById("colabPromptTextarea");
       if (textarea1) textarea1.value = promptText;
@@ -2849,6 +2896,183 @@ Return ONLY valid JSON matching this schema:
     }
   ]
 }`;
+    }
+
+    // ==================== 🤖 Agent 訂閱代寫路徑（免 API Key） ====================
+    function buildAgentPlanTaskPack(desc, durationMode, targetSec, chainParadigm) {
+      const sysPrompt = buildDirectorSystemPrompt(durationMode, targetSec, chainParadigm);
+      const extra = chainParadigm === "grid_keyframes"
+        ? `\n\n【九宮格圖】你需使用你自己的生圖能力（Claude / Gemini Canvas / gpt-image 等訂閱內建生圖），依 \`grid_image_prompt\` 產生一張 3×3 九宮格 PNG（Panel 1~9 由左至右、由上至下，格間細白線，全圖不可含任何文字或浮水印）。擇一交付：(a) 存成 PNG 檔給使用者，再到步驟二點「📁 更換九宮格圖」上傳；(b) 將圖片轉為 data URL，放進 JSON 的 "grid_image_dataurl" 欄位。`
+        : "";
+      return `你是我的影片導演 Agent。請嚴格依照下方【規格系統提示】，把我在【我的故事】中的中文情節轉譯為分鏡 JSON。只回傳一份合法 JSON（不加任何說明文字，也不要用 code fence 包裹${chainParadigm === "grid_keyframes" ? "，期間按需先生成九宮格圖" : ""}）。
+
+【規格系統提示】
+${sysPrompt}
+
+【我的故事】
+${desc}${extra}
+
+【交付要求】回傳的 JSON 必須可直接被網頁匯入：僅在需要說明時附一句繁體中文，其餘嚴守 JSON schema。`;
+    }
+
+    function copyAgentPlanPack() {
+      const textarea = document.getElementById("agentPlanPackTextarea");
+      if (!textarea || !textarea.value.trim()) {
+        showToast("⚠️ 尚未生成 Agent 任務包，請先按下「生成分鏡腳本」");
+        return;
+      }
+      copyTextToClipboard(textarea.value, "📋 已複製 Agent 任務包！貼到你的 Agent（Claude Code / Antigravity / Codex）即可");
+    }
+
+    function copyTextToClipboard(text, successMsg) {
+      function onCopySuccess() {
+        showToast(successMsg);
+      }
+      function onCopyFail() {
+        showToast("⚠️ 自動複製失敗，請手動全選任務包文字複製");
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(onCopySuccess).catch(onCopyFail);
+      } else {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          ta.style.top = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          ta.setSelectionRange(0, 99999);
+          if (document.execCommand("copy")) onCopySuccess(); else onCopyFail();
+          ta.remove();
+        } catch (_e) {
+          onCopyFail();
+        }
+      }
+    }
+
+    function normalizeAgentPlan(plan) {
+      if (!plan || typeof plan !== "object" || Array.isArray(plan)) {
+        throw new Error("JSON 需為一個物件（含 segments 或整份分鏡 plan）");
+      }
+      const rawSegs = Array.isArray(plan.segments) ? plan.segments : null;
+      if (!rawSegs || rawSegs.length === 0) {
+        throw new Error("缺少非空的 segments 陣列");
+      }
+      const segments = rawSegs.map((seg, i) => {
+        if (!seg || typeof seg !== "object" || !String(seg.prompt || "").trim()) {
+          throw new Error(`segments[${i}].prompt 不可為空（Agent 需輸出 5D 英文影片提示詞）`);
+        }
+        return {
+          segment: i + 1,
+          title: String(seg.title || `Part ${i + 1}`).trim(),
+          end_panel: Math.max(1, Math.min(9, Number(seg.end_panel) || (i === 0 ? 1 : 3))),
+          chain_mode: seg.chain_mode === "first_frame" ? "first_frame" : (seg.chain_mode === "motion_context" ? "motion_context" : (i === 0 ? "first_frame" : "motion_context")),
+          context_ir: (seg.context_ir && typeof seg.context_ir === "object") ? seg.context_ir : null,
+          prompt: String(seg.prompt).trim(),
+          dialogue: typeof seg.dialogue === "string" ? seg.dialogue : ""
+        };
+      });
+      const normalized = {
+        project_slug: String(plan.project_slug || "agent_storyboard").replace(/[^a-zA-Z0-9_-]/g, "_"),
+        reasoning_zh: String(plan.reasoning_zh || "由 Agent 訂閱額度代寫的分鏡"),
+        expanded_story_zh: String(plan.expanded_story_zh || ""),
+        grid_image_prompt: String(plan.grid_image_prompt || ""),
+        segments
+      };
+      let gridDataUrl = "";
+      if (typeof plan.grid_image_dataurl === "string" && plan.grid_image_dataurl.startsWith("data:image/")) {
+        gridDataUrl = plan.grid_image_dataurl;
+      }
+      return { plan: normalized, gridDataUrl };
+    }
+
+    function applyGridDataUrl(dataUrl) {
+      if (!dataUrl) return;
+      showGridPreview(dataUrl);
+      gridImageDataUrl = dataUrl;
+      dataUrlToBlob(dataUrl).then((blob) => {
+        gridImageBlob = blob;
+      }).catch(() => {});
+      if (typeof scheduleAutoSave === "function") scheduleAutoSave();
+    }
+
+    async function importAgentStoryboardJSON() {
+      const input = document.getElementById("agentStoryboardJsonInput");
+      const statusEl = document.getElementById("agentImportStatus");
+      try {
+        let text = (input.value || "").trim();
+        if (!text) throw new Error("請先貼上 Agent 回傳的分鏡 JSON");
+        // 容錯：剝除 code fence 與前後雜訊
+        const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (fence) text = fence[1].trim();
+        const firstBrace = text.indexOf("{");
+        if (firstBrace > 0) text = text.slice(firstBrace);
+        const parsed = JSON.parse(text);
+        const mode = document.querySelector("input[name=agentImportMode]:checked")?.value || "replace";
+        const { plan, gridDataUrl } = normalizeAgentPlan(parsed);
+
+        if (mode === "append") {
+          if (!currentPlan) currentPlan = { project_slug: "custom_story", segments: [] };
+          const baseIdx = (document.querySelectorAll("#segmentsContainer .segment-card") || []).length;
+          plan.segments.forEach((seg, i) => appendSegmentCardDOM(seg, baseIdx + i));
+          syncSegmentsFromDOM();
+          showToast(`✅ 已追加 ${plan.segments.length} 段 Agent 產出的分鏡`);
+        } else {
+          renderPlanUI(plan);
+          applyChainParadigmFromPlan(plan);
+        }
+        if (gridDataUrl) applyGridDataUrl(gridDataUrl);
+        statusEl.style.color = "#6ee7b7";
+        statusEl.textContent = "✅ 匯入成功！請到步驟二檢視與微調";
+        document.getElementById("agentStoryboardImportDialog").close();
+        input.value = "";
+      } catch (err) {
+        statusEl.textContent = `❌ 匯入失敗：${err.message}`;
+      }
+    }
+
+    function applyChainParadigmFromPlan(plan) {
+      const select = document.getElementById("chainParadigmSelect");
+      if (!select) return;
+      const segs = plan.segments || [];
+      const isGridPlan = segs.some((seg, i) => i > 0 && seg.chain_mode === "first_frame");
+      const paradigm = (isGridPlan || plan.grid_image_prompt) ? "grid_keyframes" : "latent_chain";
+      if (select.value !== paradigm) {
+        select.value = paradigm;
+        if (typeof onChainParadigmChange === "function") onChainParadigmChange(true);
+      }
+    }
+
+    // Agent 可直接呼叫的注入入口（免手動貼上）
+    window.H3StudioApplyPlan = function (planOrSegments, options = {}) {
+      const mode = options.mode || (Array.isArray(planOrSegments) ? "append" : "replace");
+      const normalized = normalizeAgentPlan(Array.isArray(planOrSegments) ? { segments: planOrSegments } : planOrSegments);
+      if (mode === "append") {
+        if (!currentPlan) currentPlan = { project_slug: "custom_story", segments: [] };
+        const baseIdx = (document.querySelectorAll("#segmentsContainer .segment-card") || []).length;
+        normalized.plan.segments.forEach((seg, i) => appendSegmentCardDOM(seg, baseIdx + i));
+        syncSegmentsFromDOM();
+        showToast(`✅ 已由 Agent 追加 ${normalized.plan.segments.length} 段分鏡`);
+      } else {
+        renderPlanUI(normalized.plan);
+        applyChainParadigmFromPlan(normalized.plan);
+        showToast("✅ 已由 Agent 帶入完整分鏡！請到步驟二檢視");
+      }
+      if (normalized.gridDataUrl) applyGridDataUrl(normalized.gridDataUrl);
+      return true;
+    };
+
+    function openAgentStoryboardImport(mode) {
+      const dialog = document.getElementById("agentStoryboardImportDialog");
+      if (!dialog) return;
+      if (mode && mode !== "") {
+        const radio = document.querySelector(`input[name=agentImportMode][value="${mode}"]`);
+        if (radio) radio.checked = true;
+      }
+      const statusEl = document.getElementById("agentImportStatus");
+      if (statusEl) statusEl.textContent = "";
+      dialog.showModal();
     }
 
     // ==================== Smart Network Proxy (CORS Bypass) ====================
@@ -3396,11 +3620,11 @@ Return ONLY valid JSON matching this schema:
         statusEl.textContent = "❌ 請先輸入中文情節描述";
         return;
       }
-
       const origBtnText = btn.textContent;
       btn.disabled = true;
       btn.textContent = "⏳ 正在規劃分鏡腳本...";
-      const stepStages = [
+      const agentPackBox = document.getElementById("agentPlanPackBox");
+      if (promptProv !== "agent-llm" && agentPackBox) agentPackBox.style.display = "none";      const stepStages = [
         "① 分析故事結構與角色特徵…",
         "② 擴寫多幕情節與對白時間軸…",
         "③ 編譯 5D 場景 / 運鏡 / 動作腳本…"
@@ -3428,7 +3652,24 @@ Return ONLY valid JSON matching this schema:
         const sysPrompt = buildDirectorSystemPrompt(durationMode, targetSec, chainParadigm);
 
         let plan;
-        if (promptProv === "local-llm") {
+        if (promptProv === "agent-llm") {
+          // 🤖 Agent 訂閱代寫：不打任何 API，輸出任務包讓使用者貼給自己的 Agent
+          clearInterval(stageTimer);
+          btn.disabled = false;
+          btn.textContent = origBtnText;
+          const packBox = document.getElementById("agentPlanPackBox");
+          const packText = document.getElementById("agentPlanPackTextarea");
+          if (packBox && packText) {
+            packText.value = buildAgentPlanTaskPack(desc, durationMode, targetSec, chainParadigm);
+            packBox.style.display = "block";
+          }
+          statusEl.style.color = "#fcd34d";
+          statusEl.innerHTML = `
+            <div style="margin-top:6px; padding:8px 12px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4); border-radius:8px;">
+              🤖 <strong>Agent 任務包就緒</strong>：複製上方文字貼給你的 Agent → 它會用你的訂閱額度生成分鏡 JSON → 點「📄 貼上 Agent 分鏡 JSON」匯入（或讓 Agent 呼叫 <code>window.H3StudioApplyPlan()</code>）。
+            </div>`;
+          return;
+        } else if (promptProv === "local-llm") {
           renderStep1Progress("🧠 正在呼叫本機 5D 引擎規劃腳本...");
           plan = await callPlanViaLocalLLM(desc, durationMode, targetSec);
         } else if (promptProv.startsWith("gemini")) {
@@ -3515,6 +3756,26 @@ Return ONLY valid JSON matching this schema:
         appendSegmentCardDOM(seg, idx);
       });
       refreshAllSegmentCardModeUI();
+
+      // 🤖 九宮格 Agent 代產引導：有 grid_image_prompt 時顯示複製框
+      const gridPrompt = String(plan.grid_image_prompt || "").trim();
+      const hintEl = document.getElementById("gridAgentHint");
+      const rowEl = document.getElementById("gridAgentPromptRow");
+      const textEl = document.getElementById("gridAgentPromptText");
+      if (hintEl && rowEl && textEl) {
+        hintEl.style.display = gridPrompt ? "block" : "none";
+        rowEl.style.display = gridPrompt ? "flex" : "none";
+        textEl.value = gridPrompt || "";
+      }
+    }
+
+    function copyGridImagePrompt() {
+      const textEl = document.getElementById("gridAgentPromptText");
+      if (!textEl || !textEl.value.trim()) {
+        showToast("⚠️ 目前分鏡沒有九宮格生圖提示（grid_image_prompt）");
+        return;
+      }
+      copyTextToClipboard(textEl.value.trim(), "📋 已複製九宮格生圖提示！貼給你的 Agent 產 3×3 PNG（不含文字浮水印）再於此上傳");
     }
 
     function renderMiniGridHTML(selectedPanel) {
@@ -4038,7 +4299,19 @@ Return ONLY valid JSON matching this schema:
         const chainParadigm = document.getElementById("chainParadigmSelect")?.value || "latent_chain";
         const sysPrompt = buildDirectorSystemPrompt("expand", currentSeconds, chainParadigm);
         let plan;
-        if (promptProv === "local-llm") {
+        if (promptProv === "agent-llm") {
+          // 🤖 Agent 訂閱代寫（重新規劃情境）：同樣輸出任務包＋貼上匯入
+          replanBtn.disabled = false;
+          replanBtn.textContent = originalText;
+          let packageText = document.getElementById("agentPlanPackTextarea");
+          let box = document.getElementById("agentPlanPackBox");
+          if (box && packageText) {
+            packageText.value = buildAgentPlanTaskPack(desc, "expand", currentSeconds, chainParadigm);
+            box.style.display = "block";
+          }
+          copyTextToClipboard(box && packageText ? packageText.value : "", "📋 已複製 Agent 重新規劃任務包！貼給你的 Agent，回傳 JSON 後點「📄 貼上 Agent 分鏡 JSON」（選「覆蓋全部分鏡」）");
+          return;
+        } else if (promptProv === "local-llm") {
           plan = await callPlanViaLocalLLM(desc, "custom", currentSeconds);
         } else if (promptProv.startsWith("gemini")) {
           if (!prefs.geminiKey) {

@@ -69,3 +69,9 @@
   - `film-chain/public/index.html`：靜態版與動態版 Colab Agent Prompt（`updateColabPromptText`）補分鏡來源鐵律（僅限使用者自有 manifest）＋403 沙盒降級指引＋開跑前點數同意。
   - 背景：遠端虛擬機實測 Colab CLI REST（new/sessions/stop）正常、OAuth 與 CU 餘額 395.63 正常，但 `agy-plugin-proxy` 封鎖 `wss://*.colab.dev` 的 WebSocket 升級，`colab exec` 於沙盒內不可用，屬環境限制非工具錯誤。
   - 驗證：`node --check` 通過；前端測試 53/53 passed。
+- [x] **D1~D4（無 API Key 雙斷點打通：Agent 訂閱代寫分鏡＋九宮格代產）**：
+  - **D1**：步驟一「劇本模型」新增 `agent-llm`「🤖 Agent 訂閱代寫（免 API Key）」並設為預設；選它執行時不打任何 API，輸出「Agent 任務包」（導演系統提示詞全文＋使用者故事＋交付規則）至可複製文字區，重新規劃情境（`replanCurrentSegmentsViaAI`）沿用同任務包並自動複製。
+  - **D2**：新增 `agentStoryboardImportDialog` 貼上匯入窗（支援整份 plan 或 `{segments:[...]}`、容錯剝 code fence）＋`normalizeAgentPlan()` 最小驗證（prompt 非空／end_panel 1~9／chain_mode 白名單）＋`window.H3StudioApplyPlan(plan,{mode:'replace'|'append'})` 注入入口（append 對應「➕ 新增一段」的 Agent 版）；匯入可帶 `grid_image_dataurl` 直接灌九宮格。
+  - **D3**：`renderPlanUI()` 有 `grid_image_prompt` 時在步驟二九宮格區顯示 Agent 代產提示＋生圖提示複製框（`copyGridImagePrompt`）：Agent 用自身訂閱生圖能力產 3×3 PNG（無文字浮水印）→「📁 更換九宮格圖」上傳。
+  - **D4**：Colab Agent Prompt（靜態＋動態）補鐵律：使用者無劇本/生圖 Key 時由 Agent 訂閱額度代產（任務包／`H3StudioApplyPlan`／自行生九宮格上傳），不得因缺 Key 改跑示範分鏡。
+  - 驗證：`node --check` 通過；前端測試 53/53 passed。
