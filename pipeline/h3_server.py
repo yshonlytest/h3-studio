@@ -20,10 +20,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from pipeline.config import get_output_dir, get_scratch_dir
+from pipeline.config import REPO_ROOT, get_output_dir, get_scratch_dir
+from pipeline.h3_context_ir import ContextIR, compile_context_ir, expand_with_local_llm
 from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor
 from pipeline.h3_presets import get_system_memory_status
 from pipeline.h3_prompt_linter import LintInput, analyze_dynamic_tension, lint_prompt
+from pipeline.h3_staging_board import CameraTrack, Point2D, compile_camera_direction
 from pipeline.h3_storyboard_pipeline import run_chained_manifest
 
 LOGGER = logging.getLogger("h3_server")
@@ -174,6 +176,8 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._handle_status()
         elif url.path == "/api/render/events":
             self._handle_sse()
+        elif url.path == "/api/templates":
+            self._handle_templates()
         elif url.path.startswith("/api/videos/"):
             self._handle_video_stream(url.path[len("/api/videos/"):])
         else:
@@ -188,6 +192,8 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
 
         if url.path == "/api/lint":
             self._handle_lint(body or {})
+        elif url.path == "/api/expand":
+            self._handle_expand(body or {})
         elif url.path == "/api/render/start":
             self._handle_render_start(body or {})
         elif url.path == "/api/render/cancel":
@@ -200,6 +206,65 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
 
     def _handle_status(self) -> None:
         self._send_json(200, HUB.get_status_payload())
+
+    def _handle_templates(self) -> None:
+        templates_dir = REPO_ROOT / "examples" / "storyboards"
+        items: list[dict[str, Any]] = []
+        if templates_dir.is_dir():
+            for p in sorted(templates_dir.glob("*.json")):
+                try:
+                    data = json.loads(p.read_text(encoding="utf-8"))
+                    items.append({
+                        "filename": p.name,
+                        "title": data.get("title", p.stem),
+                        "mode": data.get("mode", "turbo"),
+                        "segments_count": len(data.get("segments", [])),
+                        "manifest": data,
+                    })
+                except Exception as exc:
+                    LOGGER.warning("Failed to load template %s: %s", p.name, exc)
+        self._send_json(200, {"ok": True, "templates": items})
+
+    def _handle_expand(self, body: dict[str, Any]) -> None:
+        raw_ir = body.get("context_ir") or {}
+        cam = str(raw_ir.get("camera", ""))
+        cam_track = body.get("camera_track")
+        if isinstance(cam_track, dict):
+            s = cam_track.get("start", [0.0, 0.0])
+            e = cam_track.get("end", [0.0, 0.0])
+            sub = cam_track.get("subject", [0.0, 0.0])
+            track = CameraTrack(
+                start=Point2D(float(s[0]), float(s[1])),
+                end=Point2D(float(e[0]), float(e[1])),
+                subject=Point2D(float(sub[0]), float(sub[1])),
+            )
+            compiled_cam = compile_camera_direction(track)
+            cam = f"{cam} ({compiled_cam})" if cam else compiled_cam
+
+        ir = ContextIR(
+            scene=str(raw_ir.get("scene", "")),
+            action=str(raw_ir.get("action", "")),
+            camera=cam,
+            look=str(raw_ir.get("look", "")),
+            audio=str(raw_ir.get("audio", "")),
+            continuity_from_prev=bool(raw_ir.get("continuity_from_prev", False)),
+        )
+        use_llm = bool(body.get("use_llm", False))
+        endpoint = str(body.get("endpoint_url", "http://127.0.0.1:8080/v1/chat/completions"))
+        prompt = expand_with_local_llm(ir, endpoint_url=endpoint) if use_llm else compile_context_ir(ir)
+
+        actions, cameras, score, suggestions = analyze_dynamic_tension(prompt)
+        report = lint_prompt(LintInput(prompt=prompt))
+        self._send_json(200, {
+            "ok": True,
+            "prompt": prompt,
+            "score": score,
+            "actions": actions,
+            "cameras": cameras,
+            "suggestions": suggestions,
+            "passed": report.ok,
+            "warnings": report.warnings,
+        })
 
     def _handle_lint(self, body: dict[str, Any]) -> None:
         prompt = str(body.get("prompt", ""))

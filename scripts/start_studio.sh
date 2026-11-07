@@ -12,7 +12,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 export H3_BINARY="${H3_BINARY:-$ROOT_DIR/engines/h3.c/h3}"
-export H3_MODEL_DIR="${H3_MODEL_DIR:-$ROOT_DIR/models/MiniMax-H3}"
+if [ -d "$ROOT_DIR/models/MiniMax-H3-Turbo" ]; then
+  export H3_MODEL_DIR="${H3_MODEL_DIR:-$ROOT_DIR/models/MiniMax-H3-Turbo}"
+else
+  export H3_MODEL_DIR="${H3_MODEL_DIR:-$ROOT_DIR/models/MiniMax-H3}"
+fi
 
 if [ ! -x "$H3_BINARY" ]; then
   echo "ℹ️ engines/h3.c/h3 binary not compiled yet. Run ./setup.sh to compile it for local inference."
@@ -25,7 +29,16 @@ echo "========================================================"
 echo "🚀 Launching H3 Studio..."
 echo "========================================================"
 
-# Check if local ComfyUI is running on port 8188
+# 1. Check and launch H3 Native Metal Daemon on port 8080
+if lsof -nP -iTCP:8080 -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "🟢 H3 Studio Native Metal Daemon (Port 8080) is already running."
+else
+  echo "⏳ Starting H3 Studio Native Metal Daemon (Port 8080)..."
+  python3 -m pipeline.h3_server 8080 &
+  echo "🟢 H3 Daemon started (PID: $!)."
+fi
+
+# 2. Check if local ComfyUI is running on port 8188
 if lsof -nP -iTCP:8188 -sTCP:LISTEN >/dev/null 2>&1; then
   echo "🟢 Local ComfyUI (Port 8188) is already running."
 elif [ -d "$COMFY_DIR" ]; then
@@ -53,4 +66,5 @@ fi
 
 echo "========================================================"
 echo "✅ H3 Studio is ready! You can now compose shots in your browser."
+echo "📁 Unified Output Directory: $ROOT_DIR/outputs/storyboard_runs"
 echo "========================================================"

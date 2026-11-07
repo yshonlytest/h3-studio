@@ -83,6 +83,18 @@ describe('H3 Storyboard Studio - Core Modules Unit Tests', () => {
       assert.ok(prompt.includes("4 sequential 5-second segments"));
       assert.ok(prompt.includes("3x3 nine-panel photo grid"));
       assert.ok(prompt.includes(promptBuilder.CONTINUITY_PHRASE));
+      assert.ok(prompt.includes("[Scene]"));
+      assert.ok(prompt.includes("motion_context"));
+    });
+
+    it('should parse 5D Context-IR fields from structured prompt', () => {
+      const raw = "[Scene] Rain-slicked Neo-Tokyo alley. [Camera] Low-angle dolly-in shot. Timeline: 0-2.5s: Detective walks forward. 2.5-5.0s: Speaks <d>[Chinese] 你好</d>. [Look] Neon noir reflections. Audio: Heavy rain and <d>[Chinese] 你好</d>.";
+      const parsed = promptBuilder.parseContextIRFromPrompt(raw);
+      assert.equal(parsed.scene, "Rain-slicked Neo-Tokyo alley");
+      assert.equal(parsed.camera, "Low-angle dolly-in shot");
+      assert.ok(parsed.action.includes("0-2.5s: Detective walks forward"));
+      assert.equal(parsed.look, "Neon noir reflections");
+      assert.ok(parsed.audio.includes("Heavy rain"));
     });
 
     it('should build director system prompt with auto mode adaptive duration instructions', () => {

@@ -33,11 +33,9 @@
     },
     {
       "segment": 4,
-      "title": "Part 4 (15-20s): Combat Alert & Weapon Draw (Anchor Reset) / 拔槍警備 (關鍵幀重錨定)",
-      "chain_mode": "first_frame",
-      "anchor_reset": true,
-      "first_frame": "examples/assets/detective_anchor_ref.jpg",
-      "prompt": "[Scene] Neon-lit cyberpunk crossroad intersection under pouring torrential rain. [Camera] Rapid high-speed whip pan transitioning into low-angle dynamic truck left shot. Timeline: 0-2.5s: Detective violently pivots body, trench coat billowing wildly in wind, reaching under coat. 2.5-5.0s: Draws sleek matte-black plasma revolver, aiming down the foggy street with illuminated neon crosshairs. [Look] Golden muzzle glow charging, water splashing furiously beneath combat boots. Audio: Fabric snapping violently in gust, mechanical slide racking click, plasma capacitor whine."
+      "title": "Part 4 (15-20s): Combat Alert & Weapon Draw / 拔槍警備",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and noir atmosphere of previous segment. [Scene] Rain-drenched cyberpunk crossroad intersection surrounded by towering skyscraper neon signs. [Camera] Rapid high-speed whip pan transitioning into low-angle dynamic truck left shot. Timeline: 0-2.5s: Detective in high-collar charcoal trench coat and wet fedora violently pivots body, coat billowing wildly in gusts, reaching under coat. 2.5-5.0s: Draws sleek matte-black plasma revolver, aiming down the foggy street with glowing blue cybernetic eye and illuminated neon crosshairs. [Look] Golden muzzle glow charging, wet fabric reflections, water splashing furiously beneath combat boots. Audio: Fabric snapping violently in gust, mechanical slide racking click, plasma capacitor whine."
     },
     {
       "segment": 5,

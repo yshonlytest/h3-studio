@@ -171,24 +171,9 @@
     }
 
     if (!manifestPayload) {
-      manifestPayload = {
-        title: "Cyberpunk Neo-Noir (Studio Live Render)",
-        mode: "turbo",
-        width: 864,
-        height: 480,
-        frames: 124,
-        steps: 6,
-        layers: 50,
-        reuse: 0,
-        segments: [
-          {
-            segment: 1,
-            title: "Part 1 (0-5s): Establishing Shot",
-            chain_mode: "first_frame",
-            prompt: "[Scene] Futuristic rain-slicked alleyway at midnight. [Camera] Tracking push-in. Character sprints forward."
-          }
-        ]
-      };
+      alert("請先在步驟一或步驟二載入或生成分鏡腳本，再點擊啟動 Metal 渲染！");
+      showProgressView(false);
+      return;
     }
 
     showProgressView(true, '正在提交分鏡至 H3 Metal 引擎...', 10);

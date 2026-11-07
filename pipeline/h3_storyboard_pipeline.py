@@ -688,9 +688,51 @@ def _merge_and_finalize_storyboard(
     return merged_file
 
 
+def resolve_segment_prompt(
+    seg: dict,
+    idx: int,
+    expand_llm: bool = False,
+    endpoint_url: str = "http://127.0.0.1:8080/v1/chat/completions",
+) -> str:
+    """Resolve prompt text from raw string or structured context_ir."""
+    from pipeline.h3_context_ir import ContextIR, compile_context_ir, expand_with_local_llm
+    from pipeline.h3_staging_board import CameraTrack, Point2D, compile_camera_direction
+
+    raw_ir = seg.get("context_ir")
+    if isinstance(raw_ir, dict):
+        cam = raw_ir.get("camera", "")
+        cam_track = seg.get("camera_track")
+        if isinstance(cam_track, dict):
+            s = cam_track.get("start", [0.0, 0.0])
+            e = cam_track.get("end", [0.0, 0.0])
+            sub = cam_track.get("subject", [0.0, 0.0])
+            track = CameraTrack(
+                start=Point2D(float(s[0]), float(s[1])),
+                end=Point2D(float(e[0]), float(e[1])),
+                subject=Point2D(float(sub[0]), float(sub[1])),
+            )
+            compiled_cam = compile_camera_direction(track)
+            cam = f"{cam} ({compiled_cam})" if cam else compiled_cam
+
+        ir = ContextIR(
+            scene=str(raw_ir.get("scene", "")),
+            action=str(raw_ir.get("action", "")),
+            camera=cam,
+            look=str(raw_ir.get("look", "")),
+            audio=str(raw_ir.get("audio", "")),
+            continuity_from_prev=bool(raw_ir.get("continuity_from_prev", idx > 1)),
+        )
+        if expand_llm:
+            return expand_with_local_llm(ir, endpoint_url=endpoint_url)
+        return compile_context_ir(ir)
+
+    return str(seg.get("prompt", "")).strip()
+
+
 def run_chained_manifest(
     manifest_path: Path,
     executor: PipelineExecutor | None = None,
+    expand_llm: bool = False,
 ) -> Path:
     """
     Run a multi-segment (e.g. 5s + 5s + 5s) chained video generation job from a JSON manifest.
@@ -779,9 +821,10 @@ def run_chained_manifest(
             seg, idx, manifest, chain_ctx
         )
         last_frame = Path(seg["last_frame"]).expanduser().resolve() if seg.get("last_frame") else None
+        prompt_text = resolve_segment_prompt(seg, idx, expand_llm=expand_llm)
         seg_job = SegmentJob(
             inputs=SegmentInputs(
-                prompt_text=seg["prompt"].strip(),
+                prompt_text=prompt_text,
                 first_frame_path=first_frame,
                 last_frame_path=last_frame,
                 motion_context_path=motion_context,
@@ -978,6 +1021,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--prepare-only", action="store_true", help="Only copy image and write workflow JSON without running inference")
     parser.add_argument("--export-gdrive", action="store_true", help="Automatically trigger non-blocking Google Drive sync upon completion")
     parser.add_argument("--anchor-every", type=int, default=0, help="Automatically reset character anchor every N segments (default: 0 = follow manifest)")
+    parser.add_argument("--expand-llm", action="store_true", help="Expand 5D context_ir prompts using local LLM before execution")
     parser.add_argument("--model-dir", help="Override MiniMax-H3 model directory (e.g. models/MiniMax-H3-Turbo)")
     return parser
 
@@ -1100,7 +1144,7 @@ def main():
         manifest_path = Path(args.chain_manifest).expanduser().resolve()
         if not manifest_path.is_file():
             sys.exit(f"Error: Chain manifest not found: {manifest_path}")
-        final_video = run_chained_manifest(manifest_path)
+        final_video = run_chained_manifest(manifest_path, expand_llm=bool(args.expand_llm))
         print(f"\n[SUCCESS] Chained video generated at: {final_video}", flush=True)
         return
 

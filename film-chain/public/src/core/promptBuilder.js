@@ -22,7 +22,7 @@
    * @param {number} targetSeconds - 目標秒數 (例如 15、20、30)
    * @returns {string} 完整的導演系統指令
    */
-  function buildDirectorSystemPrompt(durationMode, targetSeconds) {
+  function buildDirectorSystemPrompt(durationMode, targetSeconds, paradigm = "latent_chain") {
     const sec = Math.max(DEFAULT_SEGMENT_DURATION_SECONDS, targetSeconds || 15);
     const count = Math.max(1, Math.round(sec / DEFAULT_SEGMENT_DURATION_SECONDS));
 
@@ -30,7 +30,11 @@
       ? `The user explicitly requested a total video duration of ${sec} seconds (${count} segments of 5 seconds each). You MUST expand, enrich, and pace the user's Chinese story into a rich, unhurried ${sec}-second screenplay consisting of exactly ${count} sequential 5-second segments!`
       : `Analyze the user's Chinese story complexity, actions, and dialogue length, and freely determine the optimal total duration in seconds (must be a multiple of 5, e.g., 5, 10, 15, 20, 25, 30, etc. — do NOT artificially cap at 15s if the plot needs 20s or 25s!). Create N = recommended_total_seconds / 5 sequential 5-second segments so no segment feels rushed.`;
 
-    return `You are an expert AI Film Director specializing in First/Last-Frame Chained Video Generation.
+    const chainInstruction = paradigm === "grid_keyframes"
+      ? `Each segment uses keyframe anchoring ("chain_mode": "first_frame").`
+      : `Segment 1 uses "chain_mode": "first_frame", and Segments 2..N MUST use "chain_mode": "motion_context" (PR #76 lossless latent continuation without static anchor_reset jumps).`;
+
+    return `You are an expert AI Film Director specializing in First/Last-Frame Chained Video Generation and 5D Context-IR Prompt Engineering.
 The user provides a character/setting reference image and a creative story description in Chinese.
 
 YOUR TASKS & WORKFLOW:
@@ -38,30 +42,40 @@ YOUR TASKS & WORKFLOW:
 2. 3x3 Storyboard Contact Sheet (9 Key Milestones):
    - Plan a 3x3 nine-panel photo grid (Panel 1 to Panel 9, read left-to-right, top-to-bottom: Row 1 = Panels 1, 2, 3; Row 2 = Panels 4, 5, 6; Row 3 = Panels 7, 8, 9).
    - Write \`grid_image_prompt\` in English to generate this 3x3 photo grid (thin white lines only, strictly NO text, NO captions, NO subtitles anywhere in image) maintaining exact character identity and scene atmosphere from the reference image.
-3. Sequential 5-Second Segments (Chained Storyboard Video Prompts):
+3. Sequential 5-Second Segments (5D Context-IR Chained Storyboard Video Prompts):
+   - ${chainInstruction}
    - For EACH segment (Segment 1 to Segment N):
-     A. \`title\` (Chinese Milestone Summary): MUST be in Traditional Chinese (繁體中文), stating the part number, timecode, and a clear story milestone summary (e.g., "Part 1 (0-5s): 甦醒伸展肩膀並開口說「坐太久活動一下」").
+     A. \`title\` (Chinese Milestone Summary): MUST be in Traditional Chinese (繁體中文), stating the part number, timecode, and a clear story milestone summary (e.g., "Part 1 (0-5s): 裂空急墜・雲海截殺").
      B. \`end_panel\`: The target milestone panel index in the 3x3 grid (integer from 1 to 9, monotonically increasing from Segment 1 up to 9 on the final segment).
-     C. \`prompt\` (English Cinematic Video Prompt): High-density English prompt tailored specifically for video generation models (MiniMax-H3 / Seedance):
+     C. \`chain_mode\`: "first_frame" for Segment 1, and "${paradigm === "grid_keyframes" ? "first_frame" : "motion_context"}" for Segments 2..N.
+     D. \`context_ir\`: Structured 5-dimension object \`{ "scene": "...", "camera": "...", "action": "0-2.5s: ... 2.5-5.0s: ...", "look": "...", "audio": "..." }\`.
+     E. \`prompt\` (English 5D Cinematic Video Prompt): High-density English prompt compiled from the 5D Context-IR:
         - STRICT SEAMLESS CONTINUITY:
-          * Segment 1 (0-5s): Establish the character and environment from Panel 1, progressing smoothly toward Panel \`end_panel\`.
-          * Segment 2 to N: MUST explicitly start with: "${CONTINUITY_PHRASE}..." and transition naturally towards Panel \`end_panel\`.
-        - Visual Breakdown: Include timeline timestamps (e.g., 0-2.0s, 2.0-5.0s) describing subject action, physical motion, camera shot/angle, and subtle expressions.
-        - Chinese Spoken Dialogue: If the segment includes speech, embed \`<d>[Chinese] 台詞內容</d>\` inside BOTH the prompt timeline description AND the audio section to enable lip-syncing and authentic Mandarin speech generation.
-        - Cinematic Quality: Specify coherent motion, realistic textures, cinematic lighting, and strictly clean shots without borders or watermarks.
+          * Segment 1 (0-5s): Establish the character and environment from Panel 1.
+          * Segment 2 to N: MUST explicitly start with: "${CONTINUITY_PHRASE}." and re-state core character facial/costume visual anchors in text to prevent identity drift without resetting frames.
+        - 5D Tag Format: Explicitly structure the prompt with \`[Scene] ... [Camera] ... Timeline: 0-2.5s: ... 2.5-5.0s: ... [Look] ... Audio: ...\`.
+        - Chinese Spoken Dialogue: If the segment includes speech, embed \`<d>[Chinese] 台詞內容</d>\` inside BOTH the \`Timeline:\` action and \`Audio:\` section for lip-sync and Mandarin speech synthesis.
 
 Return ONLY valid JSON matching this schema:
 {
   "project_slug": "short_english_slug",
-  "recommended_total_seconds": 15,
-  "reasoning_zh": "繁體中文說明：為什麼評估此秒數最適合，以及如何鋪陳起承轉合",
+  "recommended_total_seconds": 25,
+  "reasoning_zh": "繁體中文說明：為什麼評估此秒數最適合，以及如何鋪陳起承轉合與潛空間接力",
   "expanded_story_zh": "擴寫後的完整繁體中文分鏡故事大綱",
   "grid_image_prompt": "A seamless 3x3 nine-panel photo grid...",
   "segments": [
     {
       "title": "Part 1 (0-5s): 繁體中文段落標題與情節說明",
-      "end_panel": 3,
-      "prompt": "Create a 5-second live-action cinematic film... Timeline: 0-2.0s... 2.0-5.0s... Audio: ... spoken dialogue: <d>[Chinese] 台詞</d>."
+      "end_panel": 2,
+      "chain_mode": "first_frame",
+      "context_ir": {
+        "scene": "Environment description",
+        "camera": "Dynamic tracking shot description",
+        "action": "0-2.5s: Opening movement. 2.5-5.0s: Follow-up action and <d>[Chinese] 台詞</d>",
+        "look": "Lighting, lens, and cloth physics",
+        "audio": "Ambient foley and spoken dialogue: <d>[Chinese] 台詞</d>"
+      },
+      "prompt": "[Scene] ... [Camera] ... Timeline: 0-2.5s: ... 2.5-5.0s: ... [Look] ... Audio: ... <d>[Chinese] 台詞</d>."
     }
   ]
 }`;
@@ -178,6 +192,26 @@ Return ONLY valid JSON matching this schema:
   }
 
   /**
+   * 從既有 Prompt 字串反解析出 5D Context-IR 欄位（供 UI 五維度抽屜預填）
+   * @param {string} promptText
+   * @returns {{ scene: string, camera: string, action: string, look: string, audio: string }}
+   */
+  function parseContextIRFromPrompt(promptText) {
+    const raw = (promptText || "").trim();
+    const extract = (pattern) => {
+      const m = raw.match(pattern);
+      return m && m[1] ? m[1].trim().replace(/\.$/, "") : "";
+    };
+    return {
+      scene: extract(/\[Scene\]\s*([\s\S]*?)(?=\[Camera\]|Timeline:|\[Look\]|Audio:|$)/i),
+      camera: extract(/\[Camera\]\s*([\s\S]*?)(?=\[Scene\]|Timeline:|\[Look\]|Audio:|$)/i),
+      action: extract(/Timeline:\s*([\s\S]*?)(?=\[Scene\]|\[Camera\]|\[Look\]|Audio:|$)/i),
+      look: extract(/\[Look\]\s*([\s\S]*?)(?=\[Scene\]|\[Camera\]|Timeline:|Audio:|$)/i),
+      audio: extract(/Audio:\s*([\s\S]*?)(?=\[Scene\]|\[Camera\]|Timeline:|\[Look\]|$)/i),
+    };
+  }
+
+  /**
    * 2D Staging Board 頂視角幾何運鏡編譯器（通用層：本地與雲端模型皆可用）
    * @param {{ start: {x:number, y:number}, end: {x:number, y:number}, subject: {x:number, y:number} }} track
    * @returns {string} 電影級運鏡英語提示詞
@@ -226,6 +260,7 @@ Return ONLY valid JSON matching this schema:
     extractDialogueTags,
     cleanAndParseJson,
     compileContextIR,
+    parseContextIRFromPrompt,
     compileCameraTrack
   };
 });

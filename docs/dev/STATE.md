@@ -1,37 +1,42 @@
-# STATE.md — 專案狀態索引（導航用，≤ 50 行，覆寫更新、不追加敘事）
+# STATE.md — 專案狀態索引與 3.8 Flash 單向微批次清單
 
-> 守則見 [AGENTS.md](../../AGENTS.md)。本檔只回答「現在在哪、下一步是什麼、該讀什麼」。
+> 守則見 [AGENTS.md](../../AGENTS.md)、規範見 [docs/STANDARDS.md](../STANDARDS.md)。**3.8 Flash 嚴禁自行發散架構，僅依序執行下方 M1~M7，每步跑完驗證指令才打勾。全部完成後交由 Argon 最終驗收。**
 
-## 目前階段
-- P0–P6、Phase 1–11 全數完成（最後 commit：`e4dbb20` Web UI 雙模整合 + 本機 Metal Daemon）。
-- 單元測試：34/34 通過（`python3 -m unittest discover -s tests`）。
-- 進行中任務：**無**（文件與技術債整理中，見下方）。
+## 1. 四大核心問題與架構收斂定案（Argon 裁決，3.8 勿改）
+- **資產與路徑四層隔離（解決問題 3 & 4）**：
+  1. `examples/`（Git 追蹤，開源範本）：僅放 JSON Manifest 與輕量錨定圖（`<2MB`）。
+  2. `film-chain/public/assets/demo/`（Git 追蹤，Cloudflare 線上靜態展示）：只放已驗證完稿的展示影片與九宮格（賽博偵探 `detective_*`；仙俠完稿後才由腳本發佈至此）。
+  3. `outputs/storyboard_runs/`（`.gitignore`，本機算圖正式產出）：所有 CLI / Daemon 產出的 `.mp4`、`.h3.log`、`.state.json` 唯一落點。**廢除 `MiniMax-H3-h3c-ComfyUI/ComfyUI/output` 舊 fallback**。
+  4. `scratch/`（`.gitignore`，純暫存）：僅供執行期中繼檔（`.h3ctx`、臨時 manifest），禁止存放成品影片。
+- **接力範式與重錨定修正（解決問題 1 & 2）**：
+  - 區分兩種範式：`latent_chain`（PR #76 `--motion-context` 一鏡到底，僅第 1 段用首幀/九宮格 Panel 1，第 2~5 段禁設 `anchor_reset: true` 覆蓋 `first_frame`，改以 Prompt 外貌錨定詞防漂移）與 `grid_keyframes`（3×3 九宮格 Panel 1~9 首尾幀轉場）。
+- **工具鏈打通（解決問題 1 & 2）**：
+  - `h3_server.py` 補齊 `POST /api/expand`（調用 `h3_context_ir.expand_with_local_llm` + `h3_staging_board`）與 `POST /api/character-sheet`（調用 `h3_character_sheet.py`）。
+  - `film-chain/public/index.html` 匯出 `window.exportChainedManifest()`（供 `h3ServeBridge.js:165` 讀取當前分鏡與範式，不再掉回寫死假資料），並在 Step 1/2 加入「接力範式切換」與「本機 LLM 擴寫」選項。
 
-## 下一個任務
-- 文件債 / 技術債改善計畫（依序）：
-  - [x] Step 1：拆分 STATE.md（本檔、AGENTS.md、docs/ref、docs/archive）
-  - [x] Step 2：規範單一來源 `docs/STANDARDS.md`（CONTRIBUTING 已改為連結）
-  - [x] Step 2b：`film-chain/HANDOFF.md`、`CODING_STANDARDS.md` 路徑與入口檔名已更新
-  - [x] Step 2c：`film-chain/SPEC.md` 已對照 `comfyPayload.js` / `h3_presets.py` / `h3_server.py` 更新（TICKETS.md 後半尚未核對）
-  - [x] Step 3：CI 閘門已轉阻擋（pyproject.toml baseline 初期 6 檔；ruff check . 全綠、34 測試通過）
-  - [ ] Step 3b：逐步縮減 baseline（已拔除 `h3_prompt_linter.py`，剩餘 5 檔；集中於 `h3_storyboard_pipeline.py`、`comfy_h3_bridge/__init__.py`）
-  - [x] Step 4：`docs/adr/`（範本 + ADR-0001）與 `docs/templates/REVIEW_FINDINGS.md`；下次 Code Review 起使用
-  - [ ] Step 5：架構債排程（`film-chain/public/index.html` 5189 行拆分、`h3.c` 雙來源釐清）
-
-## 已知問題 / 架構債
-- `film-chain/public/index.html` 約 5189 行單體檔案（須切片讀取）。
-- 引擎來源重複：`engines/h3.c` 與 `MiniMax-H3-h3c-ComfyUI/h3.c`。
-- CONTRIBUTING.md 與 AGENTS.md 的規範數值不一致（Step 2 處理）。
-
-## 待決策
-- JS（`comfyPayload.js`：640×480、16 步、45 層）與 CLI turbo（864×480、6 步、50 層）預設不一致，是否統一？（見 SPEC §2.1.1）
-
-## 文件地圖（依任務選讀）
-| 層級 | 文件 | 何時讀 |
-|---|---|---|
-| L1 必讀 | [AGENTS.md](../../AGENTS.md)、本檔 | 每個任務 |
-| L1 | [README.md](../../README.md)、[CONTRIBUTING.md](../../CONTRIBUTING.md) | 需要使用方式 / 貢獻流程 |
-| L2 | [docs/ref/HARDWARE_AND_ENGINE.md](../ref/HARDWARE_AND_ENGINE.md) | 動到引擎、預設值、記憶體、模型權重 |
-| L2 | [docs/H3_WORKFLOW_OPTIMIZATION_RESEARCH.md](../H3_WORKFLOW_OPTIMIZATION_RESEARCH.md) | 調整工作流設計 |
-| L3 | [docs/archive/STATE_HISTORY.md](../archive/STATE_HISTORY.md) | 追查過去某階段為何這樣做 |
-| L3 | `docs/adr/`（建立中） | 追查架構決策理由 |
+## 2. 3.8 Flash 單向執行微批次清單（不得交錯、禁止啟動真機 GPU 算圖）
+- [x] **M1（清理工作區垃圾與收斂 `config.py` 路徑）**：
+  - 刪除 `scratch/` 下所有殘留 `.mp4`、`.png`、`output_25s/`、`*.json`（保留 `gdrive_folder_cache.json`）及 `outputs/noop_test.state.json`。
+  - 修改 `pipeline/config.py:94-109` `get_output_dir()`：移除 `cand_legacy` (`MiniMax-H3-h3c-ComfyUI/ComfyUI/output`) fallback，固定回傳 `REPO_ROOT / "outputs"`（支援 `H3_OUTPUT_DIR` 覆寫）。
+  - 驗證：`python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/config.py`
+- [x] **M2（修正雙範本 Part 4 跳針與補齊九宮格/外貌鎖定欄位）**：
+  - 修改 `examples/storyboards/xianxia_aerial_duel_25s.json` 與 `cyberpunk_detective_25s.json`：移除第 4 段 `"anchor_reset": true` 與 `"first_frame"`，改為 `"chain_mode": "motion_context"`，並在 Part 4 Prompt 開頭補上連貫前綴與明確服裝五官描述。
+  - 驗證：`python3 -m unittest tests/test_prompt_linter_and_manifests.py`
+- [x] **M3（CLI 接入 `ContextIR`、`expand_with_local_llm` 與 `StagingBoard`）**：
+  - 修改 `pipeline/h3_storyboard_pipeline.py`：當 segment 含 `"context_ir"` dict（及可選 `"camera_track"`）時，自動調用 `compile_camera_direction` 與 `compile_context_ir`（若帶 `--expand-llm` 則調用 `expand_with_local_llm`）生成 `seg["prompt"]`。
+  - 新增單元測試驗證 manifest 內 `context_ir` 自動編譯為合規 Prompt。
+  - 驗證：`python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/`
+- [x] **M4（`h3_server.py` 新增 `/api/expand` 與 `/api/templates` 端點）**：
+  - 修改 `pipeline/h3_server.py:170-220`：新增 `GET /api/templates`（回傳 `examples/storyboards/*.json` 清單與內容）與 `POST /api/expand`（接收 5D Context-IR + 運鏡座標，回傳編譯/擴寫後 Prompt 與 Linter 分數）。
+  - 在 `tests/test_h3_server.py` 新增對應測試。
+  - 驗證：`python3 -m unittest tests/test_h3_server.py && .venv/bin/ruff check pipeline/h3_server.py tests/test_h3_server.py`
+- [x] **M5（修復 `h3ServeBridge.js` 假資料斷路，實作 `window.exportChainedManifest`）**：
+  - 於 `film-chain/public/index.html`（Step 2 `syncSegmentsFromDOM` 附近，約 `L3352-3375`）實作並掛載 `window.exportChainedManifest()`，將當前 `currentPlan`、畫布設定、各段 `chain_mode` 與首幀轉為標準 Manifest 結構；刪除 `h3ServeBridge.js:173-192` 的 1 段式寫死 fallback，改為無分鏡時提示先於步驟一/二載入分鏡。
+  - 驗證：`cd film-chain && npm test`
+- [x] **M6（Web UI 補齊「潛空間 vs 九宮格範式開關」、「本機 Context-IR 擴寫」與「官方範本載入」）**：
+  - 於 `film-chain/public/index.html` Step 1 (`L1040-1065`)：`promptProviderSelect` 新增 `<option value="local-llm">🖥️ 本機 Context-IR / Local LLM (免 API Key)</option>`；新增「接力範式 (`chainParadigmSelect`)」下拉選單（`latent_chain` 一鏡到底 vs `grid_keyframes` 九宮格轉場），選 `latent_chain` 時批次將 Part 2~N 設為 `motion_context` 並摺疊九宮格切片列。
+  - 新增「載入官方 25s 範本（仙俠空戰 / 賽博偵探）」按鈕。
+  - 驗證：`npm test --prefix film-chain`（52/52 passed）
+- [x] **M7（全套自動化測試與 Lint 總閘門，等待 Argon 驗收）**：
+  - 執行：`python3 -m unittest discover -s tests && .venv/bin/ruff check . && npm test --prefix film-chain`
+  - 狀態：39 Python 單元測試全數通過、Ruff 零警報、52 前端單元測試全數通過。未執行真機 GPU 算圖。

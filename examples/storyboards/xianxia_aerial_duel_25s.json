@@ -33,11 +33,9 @@
     },
     {
       "segment": 4,
-      "title": "Part 4 (15-20s): Canyon Dive & Mid-Air Blade Clash (Anchor Reset) / 絕壁俯衝・近身激撞 (關鍵幀重錨定)",
-      "chain_mode": "first_frame",
-      "anchor_reset": true,
-      "first_frame": "examples/assets/xianxia_anchor_ref.png",
-      "prompt": "[Scene] Shadowy vertical chasm between two colossal sheer granite cliffs draped in ancient hanging pines. [Camera] Steep vertical crane-down diving shot plunging straight down the cliff face alongside the hurtling cultivators. Timeline: 0-2.5s: Talisman master dives headfirst into the gorge to evade remaining sword energy; sword immortal swoops down in relentless pursuit along mossy stone walls. 2.5-5.0s: Swordsman catches up and strikes downward; talisman master conjures a golden hexagonal rune shield to block the blow, sparks exploding violently between their faces as he grunts: <d>[Chinese] 妄想！</d> [Look] High-contrast canyon shadow pierced by blinding azure and gold contact flash, flying rock chips and pine needle debris. Audio: Shrieking wind in narrow gorge, heavy metallic impact blast, strained fierce spoken grunt: <d>[Chinese] 妄想！</d>, stone cracking echo."
+      "title": "Part 4 (15-20s): Canyon Dive & Mid-Air Blade Clash / 絕壁俯衝・近身激撞",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and downward kinetic trajectory of previous segment. [Scene] Shadowy vertical chasm between two colossal sheer granite cliffs draped in ancient hanging pines. [Camera] Steep vertical crane-down diving shot plunging straight down the cliff face alongside the hurtling cultivators. Timeline: 0-2.5s: Talisman master in billowing indigo silk robes with gold trim dives headfirst into the gorge; white-robed sword immortal swoops down in relentless pursuit along mossy stone walls. 2.5-5.0s: Swordsman catches up and strikes downward; talisman master conjures a golden hexagonal rune shield to block the blow, sparks exploding violently between their determined faces as he grunts: <d>[Chinese] 妄想！</d> [Look] High-contrast canyon shadow pierced by blinding azure and gold contact flash, realistic silk cloth dynamics, flying rock debris. Audio: Shrieking wind in narrow gorge, heavy metallic impact blast, strained fierce spoken grunt: <d>[Chinese] 妄想！</d>, stone cracking echo."
     },
     {
       "segment": 5,

@@ -99,11 +99,6 @@ def get_output_dir() -> Path:
         cand.mkdir(parents=True, exist_ok=True)
         return cand
     cand_root = REPO_ROOT / "outputs"
-    if cand_root.is_dir():
-        return cand_root
-    cand_legacy = REPO_ROOT / "MiniMax-H3-h3c-ComfyUI" / "ComfyUI" / "output"
-    if cand_legacy.is_dir():
-        return cand_legacy
     cand_root.mkdir(parents=True, exist_ok=True)
     return cand_root
 

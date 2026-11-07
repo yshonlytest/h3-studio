@@ -78,6 +78,40 @@ class TestH3Server(unittest.TestCase):
         self.assertIn("200 OK", resp)
         self.assertIn('"ok": false', resp)
 
+    def test_templates_endpoint(self) -> None:
+        raw = b"GET /api/templates HTTP/1.1\r\nHost: localhost\r\n\r\n"
+        resp = self._call_handler(raw)
+        self.assertIn("200 OK", resp)
+        self.assertIn('"templates":', resp)
+        self.assertIn("cyberpunk_detective_25s.json", resp)
+
+    def test_expand_endpoint(self) -> None:
+        body = json.dumps({
+            "context_ir": {
+                "scene": "Cyberpunk alley",
+                "action": "0-2s: walks. 2-5s: leaps",
+                "look": "Rain reflections",
+                "audio": "Sirens",
+            },
+            "camera_track": {
+                "start": [0.1, 0.8],
+                "end": [0.5, 0.25],
+                "subject": [0.5, 0.0],
+            },
+            "use_llm": False,
+        }).encode("utf-8")
+        raw = (
+            b"POST /api/expand HTTP/1.1\r\n"
+            b"Host: localhost\r\n"
+            b"Content-Type: application/json\r\n"
+            b"Content-Length: " + str(len(body)).encode("utf-8") + b"\r\n\r\n" + body
+        )
+        resp = self._call_handler(raw)
+        self.assertIn("200 OK", resp)
+        self.assertIn('"ok": true', resp)
+        self.assertIn("[Scene] Cyberpunk alley.", resp)
+        self.assertIn("dolly-in", resp)
+
     def test_event_broadcaster(self) -> None:
         broadcaster = EventBroadcaster()
         q = broadcaster.subscribe()
