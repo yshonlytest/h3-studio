@@ -158,6 +158,14 @@
     }
   }
 
+  function notifyUser(msg) {
+    if (typeof window.showToast === 'function') {
+      window.showToast(msg);
+    } else {
+      alert(msg);
+    }
+  }
+
   async function handleStartRender() {
     if (!isDaemonOnline) return;
 
@@ -171,7 +179,7 @@
     }
 
     if (!manifestPayload) {
-      alert("請先在步驟一或步驟二載入或生成分鏡腳本，再點擊啟動 Metal 渲染！");
+      notifyUser("⚠️ 請先在步驟一或步驟二載入或生成分鏡腳本，再點擊啟動 Metal 渲染！");
       showProgressView(false);
       return;
     }
@@ -187,13 +195,13 @@
       });
       const res = await resp.json();
       if (!resp.ok) {
-        alert(`啟動渲染失敗: ${res.error || res.message}`);
+        notifyUser(`❌ 啟動渲染失敗: ${res.error || res.message}`);
         showProgressView(false);
         return;
       }
       subscribeToEvents();
     } catch (err) {
-      alert(`連線守護進程發生錯誤: ${err.message}`);
+      notifyUser(`❌ 連線守護進程發生錯誤: ${err.message}`);
       showProgressView(false);
     }
   }
@@ -249,11 +257,11 @@
       });
       const data = await resp.json();
       const score = (data.score * 100).toFixed(0);
-      const msg = `🛡️ 動態張力評分: ${score}%\n動作動詞數: ${data.actions} | 運鏡關鍵字: ${data.cameras}\n` +
-                  (data.suggestions?.length ? `優化建議:\n- ${data.suggestions.join('\n- ')}` : '動態張力飽滿，符合高動態標準！');
-      alert(msg);
+      const msg = `🛡️ 動態張力評分: ${score}%（動作: ${data.actions} | 運鏡: ${data.cameras}）` +
+                  (data.suggestions?.length ? ` · 建議: ${data.suggestions.join('; ')}` : ' · 動態張力飽滿！');
+      notifyUser(msg);
     } catch (err) {
-      alert(`Linter 連線失敗: ${err.message}`);
+      notifyUser(`❌ Linter 連線失敗: ${err.message}`);
     }
   }
 

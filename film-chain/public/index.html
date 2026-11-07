@@ -340,14 +340,18 @@
 
     @media (max-width: 768px) {
       .info-tip {
-        width: 22px;
-        height: 22px;
-        min-width: 22px;
-        min-height: 22px;
-        font-size: 0.8rem;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 0.9rem;
       }
       .info-tip .tooltip-content {
         display: none !important;
+      }
+      .segment-card-header button,
+      .segment-card-header select {
+        min-height: 40px;
       }
     }
 
@@ -937,43 +941,47 @@
         </div>
       </div>
 
-      <!-- ☁️ 路線 1: Google Colab Agent Prompt 卡片（預設推薦 · Gemini Pro 以上用戶限定） -->
-      <div id="step1ColabPromptBox" style="background:#091426; border:1.5px solid #0284c7; border-radius:10px; padding:14px; margin-bottom:16px; box-shadow:0 4px 16px rgba(2,132,199,0.2);">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
-          <div style="font-size:0.88rem; color:#e0f2fe; display:flex; align-items:center; gap:8px;">
+      <!-- ☁️ 路線 1: Google Colab Agent Prompt 卡片 -->
+      <div id="step1ColabPromptBox" style="background:#091426; border:1.5px solid #0284c7; border-radius:10px; padding:12px 14px; margin-bottom:16px; box-shadow:0 4px 16px rgba(2,132,199,0.2);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div style="font-size:0.88rem; color:#e0f2fe; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span style="font-size:1.1rem;">☁️</span>
-            <span><strong style="color:#38bdf8;">【Gemini Advanced / Pro 用戶限定】跨平台 AI Agent 雲端算力流</strong></span>
-            <span class="badge ok" style="font-size:0.68rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.2);">Claude Code · Codex · Antigravity 通用</span>
+            <span><strong style="color:#38bdf8;">雲端 GPU 自動化渲染（免本機顯卡）</strong></span>
+            <span style="font-size:0.8rem; color:#94a3b8;">A100 / L4 自動容錯，一鍵產出並無縫拼接長片</span>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" id="openColabTopBtn" class="btn primary" onclick="openColabNotebook()" style="padding:6px 16px; font-size:0.82rem; background:linear-gradient(135deg, #0284c7, #0369a1); border-color:#38bdf8; color:#fff; font-weight:700; box-shadow:0 3px 12px rgba(2,132,199,0.3);">
-              🚀 在 Google Colab 開啟執行 (免本機環境)
+            <button type="button" id="openColabTopBtn" class="btn primary" onclick="openColabNotebook()" style="padding:7px 16px; font-size:0.84rem; min-height:38px; background:linear-gradient(135deg, #0284c7, #0369a1); border-color:#38bdf8; color:#fff; font-weight:700;">
+              🚀 在 Google Colab 開啟
             </button>
-            <button type="button" id="copyColabPromptBtn" class="btn" onclick="copyColabPrompt()" style="padding:6px 14px; font-size:0.82rem; background:rgba(56,189,248,0.22); border-color:#38bdf8; color:#7dd3fc; font-weight:700;">
-              📋 複製終端 Agent 執行指令
+            <button type="button" id="copyColabPromptBtn" class="btn" onclick="copyColabPrompt()" style="padding:7px 14px; font-size:0.84rem; min-height:38px; background:rgba(56,189,248,0.22); border-color:#38bdf8; color:#7dd3fc; font-weight:700;">
+              📋 複製 Agent 指令
             </button>
           </div>
         </div>
-        <div style="font-size:0.78rem; color:#94a3b8; line-height:1.5; margin-bottom:8px;">
-          💡 <strong>方案彈性與智慧容錯：</strong>本工作流利用 Google 訂閱之 Compute Units 啟動雲端 GPU；預設使用 A100，若遇尖峰滿載（503 Service Unavailable）系統將<strong>自動容錯切換至 NVIDIA L4 GPU</strong>（24GB VRAM，Ada Lovelace 原生 INT8/NVFP4 量化，速度相近且點數省 50%）。首次使用需執行 <code>colab login</code> 完成 OAuth 授權，零本機顯卡負擔！
-        </div>
-        <div style="font-size:0.75rem; color:#7dd3fc; margin-bottom:4px; opacity:0.9;">▼ 終端 Agent 完整執行指令預覽（支援全自動安裝 skill、授權引導、A100/L4 智慧容錯生成與 ffmpeg 無縫縫合）：</div>
-        <textarea id="colabPromptTextarea" readonly style="width:100%; height:82px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 `film-chain/skills/minimax-h3-colab`（若本機尚未安裝 colab CLI，請執行 `pip install google-colab-cli` 並提示我完成 `colab login` OAuth 授權）。確認具備 Compute Units 餘額後，讀取本專案分鏡任務，調用 Google Colab GPU（預設 A100，若遇尖峰滿載則自動切換至 NVIDIA L4 備援算力）依序渲染 MiniMax H3 影片，完成後自動調用本機 ffmpeg 消除重複首幀並以無縫 concat 合併為完整長影片，回填至網頁播放廳中。</textarea>
+        <details style="margin-top:8px; font-size:0.78rem; color:#94a3b8;">
+          <summary style="cursor:pointer; color:#7dd3fc;">▾ 查看雲端算力說明與終端 Agent 指令內容</summary>
+          <div style="line-height:1.5; margin:6px 0;">
+            💡 利用 Google Colab 啟動雲端 GPU（預設 A100，滿載時自動切換至 NVIDIA L4，點數省 50%）。首次使用請執行 <code>colab login</code> 授權。
+          </div>
+          <textarea id="colabPromptTextarea" readonly style="width:100%; height:72px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 `film-chain/skills/minimax-h3-colab`（若本機尚未安裝 colab CLI，請執行 `pip install google-colab-cli` 並提示我完成 `colab login` OAuth 授權）。確認具備 Compute Units 餘額後，讀取本專案分鏡任務，調用 Google Colab GPU（預設 A100，若遇尖峰滿載則自動切換至 NVIDIA L4 備援算力）依序渲染 MiniMax H3 影片，完成後自動調用本機 ffmpeg 消除重複首幀並以無縫 concat 合併為完整長影片，回填至網頁播放廳中。</textarea>
+        </details>
       </div>
 
       <!-- 🤖 路線 3: 本機 H3 Metal / ComfyUI Agent 環境對齊卡片（僅在選取路線 3 時顯示） -->
       <div id="step1AgentPromptBox" style="display:none; background:#091222; border:1px solid #f59e0b; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div style="font-size:0.86rem; color:#cbd5e1; display:flex; align-items:center; gap:6px;">
             <span>🤖</span>
-            <span>本機 Apple Silicon Metal (`h3_server` Port 8080) 與 ComfyUI 雙引擎自動對齊指令：</span>
+            <span><strong>本機 Metal / ComfyUI 服務一鍵啟動指引</strong>（零雲端費用）</span>
           </div>
-          <button type="button" id="copyAgentPromptBtn" class="btn" onclick="copyAgentPrompt()" style="padding:5px 14px; font-size:0.8rem; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fcd34d; font-weight:600;">
-            📋 複製本機對齊 Prompt
+          <button type="button" id="copyAgentPromptBtn" class="btn" onclick="copyAgentPrompt()" style="padding:6px 14px; font-size:0.82rem; min-height:38px; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fcd34d; font-weight:600;">
+            📋 複製本機對齊指令
           </button>
         </div>
-        <div style="font-size:0.75rem; color:#64748b; margin-bottom:4px;">▼ 指令內容預覽（可直接點擊上方按鈕一鍵複製）：</div>
-        <textarea id="agentPromptTextarea" readonly style="width:100%; height:74px; background:#050912; color:#94a3b8; border:1px solid #1e293b; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請你下載開源專案 https://github.com/yshonlytest/h3-studio 並執行 `./setup.sh` 編譯 Apple Silicon Metal 引擎 (`engines/h3.c/h3`)，啟動本機守護進程 `python3 -m pipeline.h3_server` (Port 8080，支援 5D Context-IR 擴寫、動態張力檢查與 PR #76 `--motion-context` 潛空間無損接力)，或執行 `python3 -m pipeline.h3_storyboard_pipeline --chain-manifest examples/storyboards/xianxia_aerial_duel_25s.json` 輸出至 `outputs/storyboard_runs/`。</textarea>
+        <details style="margin-top:8px; font-size:0.78rem; color:#94a3b8;">
+          <summary style="cursor:pointer; color:#fcd34d;">▾ 查看本機守護進程啟動指令預覽</summary>
+          <textarea id="agentPromptTextarea" readonly style="margin-top:6px; width:100%; height:68px; background:#050912; color:#94a3b8; border:1px solid #1e293b; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請你下載開源專案 https://github.com/yshonlytest/h3-studio 並執行 `./setup.sh` 編譯 Apple Silicon Metal 引擎 (`engines/h3.c/h3`)，啟動本機守護進程 `python3 -m pipeline.h3_server` (Port 8080，支援 5D Context-IR 擴寫、動態張力檢查與 PR #76 `--motion-context` 潛空間無損接力)，或執行 `python3 -m pipeline.h3_storyboard_pipeline --chain-manifest examples/storyboards/xianxia_aerial_duel_25s.json` 輸出至 `outputs/storyboard_runs/`。</textarea>
+        </details>
       </div>
 
       <div class="step1-container">
@@ -1043,8 +1051,8 @@
           <!-- Paradigm and AI Provider for Step 1 -->
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
             <div>
-              <label>🔗 接力模式</label>
-              <select id="chainParadigmSelect" onchange="onChainParadigmChange()">
+              <label>🔗 預設接力模式</label>
+              <select id="chainParadigmSelect" onchange="onChainParadigmChange(true)">
                 <option value="latent_chain" selected>🔗 潛空間（一鏡到底）</option>
                 <option value="grid_keyframes">🖼️ 九宮格（自訂分鏡）</option>
               </select>
@@ -1117,20 +1125,29 @@
       <div id="expandedStoryBox" style="font-size: 0.84rem; color: #cbd5e1; background: rgba(99,102,241,0.1); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; display: none;"></div>
 
       <!-- 2. 功能按鈕及時長統計與 Prompt 控制放在一起 -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px; padding:10px 14px; background:#0b101b; border:1px solid #1f2b3e; border-radius:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px; padding:10px 14px; background:#0b101b; border:1px solid #1f2b3e; border-radius:10px;">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <strong style="font-size:0.92rem; color:#e2e8f0;">🎞️ 各分段腳本與 Prompt 微調</strong>
+          <strong style="font-size:0.92rem; color:#e2e8f0;">🎞️ 各分段腳本與微調</strong>
           <span id="totalDurationBadge" class="badge">共 3 段，總長 15 秒</span>
         </div>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn" onclick="batchApplyChainMode('motion_context')" style="padding:6px 10px; font-size:0.8rem; background:#0f172a; border-color:#38bdf8; color:#7dd3fc;" title="將 Part 2 起所有段落設為潛空間一鏡到底">
+            🔗 批次設為潛空間
+          </button>
+          <button type="button" class="btn" onclick="batchApplyChainMode('first_frame')" style="padding:6px 10px; font-size:0.8rem; background:#0f172a; border-color:#94a3b8; color:#cbd5e1;" title="將所有段落設為九宮格關鍵幀">
+            🖼️ 批次設為九宮格
+          </button>
           <button type="button" class="btn" onclick="addSegmentCard()" style="padding:6px 12px; font-size:0.82rem; background:#1e293b; border-color:#38bdf8; color:#7dd3fc;">
             ➕ 新增一段 (+5秒)
           </button>
           <button type="button" id="replanBtn" class="btn" onclick="replanCurrentSegmentsViaAI()" style="padding:6px 14px; font-size:0.82rem; background:linear-gradient(135deg, #4f46e5, #6366f1); border-color:#6366f1; color:#fff; box-shadow:0 2px 8px rgba(99,102,241,0.25);">
-            🔄 AI 依當前總秒數重設分鏡建議
+            🔄 AI 重設分鏡建議
           </button>
         </div>
       </div>
+
+      <!-- 2.5 鏈式時間軸視覺化列 (Chain Timeline Visualizer) -->
+      <div id="chainTimelineBar" style="display:flex; align-items:center; gap:6px; overflow-x:auto; padding:10px 14px; margin-bottom:14px; background:#070d19; border:1px solid #1e293b; border-radius:10px;"></div>
 
       <!-- Segment list cards with mini 3x3 indicator -->
       <div id="segmentsContainer"></div>
@@ -1374,9 +1391,16 @@
           </div>
         </div>
 
+        <div id="localRenderEstimateBar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 14px; margin-bottom:12px; background:#091222; border:1px solid #1e293b; border-radius:8px; font-size:0.84rem;">
+          <span id="localDetectedEngineBadge" style="color:#94a3b8;">🔍 引擎狀態：偵測中...</span>
+          <span id="localEstimatedDurationText" style="color:#fcd34d; font-weight:600;">⏱️ 預估總時長：共 5 段，約 30 分鐘</span>
+        </div>
+
         <button type="button" id="startLocalVideoBtn" class="success" style="width:100%; justify-content:center; padding:13px; font-size:0.95rem;" onclick="executeLocalComfyStep()">
           🎬 啟動本機渲染（H3 Metal / ComfyUI）
         </button>
+
+        <div id="localPipelineGrid" class="pipeline-tracker-grid" style="margin-top:12px; display:none;"></div>
       </div>
 
       <!-- Execution Progress -->
@@ -1391,8 +1415,8 @@
         <div class="progress-track">
           <div class="progress-fill" id="jobProgressBar" style="width: 2%;"></div>
         </div>
-        <p id="jobHintText" style="font-size:0.78rem; color:var(--muted); margin-top:6px;">
-          💡 任務正在運算中（已啟用 BF16 VAE 預載加速與三階段即時進度），完成後將自動展示在下方步驟四成果區！
+        <p id="jobHintText" style="font-size:0.8rem; color:var(--muted); margin-top:6px;">
+          💡 任務正在渲染中，完成後將自動載入步驟四成果播放區。
         </p>
       </div>
     </section>
@@ -2025,10 +2049,10 @@
       const input = document.getElementById("shareUrlInput");
       input.select();
       navigator.clipboard.writeText(input.value).then(() => {
-        alert("已複製跨裝置監看網址！");
+        showToast("📋 已複製跨裝置監看網址！");
       }).catch(() => {
         document.execCommand("copy");
-        showToast("已複製跨裝置監看網址！");
+        showToast("📋 已複製跨裝置監看網址！");
       });
     }
 
@@ -2064,6 +2088,7 @@
         toast.style.transform = "translateX(-50%) translateY(-15px)";
       }, duration);
     }
+    window.showToast = showToast;
 
     async function publishSessionManifestAndImage() {
       const sid = getOrCreateSessionId();
@@ -2597,15 +2622,7 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
 
       e.preventDefault();
       e.stopPropagation();
-
-      const isMobileOrTouch = window.innerWidth <= 768 || window.matchMedia("(pointer: coarse)").matches;
-      if (isMobileOrTouch) {
-        showInfoTipModal(tooltip.innerHTML);
-      } else {
-        const wasPinned = tip.classList.contains("pinned");
-        document.querySelectorAll(".info-tip.pinned").forEach(el => el.classList.remove("pinned"));
-        if (!wasPinned) tip.classList.add("pinned");
-      }
+      showInfoTipModal(tooltip.innerHTML);
     });
 
     document.addEventListener("keydown", (e) => {
@@ -2663,6 +2680,16 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       document.querySelectorAll(".speed-option").forEach(el => {
         el.classList.toggle("active", el.dataset.speed === speedKey);
       });
+      updateLocalRenderEstimateUI();
+    }
+
+    function updateLocalRenderEstimateUI() {
+      const estEl = document.getElementById("localEstimatedDurationText");
+      if (!estEl) return;
+      const count = document.querySelectorAll("#segmentsContainer .segment-card").length || (currentPlan?.segments?.length || 5);
+      const minsPerSeg = selectedSpeed === "balanced" ? 18 : (selectedSpeed === "fast" ? 2 : 6);
+      const modeName = selectedSpeed === "balanced" ? "標準 20 Steps" : (selectedSpeed === "fast" ? "極速預覽" : "LoRA 6 Steps");
+      estEl.textContent = `⏱️ 預估總時長（${modeName}）：共 ${count} 段（${count * 5} 秒），約 ${count * minsPerSeg} 分鐘`;
     }
 
     function fileToDataUrl(file) {
@@ -2777,27 +2804,36 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       return await res.blob();
     }
 
+    let detectedLocalEngine = "none";
     async function checkComfyConnection() {
       const badge = document.getElementById("comfyStatusBadge");
+      const engineEl = document.getElementById("localDetectedEngineBadge");
       const { comfyUrl } = getPrefs();
+      updateLocalRenderEstimateUI();
       try {
         const daemonRes = await fetch("http://127.0.0.1:8080/api/status", { method: "GET" });
         if (daemonRes.ok) {
+          detectedLocalEngine = "metal";
           badge.className = "badge ok";
-          badge.textContent = "🟢 本機 H3 Metal 守護進程已連線 (127.0.0.1:8080)";
+          badge.textContent = "🟢 本機 H3 Metal 已連線 (8080)";
+          if (engineEl) engineEl.innerHTML = `🟢 當前選用引擎：<strong style="color:#6ee7b7;">H3 Metal 原生守護進程 (127.0.0.1:8080)</strong>`;
           return true;
         }
       } catch (_e) {}
       try {
         const res = await fetch(`${comfyUrl}/system_stats`, { method: "GET" });
         if (res.ok) {
+          detectedLocalEngine = "comfy";
           badge.className = "badge ok";
           badge.textContent = `🟢 本地 ComfyUI 已連線 (${comfyUrl})`;
+          if (engineEl) engineEl.innerHTML = `🟡 當前選用引擎：<strong style="color:#fcd34d;">ComfyUI 節點排程 (${comfyUrl})</strong>`;
           return true;
         }
       } catch (_e) {}
+      detectedLocalEngine = "none";
       badge.className = "badge warn";
       badge.textContent = "⚪ 本機 H3 (8080) / ComfyUI (8188) 未啟動 (點此重試)";
+      if (engineEl) engineEl.innerHTML = `⚪ 引擎狀態：<span style="color:#fca5a5;">未偵測到 8080 或 8188 服務（請先執行 ./scripts/start_studio.sh）</span>`;
       return false;
     }
 
@@ -2995,7 +3031,7 @@ Return ONLY valid JSON matching this schema:
       throw new Error("OpenAI Image API 未回傳影像");
     }
 
-    function onChainParadigmChange() {
+    function onChainParadigmChange(fromUser = false) {
       const paradigmSelect = document.getElementById("chainParadigmSelect");
       const paradigm = paradigmSelect ? paradigmSelect.value : "latent_chain";
       const gridContainer = document.getElementById("gridPreviewContainer");
@@ -3003,6 +3039,18 @@ Return ONLY valid JSON matching this schema:
       const planBtn = document.getElementById("planBtn");
       const step2Title = document.getElementById("step2HeaderTitleText");
       const imgSelect = document.getElementById("imageProviderSelect");
+      const targetMode = paradigm === "latent_chain" ? "motion_context" : "first_frame";
+
+      const modeSelects = Array.from(document.querySelectorAll("#segmentsContainer .seg-chain-mode-select"));
+      const customizedSelects = modeSelects.filter((sel) => sel.dataset.userModified === "true" && sel.value !== targetMode);
+
+      let shouldOverwriteSegments = true;
+      if (fromUser && customizedSelects.length > 0) {
+        const modeLabel = paradigm === "latent_chain" ? "🔗 潛空間（一鏡到底）" : "🖼️ 九宮格（自訂分鏡）";
+        shouldOverwriteSegments = window.confirm(
+          `步驟二目前有 ${customizedSelects.length} 段分鏡已手動調整過接力方式。\n\n是否要將所有分段統一重設為「${modeLabel}」？\n（點擊「取消」將保留各段目前的自訂接力設定）`
+        );
+      }
 
       if (paradigm === "latent_chain") {
         if (gridContainer) gridContainer.style.display = "none";
@@ -3010,10 +3058,12 @@ Return ONLY valid JSON matching this schema:
         if (planBtn) planBtn.textContent = "✨ 生成分鏡腳本（潛空間一鏡到底）";
         if (step2Title) step2Title.textContent = "步驟二：分鏡腳本與運鏡微調（潛空間一鏡到底）";
         if (imgSelect) imgSelect.value = "manual";
-        const modeSelects = document.querySelectorAll("#segmentsContainer .seg-chain-mode-select");
-        modeSelects.forEach((sel) => {
-          sel.value = "motion_context";
-        });
+        if (shouldOverwriteSegments) {
+          modeSelects.forEach((sel) => {
+            sel.value = "motion_context";
+            delete sel.dataset.userModified;
+          });
+        }
       } else {
         if (gridContainer && (typeof gridImageDataUrl !== "undefined" && gridImageDataUrl)) {
           gridContainer.style.display = "block";
@@ -3022,12 +3072,108 @@ Return ONLY valid JSON matching this schema:
         if (planBtn) planBtn.textContent = "✨ 生成分鏡腳本與九宮格圖";
         if (step2Title) step2Title.textContent = "步驟二：九宮格與分鏡腳本微調";
         if (imgSelect && imgSelect.value === "manual") imgSelect.value = "nano-banana-2";
-        const modeSelects = document.querySelectorAll("#segmentsContainer .seg-chain-mode-select");
-        modeSelects.forEach((sel) => {
-          sel.value = "first_frame";
-        });
+        if (shouldOverwriteSegments) {
+          modeSelects.forEach((sel) => {
+            sel.value = "first_frame";
+            delete sel.dataset.userModified;
+          });
+        }
       }
+      refreshAllSegmentCardModeUI();
       if (typeof syncSegmentsFromDOM === "function") syncSegmentsFromDOM();
+    }
+
+    function batchApplyChainMode(targetMode) {
+      const modeSelects = Array.from(document.querySelectorAll("#segmentsContainer .seg-chain-mode-select"));
+      const customizedCount = modeSelects.filter((sel) => sel.value !== targetMode).length;
+      if (customizedCount > 0) {
+        const label = targetMode === "motion_context" ? "🔗 潛空間（一鏡到底）" : "🖼️ 九宮格（關鍵幀）";
+        if (!window.confirm(`確定要將步驟二共 ${customizedCount} 個分段統一套用為「${label}」嗎？`)) {
+          return;
+        }
+      }
+      const paradigmSelect = document.getElementById("chainParadigmSelect");
+      if (paradigmSelect) {
+        paradigmSelect.value = targetMode === "motion_context" ? "latent_chain" : "grid_keyframes";
+      }
+      modeSelects.forEach((sel) => {
+        sel.value = targetMode;
+        delete sel.dataset.userModified;
+      });
+      onChainParadigmChange(false);
+      if (typeof showToast === "function") {
+        showToast(`✅ 已批次套用「${targetMode === "motion_context" ? "🔗 潛空間（一鏡到底）" : "🖼️ 九宮格（關鍵幀）"}」`);
+      }
+    }
+
+    function onSegChainModeChange(selectEl) {
+      selectEl.dataset.userModified = "true";
+      refreshAllSegmentCardModeUI();
+      syncSegmentsFromDOM();
+    }
+
+    function refreshAllSegmentCardModeUI() {
+      const paradigm = document.getElementById("chainParadigmSelect")?.value || "latent_chain";
+      const cards = document.querySelectorAll("#segmentsContainer .segment-card");
+      cards.forEach((card, idx) => {
+        const modeSelect = card.querySelector(".seg-chain-mode-select");
+        const mode = idx === 0
+          ? (paradigm === "latent_chain" ? "latent_anchor" : "first_frame")
+          : (modeSelect ? modeSelect.value : "motion_context");
+        const pickerGroup = card.querySelector(".seg-panel-picker-group");
+        const latentBadge = card.querySelector(".seg-latent-badge");
+        if (mode === "motion_context" || mode === "latent_anchor") {
+          if (pickerGroup) pickerGroup.style.display = "none";
+          if (latentBadge) {
+            latentBadge.style.display = "inline-flex";
+            latentBadge.textContent = idx === 0
+              ? "🖼️ 首幀：主角參考圖錨定"
+              : `🔗 承接 Part ${idx} 潛空間尾幀`;
+          }
+        } else {
+          if (pickerGroup) pickerGroup.style.display = "inline-flex";
+          if (latentBadge) latentBadge.style.display = "none";
+        }
+      });
+      renderChainTimelineBar();
+    }
+
+    function renderChainTimelineBar() {
+      const bar = document.getElementById("chainTimelineBar");
+      if (!bar) return;
+      const cards = document.querySelectorAll("#segmentsContainer .segment-card");
+      if (!cards.length) {
+        bar.innerHTML = `<span style="font-size:0.8rem; color:#64748b;">尚無分鏡段落</span>`;
+        return;
+      }
+      const paradigm = document.getElementById("chainParadigmSelect")?.value || "latent_chain";
+      const partsHtml = [];
+      cards.forEach((card, idx) => {
+        const modeSelect = card.querySelector(".seg-chain-mode-select");
+        const mode = idx === 0 ? "first_frame" : (modeSelect ? modeSelect.value : "motion_context");
+        const panelVal = card.querySelector(".seg-panel-select")?.value || (idx + 1);
+        const isLatent = idx > 0 && mode === "motion_context";
+        if (idx > 0) {
+          partsHtml.push(
+            isLatent
+              ? `<span style="color:#38bdf8; font-size:0.78rem; font-weight:700; white-space:nowrap;">──🔗 潛空間接力──▶</span>`
+              : `<span style="color:#f59e0b; font-size:0.78rem; font-weight:700; white-space:nowrap;">──🖼️ 關鍵幀切換──▶</span>`
+          );
+        }
+        const badgeText = idx === 0
+          ? (paradigm === "latent_chain" ? "🖼️ 首幀錨定" : `🖼️ Panel ${panelVal}`)
+          : (isLatent ? "🔒 一鏡到底" : `🖼️ Panel ${panelVal}`);
+        const borderColor = isLatent ? "#0284c7" : "#475569";
+        const bg = isLatent ? "rgba(2,132,199,0.16)" : "rgba(30,41,59,0.7)";
+        partsHtml.push(`
+          <button type="button" onclick="document.querySelectorAll('#segmentsContainer .segment-card')[${idx}]?.scrollIntoView({behavior:'smooth', block:'center'})" style="display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:8px; border:1px solid ${borderColor}; background:${bg}; color:#e2e8f0; font-size:0.8rem; cursor:pointer; white-space:nowrap;">
+            <strong>Part ${idx + 1}</strong>
+            <span style="color:#94a3b8; font-size:0.75rem;">(${idx * 5}-${(idx + 1) * 5}s)</span>
+            <span style="color:${isLatent ? '#7dd3fc' : '#fcd34d'}; font-weight:600;">${badgeText}</span>
+          </button>
+        `);
+      });
+      bar.innerHTML = `<span style="font-size:0.8rem; color:#94a3b8; font-weight:600; white-space:nowrap; margin-right:4px;">🧭 接力時間軸：</span>` + partsHtml.join("");
     }
 
     const GOLDEN_TEMPLATES_FALLBACK = {
@@ -3194,10 +3340,11 @@ Return ONLY valid JSON matching this schema:
 
       if (statusEl) {
         statusEl.style.color = "var(--success)";
-        statusEl.textContent = `✅ 已載入「${manifestData.title}」（共 ${manifestData.segments.length * 5} 秒，已同步載入 5 段影片與 25 秒全片預覽）！`;
+        statusEl.innerHTML = `✅ 已載入「${escapeHtml(manifestData.title)}」（共 ${manifestData.segments.length * 5} 秒）！ <button type="button" class="btn" onclick="document.getElementById('step2Card')?.scrollIntoView({behavior:'smooth'})" style="margin-left:8px; padding:4px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc;">⬇️ 前往步驟二微調</button> <button type="button" class="btn" onclick="document.getElementById('step4Card')?.scrollIntoView({behavior:'smooth'})" style="margin-left:4px; padding:4px 10px; font-size:0.78rem; border-color:#10b981; color:#6ee7b7;">▶️ 前往步驟四看成片</button>`;
       }
-      const step2Card = document.getElementById("step2Card");
-      if (step2Card) step2Card.scrollIntoView({ behavior: "smooth" });
+      if (typeof showToast === "function") {
+        showToast(`✅ 已載入「${templateKey === "xianxia" ? "仙俠空戰" : "賽博偵探"}」25s 範本與成片`);
+      }
     }
 
     async function callPlanViaLocalLLM(chineseDesc, durationMode, targetSec) {
@@ -3282,15 +3429,39 @@ Return ONLY valid JSON matching this schema:
         return;
       }
 
+      const origBtnText = btn.textContent;
       btn.disabled = true;
+      btn.textContent = "⏳ 正在規劃分鏡腳本...";
+      const stepStages = [
+        "① 分析故事結構與角色特徵…",
+        "② 擴寫多幕情節與對白時間軸…",
+        "③ 編譯 5D 場景 / 運鏡 / 動作腳本…"
+      ];
+      let stageIdx = 0;
+      const renderStep1Progress = (msg) => {
+        statusEl.style.color = "#7dd3fc";
+        statusEl.innerHTML = `
+          <div style="margin-top:6px; padding:8px 12px; background:rgba(2,132,199,0.12); border:1px solid rgba(56,189,248,0.3); border-radius:8px;">
+            <div style="font-weight:600; margin-bottom:4px;">⏳ ${msg}</div>
+            <div style="display:flex; gap:8px; font-size:0.76rem; color:#94a3b8;">
+              ${stepStages.map((s, idx) => `<span style="color:${idx <= stageIdx ? '#38bdf8' : '#475569'}; font-weight:${idx === stageIdx ? '700' : '400'};">${s}</span>`).join(" ➔ ")}
+            </div>
+          </div>`;
+      };
+      renderStep1Progress(stepStages[0]);
+      const stageTimer = setInterval(() => {
+        if (stageIdx < stepStages.length - 1) {
+          stageIdx++;
+          renderStep1Progress(stepStages[stageIdx]);
+        }
+      }, 2200);
+
       try {
-        statusEl.style.color = "var(--muted)";
-        statusEl.textContent = "⏳ 正在分析情節、規劃最佳秒數與每段 5 秒 5D 分鏡腳本...";
         const sysPrompt = buildDirectorSystemPrompt(durationMode, targetSec, chainParadigm);
 
         let plan;
         if (promptProv === "local-llm") {
-          statusEl.textContent = "🧠 正在呼叫本機 5D Context-IR 引擎規劃腳本...";
+          renderStep1Progress("🧠 正在呼叫本機 5D 引擎規劃腳本...");
           plan = await callPlanViaLocalLLM(desc, durationMode, targetSec);
         } else if (promptProv.startsWith("gemini")) {
           if (!prefs.geminiKey) {
@@ -3308,7 +3479,7 @@ Return ONLY valid JSON matching this schema:
         }
 
         if (chainParadigm === "grid_keyframes" && imageProv !== "manual") {
-          statusEl.textContent = "🎨 正在根據分鏡腳本生成無字邊框 3×3 九宮格分鏡圖...";
+          renderStep1Progress("🎨 正在生成 3×3 九宮格分鏡圖...");
           let dataUrl;
           if (imageProv.startsWith("nano-banana")) {
             if (!prefs.geminiKey) {
@@ -3340,10 +3511,10 @@ Return ONLY valid JSON matching this schema:
         renderPlanUI(plan);
         if (typeof scheduleAutoSave === "function") scheduleAutoSave();
         statusEl.style.color = "var(--success)";
-        statusEl.textContent = `✅ 步驟一完成！已自動產出 ${plan.segments.length * 5} 秒（共 ${plan.segments.length} 段）5D 連貫分鏡腳本，請在步驟二檢視與微調。`;
-
-        // Smooth scroll to Step 2
-        document.getElementById("step2Card").scrollIntoView({ behavior: "smooth" });
+        statusEl.innerHTML = `✅ 已產出 ${plan.segments.length * 5} 秒（共 ${plan.segments.length} 段）分鏡腳本！ <button type="button" class="btn" onclick="document.getElementById('step2Card')?.scrollIntoView({behavior:'smooth'})" style="margin-left:8px; padding:4px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc;">⬇️ 前往步驟二微調</button>`;
+        if (typeof showToast === "function") {
+          showToast(`✅ 分鏡腳本生成完成（共 ${plan.segments.length} 段）！`);
+        }
       } catch (err) {
         statusEl.style.color = "var(--danger)";
         if (typeof H3CloudDiagnostics !== "undefined") {
@@ -3353,7 +3524,9 @@ Return ONLY valid JSON matching this schema:
           statusEl.textContent = `❌ ${err.message}`;
         }
       } finally {
+        clearInterval(stageTimer);
         btn.disabled = false;
+        btn.textContent = origBtnText;
       }
     }
 
@@ -3373,6 +3546,7 @@ Return ONLY valid JSON matching this schema:
       (plan.segments || []).forEach((seg, idx) => {
         appendSegmentCardDOM(seg, idx);
       });
+      refreshAllSegmentCardModeUI();
     }
 
     function renderMiniGridHTML(selectedPanel) {
@@ -3408,14 +3582,17 @@ Return ONLY valid JSON matching this schema:
         : (typeof H3PromptBuilder !== "undefined" && H3PromptBuilder.parseContextIRFromPrompt
           ? H3PromptBuilder.parseContextIRFromPrompt(seg.prompt || "")
           : { scene: "", camera: "", action: "", look: "", audio: "" });
+      const paradigm = document.getElementById("chainParadigmSelect")?.value || "latent_chain";
+      const isLatentSeg = idx === 0 ? (paradigm === "latent_chain") : (!seg.chain_mode || seg.chain_mode === "motion_context");
       const chainSelectHTML = idx === 0
-        ? `<span style="font-size:0.75rem; color:var(--muted);">首幀：角色錨定圖 / Panel 1</span>`
-        : `<div style="display:inline-flex; align-items:center; gap:4px;">
-             <span style="font-size:0.75rem; color:var(--muted);">接力：</span>
-             <select class="seg-chain-mode-select" style="padding:2px 4px; font-size:0.75rem;">
+        ? `<span class="seg-latent-badge" style="display:${isLatentSeg ? 'inline-flex' : 'none'}; font-size:0.82rem; color:#7dd3fc; background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.35); padding:4px 10px; border-radius:6px;">🖼️ 首幀：主角參考圖錨定</span>`
+        : `<div style="display:inline-flex; align-items:center; gap:6px;">
+             <span style="font-size:0.82rem; color:var(--muted);">接力：</span>
+             <select class="seg-chain-mode-select" onchange="onSegChainModeChange(this)" style="padding:5px 8px; font-size:0.82rem; min-height:36px;">
                <option value="motion_context" ${(!seg.chain_mode || seg.chain_mode === "motion_context") ? "selected" : ""}>🔗 潛空間（一鏡到底）</option>
                <option value="first_frame" ${seg.chain_mode === "first_frame" ? "selected" : ""}>🖼️ 九宮格（關鍵幀）</option>
              </select>
+             <span class="seg-latent-badge" style="display:${isLatentSeg ? 'inline-flex' : 'none'}; font-size:0.8rem; color:#7dd3fc; background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.3); padding:4px 9px; border-radius:6px;">🔗 承接 Part ${idx} 潛空間尾幀</span>
            </div>`;
       div.innerHTML = `
         <div class="segment-card-header">
@@ -3426,45 +3603,49 @@ Return ONLY valid JSON matching this schema:
           </div>
           <div class="seg-header-controls">
             ${chainSelectHTML}
-            <span style="font-size:0.75rem; color:var(--muted);">→ 目標尾幀：</span>
-            <div style="display:inline-flex; align-items:center; gap:5px;">
+            <div class="seg-panel-picker-group" style="display:${isLatentSeg ? 'none' : 'inline-flex'}; align-items:center; gap:6px;">
+              <span style="font-size:0.82rem; color:var(--muted);">→ 目標尾幀：</span>
               ${renderMiniGridHTML(seg.end_panel || 9)}
-              <select class="seg-panel-select" onchange="onPanelSelectChange(this)" style="width:95px; padding:4px 6px; font-size:0.8rem;">
+              <select class="seg-panel-select" onchange="onPanelSelectChange(this)" style="width:100px; padding:5px 8px; font-size:0.82rem; min-height:36px;">
                 ${[1,2,3,4,5,6,7,8,9].map(n => `<option value="${n}" ${Number(seg.end_panel) === n ? "selected" : ""}>Panel ${n}</option>`).join("")}
               </select>
             </div>
-            <button type="button" onclick="removeSegmentCard(this)" style="padding:3px 8px; font-size:0.75rem; color:var(--danger);">🗑️ 刪除</button>
+            <button type="button" onclick="removeSegmentCard(this)" style="padding:5px 10px; font-size:0.82rem; min-height:36px; color:var(--danger);">🗑️ 刪除</button>
           </div>
         </div>
-        <details style="margin:6px 0 8px 0; font-size:0.78rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:6px 8px;">
-          <summary style="cursor:pointer; color:#93c5fd; font-weight:600;">🧭 5D 分鏡參數（場景 / 運鏡 / 動作 / 影調 / 對白）</summary>
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:6px; margin-top:6px;">
-            <div><label style="color:var(--muted); font-size:0.72rem;">場景 (Scene)</label><input type="text" class="ir-scene" value="${escapeHtml(parsedIr.scene || "")}" placeholder="例: Okinawa street at dusk" style="width:100%; padding:3px 5px; font-size:0.76rem;" /></div>
-            <div><label style="color:var(--muted); font-size:0.72rem;">運鏡 (Camera)</label><input type="text" class="ir-camera" value="${escapeHtml(parsedIr.camera || "")}" placeholder="例: Low angle tracking" style="width:100%; padding:3px 5px; font-size:0.76rem;" /></div>
-            <div><label style="color:var(--muted); font-size:0.72rem;">動作 (Action)</label><input type="text" class="ir-action" value="${escapeHtml(parsedIr.action || "")}" placeholder="例: 0-5s: smiles and waves" style="width:100%; padding:3px 5px; font-size:0.76rem;" /></div>
-            <div><label style="color:var(--muted); font-size:0.72rem;">影調 (Look)</label><input type="text" class="ir-look" value="${escapeHtml(parsedIr.look || "")}" placeholder="例: Warm golden hour" style="width:100%; padding:3px 5px; font-size:0.76rem;" /></div>
-            <div><label style="color:var(--muted); font-size:0.72rem;">音訊/對白 (Audio)</label><input type="text" class="ir-audio" value="${escapeHtml(parsedIr.audio || "")}" placeholder="例: Breeze, <d>[Chinese] 你好</d>" style="width:100%; padding:3px 5px; font-size:0.76rem;" /></div>
+        <details style="margin:6px 0 8px 0; font-size:0.82rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:8px 10px;">
+          <summary style="cursor:pointer; color:#93c5fd; font-weight:600; padding:4px 0;">🧭 5D 分鏡參數（修改欄位自動同步至下方對應段落）</summary>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin-top:8px;">
+            <div><label style="color:var(--muted); font-size:0.78rem;">場景 (Scene)</label><input type="text" class="ir-scene" oninput="onSingleIRFieldInput(this, 'scene')" value="${escapeHtml(parsedIr.scene || "")}" placeholder="例: Okinawa street at dusk" style="width:100%; padding:6px 8px; font-size:0.82rem;" /></div>
+            <div><label style="color:var(--muted); font-size:0.78rem;">運鏡 (Camera)</label><input type="text" class="ir-camera" oninput="onSingleIRFieldInput(this, 'camera')" value="${escapeHtml(parsedIr.camera || "")}" placeholder="例: Low angle tracking" style="width:100%; padding:6px 8px; font-size:0.82rem;" /></div>
+            <div><label style="color:var(--muted); font-size:0.78rem;">動作 (Action)</label><input type="text" class="ir-action" oninput="onSingleIRFieldInput(this, 'action')" value="${escapeHtml(parsedIr.action || "")}" placeholder="例: 0-5s: smiles and waves" style="width:100%; padding:6px 8px; font-size:0.82rem;" /></div>
+            <div><label style="color:var(--muted); font-size:0.78rem;">影調 (Look)</label><input type="text" class="ir-look" oninput="onSingleIRFieldInput(this, 'look')" value="${escapeHtml(parsedIr.look || "")}" placeholder="例: Warm golden hour" style="width:100%; padding:6px 8px; font-size:0.82rem;" /></div>
+            <div><label style="color:var(--muted); font-size:0.78rem;">音訊/對白 (Audio)</label><input type="text" class="ir-audio" oninput="onSingleIRFieldInput(this, 'audio')" value="${escapeHtml(parsedIr.audio || "")}" placeholder="例: Breeze, <d>[Chinese] 你好</d>" style="width:100%; padding:6px 8px; font-size:0.82rem;" /></div>
           </div>
-          <button type="button" onclick="applyContextIRToCard(this, ${idx})" style="margin-top:6px; padding:3px 10px; font-size:0.75rem; background:#2563eb; color:#fff; border-radius:4px; border:none; cursor:pointer;">✨ 寫入 Prompt</button>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap;">
+            <button type="button" onclick="applyContextIRToCard(this, ${idx})" style="padding:6px 12px; font-size:0.8rem; min-height:36px; background:#2563eb; color:#fff; border-radius:6px; border:none; cursor:pointer;">✨ 完整重組 Prompt</button>
+            <button type="button" class="ir-undo-btn" onclick="undoPromptOverwrite(this)" style="display:none; padding:6px 12px; font-size:0.8rem; min-height:36px; background:#334155; color:#e2e8f0; border-radius:6px; border:1px solid #64748b; cursor:pointer;">↩️ 復原上一版 Prompt</button>
+            <span style="font-size:0.76rem; color:var(--muted);">💡 修改上方任一欄會即時局部更新對應標籤，不會洗掉其他手改內容</span>
+          </div>
         </details>
-        <details class="staging-board-details" ontoggle="onStagingDetailsToggle(this)" style="margin:4px 0 8px 0; font-size:0.78rem; background:rgba(30,41,59,0.25); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:6px 8px;">
-          <summary style="cursor:pointer; color:#38bdf8; font-weight:600;">🎬 2D 運鏡軌跡板（拖曳機位）</summary>
-          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:6px;">
-            <canvas class="staging-canvas" width="220" height="130" style="background:#0f172a; border:1px solid #334155; border-radius:4px; cursor:crosshair;"></canvas>
-            <div style="font-size:0.73rem; color:var(--muted); line-height:1.4; flex:1; min-width:180px;">
-              <div>🔵 <b>A:起點</b> | 🟢 <b>B:終點</b> | 🟡 <b>S:主體</b></div>
-              <div style="margin:4px 0;">快速預設：
-                <button type="button" onclick="setStagingPreset(this, 'dolly_in')" style="padding:2px 5px; font-size:0.7rem; margin-right:3px;">推近 (Dolly In)</button>
-                <button type="button" onclick="setStagingPreset(this, 'pull_back')" style="padding:2px 5px; font-size:0.7rem; margin-right:3px;">拉遠 (Pull Back)</button>
-                <button type="button" onclick="setStagingPreset(this, 'orbit')" style="padding:2px 5px; font-size:0.7rem; margin-right:3px;">環繞 (Orbit)</button>
-                <button type="button" onclick="setStagingPreset(this, 'truck_right')" style="padding:2px 5px; font-size:0.7rem;">右移 (Truck)</button>
+        <details class="staging-board-details" ontoggle="onStagingDetailsToggle(this)" style="margin:4px 0 8px 0; font-size:0.82rem; background:rgba(30,41,59,0.25); border:1px solid rgba(56,189,248,0.2); border-radius:6px; padding:8px 10px;">
+          <summary style="cursor:pointer; color:#38bdf8; font-weight:600; padding:4px 0;">🎬 2D 運鏡軌跡板（拖曳機位）</summary>
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:8px;">
+            <canvas class="staging-canvas" width="280" height="160" style="background:#0f172a; border:1px solid #334155; border-radius:6px; cursor:crosshair; touch-action:none;"></canvas>
+            <div style="font-size:0.8rem; color:var(--muted); line-height:1.5; flex:1; min-width:200px;">
+              <div>🔵 <b>A:起點</b> ｜ 🟢 <b>B:終點</b> ｜ 🟡 <b>S:主體</b>（直接拖曳圓點）</div>
+              <div style="margin:6px 0; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">快速預設：
+                <button type="button" onclick="setStagingPreset(this, 'dolly_in')" style="padding:5px 10px; font-size:0.78rem; min-height:34px;">推近 (Dolly In)</button>
+                <button type="button" onclick="setStagingPreset(this, 'pull_back')" style="padding:5px 10px; font-size:0.78rem; min-height:34px;">拉遠 (Pull Back)</button>
+                <button type="button" onclick="setStagingPreset(this, 'orbit')" style="padding:5px 10px; font-size:0.78rem; min-height:34px;">環繞 (Orbit)</button>
+                <button type="button" onclick="setStagingPreset(this, 'truck_right')" style="padding:5px 10px; font-size:0.78rem; min-height:34px;">右移 (Truck)</button>
               </div>
-              <div class="staging-preview-text" style="color:#e2e8f0; font-style:italic; margin:4px 0; min-height:2.2em;"></div>
-              <button type="button" onclick="applyStagingToCard(this)" style="padding:3px 8px; font-size:0.74rem; background:#0284c7; color:#fff; border-radius:4px; border:none; cursor:pointer;">✨ 將運鏡填入 Camera 欄位</button>
+              <div class="staging-preview-text" style="color:#e2e8f0; font-style:italic; margin:6px 0; min-height:2.2em;"></div>
+              <button type="button" onclick="applyStagingToCard(this)" style="padding:6px 12px; font-size:0.8rem; min-height:36px; background:#0284c7; color:#fff; border-radius:6px; border:none; cursor:pointer;">✨ 套用運鏡至 Camera 與 Prompt</button>
             </div>
           </div>
         </details>
-        <textarea class="seg-prompt-input" rows="4">${seg.prompt || ""}</textarea>
+        <textarea class="seg-prompt-input" oninput="onRawPromptInput(this)" rows="4">${seg.prompt || ""}</textarea>
       `;
       container.appendChild(div);
     }
@@ -3490,13 +3671,13 @@ Return ONLY valid JSON matching this schema:
     }
 
     function stagingCoordToPx(pt) {
-      return { x: 110 + pt.x * 45, y: 65 + pt.y * 45 };
+      return { x: 140 + pt.x * 58, y: 80 + pt.y * 55 };
     }
 
     function stagingPxToCoord(px, py) {
       return {
-        x: Math.max(-1.3, Math.min(1.3, (px - 110) / 45)),
-        y: Math.max(-1.1, Math.min(1.1, (py - 65) / 45))
+        x: Math.max(-1.3, Math.min(1.3, (px - 140) / 58)),
+        y: Math.max(-1.1, Math.min(1.1, (py - 80) / 55))
       };
     }
 
@@ -3520,20 +3701,29 @@ Return ONLY valid JSON matching this schema:
       ctx.beginPath(); ctx.moveTo(pB.x, pB.y); ctx.lineTo(pS.x, pS.y); ctx.stroke();
       ctx.setLineDash([]);
       ctx.strokeStyle = "#38bdf8";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.stroke();
-      drawStagingPoint(ctx, pS, "#f59e0b", "S");
-      drawStagingPoint(ctx, pA, "#3b82f6", "A");
-      drawStagingPoint(ctx, pB, "#10b981", "B");
+      drawStagingPoint(ctx, pS, "#f59e0b", "S", canvas._hoverKey === "subject");
+      drawStagingPoint(ctx, pA, "#3b82f6", "A", canvas._hoverKey === "start");
+      drawStagingPoint(ctx, pB, "#10b981", "B", canvas._hoverKey === "end");
     }
 
-    function drawStagingPoint(ctx, pt, color, label) {
+    function drawStagingPoint(ctx, pt, color, label, isHovered = false) {
+      if (isHovered) {
+        ctx.save();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 14, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+      ctx.arc(pt.x, pt.y, isHovered ? 11 : 10, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 9px sans-serif";
+      ctx.font = "bold 10px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(label, pt.x, pt.y);
@@ -3541,20 +3731,40 @@ Return ONLY valid JSON matching this schema:
 
     function setupStagingEvents(canvas) {
       let active = null;
+      const HIT_RADIUS = 24;
       function getPos(e) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         return { x: clientX - rect.left, y: clientY - rect.top };
       }
-      function onStart(e) {
-        const pos = getPos(e);
+      function findHitNode(pos) {
         for (const k of ["subject", "start", "end"]) {
           const pt = stagingCoordToPx(canvas._track[k]);
-          if (Math.hypot(pos.x - pt.x, pos.y - pt.y) < 14) {
-            active = k;
-            break;
+          if (Math.hypot(pos.x - pt.x, pos.y - pt.y) < HIT_RADIUS) {
+            return k;
           }
+        }
+        return null;
+      }
+      function onStart(e) {
+        const pos = getPos(e);
+        const hit = findHitNode(pos);
+        if (hit) {
+          active = hit;
+          canvas._hoverKey = hit;
+          canvas.style.cursor = "grabbing";
+          drawStagingTrack(canvas);
+        }
+      }
+      function onHover(e) {
+        if (active) return;
+        const pos = getPos(e);
+        const hit = findHitNode(pos);
+        if (canvas._hoverKey !== hit) {
+          canvas._hoverKey = hit;
+          canvas.style.cursor = hit ? "grab" : "crosshair";
+          drawStagingTrack(canvas);
         }
       }
       function onMove(e) {
@@ -3565,8 +3775,12 @@ Return ONLY valid JSON matching this schema:
         drawStagingTrack(canvas);
         updateStagingPreview(canvas);
       }
-      function onEnd() { active = null; }
+      function onEnd() {
+        active = null;
+        canvas.style.cursor = canvas._hoverKey ? "grab" : "crosshair";
+      }
       canvas.addEventListener("mousedown", onStart);
+      canvas.addEventListener("mousemove", onHover);
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onEnd);
       canvas.addEventListener("touchstart", onStart, { passive: false });
@@ -3603,18 +3817,68 @@ Return ONLY valid JSON matching this schema:
       }
     }
 
+    function updateSinglePromptSection(rawPrompt, fieldKey, newValue) {
+      const val = String(newValue || "").trim().replace(/\.+$/, "");
+      if (!val) return rawPrompt;
+      const patterns = {
+        scene:   { re: /(\[Scene\]\s*)([\s\S]*?)(?=\s*(?:\[Camera\]|Timeline:|\[Look\]|Audio:|$))/i, tag: "[Scene]" },
+        camera:  { re: /(\[Camera\]\s*)([\s\S]*?)(?=\s*(?:Timeline:|\[Look\]|Audio:|$))/i, tag: "[Camera]" },
+        action:  { re: /(Timeline:\s*)([\s\S]*?)(?=\s*(?:\[Look\]|Audio:|$))/i, tag: "Timeline:" },
+        look:    { re: /(\[Look\]\s*)([\s\S]*?)(?=\s*(?:Audio:|$))/i, tag: "[Look]" },
+        audio:   { re: /(Audio:\s*)([\s\S]*?)$/i, tag: "Audio:" }
+      };
+      const spec = patterns[fieldKey];
+      if (!spec) return rawPrompt;
+      if (spec.re.test(rawPrompt)) {
+        return rawPrompt.replace(spec.re, `$1${val}. `);
+      }
+      return `${rawPrompt.trim()} ${spec.tag} ${val}.`.trim();
+    }
+
+    function onSingleIRFieldInput(inputEl, fieldKey) {
+      const card = inputEl.closest(".segment-card");
+      if (!card) return;
+      const promptEl = card.querySelector(".seg-prompt-input");
+      if (promptEl) {
+        promptEl.value = updateSinglePromptSection(promptEl.value, fieldKey, inputEl.value);
+      }
+      syncSegmentsFromDOM();
+    }
+
+    function onRawPromptInput(textareaEl) {
+      const card = textareaEl.closest(".segment-card");
+      if (!card) return;
+      if (typeof H3PromptBuilder !== "undefined" && H3PromptBuilder.parseContextIRFromPrompt) {
+        const parsed = H3PromptBuilder.parseContextIRFromPrompt(textareaEl.value);
+        const map = { scene: ".ir-scene", camera: ".ir-camera", action: ".ir-action", look: ".ir-look", audio: ".ir-audio" };
+        Object.keys(map).forEach((k) => {
+          const el = card.querySelector(map[k]);
+          if (el && parsed[k]) el.value = parsed[k];
+        });
+      }
+      syncSegmentsFromDOM();
+    }
+
     function applyStagingToCard(btnEl) {
       const card = btnEl.closest(".segment-card");
       if (!card) return;
       const previewEl = card.querySelector(".staging-preview-text");
       const camInput = card.querySelector(".ir-camera");
       if (!previewEl || !camInput) return;
-      camInput.value = previewEl.textContent.trim();
+      const camText = previewEl.textContent.trim();
+      if (!camText) {
+        if (typeof showToast === "function") showToast("⚠️ 請先在軌跡板上拖曳機位或選擇預設");
+        return;
+      }
+      camInput.value = camText;
       const promptEl = card.querySelector(".seg-prompt-input");
-      if (promptEl && promptEl.value && /\[Camera\]\s*([^.]+)\./i.test(promptEl.value)) {
-        promptEl.value = promptEl.value.replace(/\[Camera\]\s*([^.]+)\./i, `[Camera] ${camInput.value}.`);
+      if (promptEl) {
+        promptEl.value = updateSinglePromptSection(promptEl.value, "camera", camText);
       }
       syncSegmentsFromDOM();
+      if (typeof showToast === "function") {
+        showToast("🎬 已將 2D 運鏡軌跡同步至 Camera 欄位與 Prompt");
+      }
     }
 
     function applyContextIRToCard(btnEl, idx) {
@@ -3629,11 +3893,31 @@ Return ONLY valid JSON matching this schema:
       };
       const promptEl = card.querySelector(".seg-prompt-input");
       if (!promptEl) return;
+      card._lastPromptBackup = promptEl.value;
+      const undoBtn = card.querySelector(".ir-undo-btn");
+      if (undoBtn) undoBtn.style.display = "inline-flex";
       const compiled = typeof H3PromptBuilder !== "undefined" && H3PromptBuilder.compileContextIR
         ? H3PromptBuilder.compileContextIR(fields, idx)
         : `[Scene] ${fields.scene}. [Camera] ${fields.camera}. Timeline: ${fields.action}. [Look] ${fields.look}. Audio: ${fields.audio}.`;
       promptEl.value = typeof lintH3PromptText === "function" ? lintH3PromptText(compiled) : compiled.trim();
       syncSegmentsFromDOM();
+      if (typeof showToast === "function") {
+        showToast("✨ 已根據 5D 欄位重組 Prompt（可點「↩️ 復原」還原）");
+      }
+    }
+
+    function undoPromptOverwrite(btnEl) {
+      const card = btnEl.closest(".segment-card");
+      if (!card || typeof card._lastPromptBackup !== "string") return;
+      const promptEl = card.querySelector(".seg-prompt-input");
+      if (promptEl) {
+        promptEl.value = card._lastPromptBackup;
+        onRawPromptInput(promptEl);
+      }
+      btnEl.style.display = "none";
+      if (typeof showToast === "function") {
+        showToast("↩️ 已復原上一版 Prompt");
+      }
     }
 
     function addSegmentCard() {
@@ -3698,6 +3982,7 @@ Return ONLY valid JSON matching this schema:
       });
       currentPlan.segments = segs;
       updateDurationBadge();
+      renderChainTimelineBar();
       return segs;
     }
 
@@ -3747,6 +4032,7 @@ Return ONLY valid JSON matching this schema:
       if (b4) b4.textContent = `共 ${count} 段個別影片 ＋ 1 支完整彙整總片`;
 
       renderColabPipelineTracker();
+      if (typeof updateLocalRenderEstimateUI === "function") updateLocalRenderEstimateUI();
     }
 
     function confirmStep2AndProceed() {
@@ -3938,10 +4224,25 @@ Return ONLY valid JSON matching this schema:
       document.getElementById("startLocalVideoBtn").disabled = false;
     }
 
+    function renderLocalPipelineTracker(segs, engineName) {
+      const grid = document.getElementById("localPipelineGrid");
+      if (!grid) return;
+      grid.style.display = "grid";
+      grid.innerHTML = segs.map((s, idx) => `
+        <div id="local-part-card-${idx}" class="pipeline-step-card stage-render ${idx === 0 ? 'active-running' : ''}">
+          <div class="pipeline-step-header">
+            <span class="pipeline-step-title">🎬 Part ${idx + 1} (${idx * 5}-${(idx + 1) * 5}s)</span>
+            <span id="local-card-tag-${idx}" class="badge ${idx === 0 ? 'ok' : ''}">${idx === 0 ? '運算中' : '等待中'}</span>
+          </div>
+          <div class="pipeline-step-desc">${escapeHtml(s.title || `分段 ${idx + 1}`)} · 引擎：${escapeHtml(engineName)}</div>
+        </div>
+      `).join("");
+    }
+
     async function executeLocalComfyStep() {
       const segs = syncSegmentsFromDOM().map((s) => ({ ...s, prompt: lintH3PromptText(s.prompt) }));
       if (!segs.length) {
-        alert("請先在步驟一產出或新增至少 1 個分鏡段落");
+        showToast("⚠️ 請先在步驟一產出或新增至少 1 個分鏡段落");
         return;
       }
 
@@ -3949,6 +4250,8 @@ Return ONLY valid JSON matching this schema:
       try {
         const daemonCheck = await fetch("http://127.0.0.1:8080/api/status", { method: "GET" });
         if (daemonCheck.ok) {
+          renderLocalPipelineTracker(segs, "H3 Metal (8080)");
+          showToast(`🚀 已連線 H3 Metal 原生守護進程 (8080)，開始渲染共 ${segs.length} 段分鏡`);
           const hudRenderBtn = document.getElementById("h3-hud-render-btn");
           if (hudRenderBtn) {
             hudRenderBtn.click();
@@ -3965,9 +4268,12 @@ Return ONLY valid JSON matching this schema:
         const diag = typeof H3CloudDiagnostics !== "undefined"
           ? H3CloudDiagnostics.diagnoseNetworkError(new Error("ComfyUI offline"), { url: comfyUrl, service: "comfyui" })
           : null;
-        alert(`❌ ${diag ? diag.title : '無法連線至本機 H3 守護進程 (8080) 或 ComfyUI (8188)'}\n\n原因：${diag ? diag.reason : '服務未啟動'}\n\n👉 建議作法：請執行 ./scripts/start_studio.sh 或雙擊「一鍵啟動_本地ComfyUI與工作坊.command」`);
+        showToast(`❌ ${diag ? diag.title : '無法連線至本機 H3 (8080) 或 ComfyUI (8188)'}：請先執行 ./scripts/start_studio.sh`);
         return;
       }
+
+      renderLocalPipelineTracker(segs, `ComfyUI (${comfyUrl})`);
+      showToast(`🟡 8080 未啟動，已自動切換至 ComfyUI (${comfyUrl}) 排程渲染`);
 
       const startBtn = document.getElementById("startLocalVideoBtn");
       const cancelBtn = document.getElementById("cancelLocalJobBtn");
@@ -4005,15 +4311,29 @@ Return ONLY valid JSON matching this schema:
         const promptId = qData.prompt_id;
 
         document.getElementById("jobProgressPanel").style.display = "block";
-        document.getElementById("jobProgressBar").style.width = "2%";
-        document.getElementById("jobPercentText").textContent = "2%";
-        document.getElementById("jobStageText").textContent = `已送入本地 ComfyUI 佇列 (共 ${segs.length} 段 / ${segs.length * 5} 秒)...`;
+        document.getElementById("jobProgressBar").style.width = "5%";
+        document.getElementById("jobPercentText").textContent = "5%";
+        document.getElementById("jobStageText").textContent = `🟡 [ComfyUI 8188] 佇列執行中 (共 ${segs.length} 段 / ${segs.length * 5} 秒)...`;
         const startTime = Date.now();
+        const estTotalSec = segs.length * (selectedSpeed === "balanced" ? 1080 : (selectedSpeed === "fast" ? 120 : 360));
 
         if (comfyPollTimer) clearInterval(comfyPollTimer);
         comfyPollTimer = setInterval(async () => {
           const elapsed = Math.floor((Date.now() - startTime) / 1000);
           document.getElementById("jobTimerBadge").textContent = `⏱️ 本地執行 ${Math.floor(elapsed / 60)}分 ${elapsed % 60}秒`;
+          const activeSegIdx = Math.min(segs.length - 1, Math.floor((elapsed / Math.max(1, estTotalSec)) * segs.length));
+          segs.forEach((_, idx) => {
+            const c = document.getElementById(`local-part-card-${idx}`);
+            const t = document.getElementById(`local-card-tag-${idx}`);
+            if (!c || !t) return;
+            if (idx < activeSegIdx) {
+              c.className = "pipeline-step-card stage-render stage-done";
+              t.textContent = "✅ 已完成";
+            } else if (idx === activeSegIdx) {
+              c.className = "pipeline-step-card stage-render active-running";
+              t.textContent = "🎨 渲染中";
+            }
+          });
           try {
             const hRes = await fetch(`${comfyUrl}/history/${promptId}`);
             if (!hRes.ok) return;
@@ -4026,18 +4346,36 @@ Return ONLY valid JSON matching this schema:
               }
               if (cancelBtn) cancelBtn.style.display = "none";
               const outputs = hist[promptId].outputs || {};
+              const collectedVideos = [];
               for (const nodeId of Object.keys(outputs)) {
                 const nodeOut = outputs[nodeId];
                 const items = nodeOut.videos || nodeOut.gifs || nodeOut.images || [];
-                if (items.length > 0) {
-                  const vid = items[0];
+                items.forEach((vid, vIdx) => {
                   const viewUrl = `${comfyUrl}/view?filename=${encodeURIComponent(vid.filename)}&subfolder=${encodeURIComponent(vid.subfolder || "")}&type=${encodeURIComponent(vid.type || "output")}`;
-                  document.getElementById("jobProgressBar").style.width = "100%";
-                  document.getElementById("jobStageText").textContent = "✅ 本地影片生成與多段拼接完成！";
-                  document.getElementById("jobPercentText").textContent = "100%";
-                  playVideoInStage(viewUrl, `🎬 ${vid.subfolder ? vid.subfolder + "/" : ""}${vid.filename}`);
-                  document.getElementById("step4Card").scrollIntoView({ behavior: "smooth" });
+                  collectedVideos.push({
+                    title: segs[collectedVideos.length]?.title || `輸出片段 ${collectedVideos.length + 1} (${vid.filename})`,
+                    url: viewUrl,
+                    filename: vid.filename,
+                    subfolder: vid.subfolder || ""
+                  });
+                });
+              }
+              segs.forEach((_, idx) => {
+                const c = document.getElementById(`local-part-card-${idx}`);
+                const t = document.getElementById(`local-card-tag-${idx}`);
+                if (c) c.className = "pipeline-step-card stage-render stage-done";
+                if (t) t.textContent = "✅ 已完成";
+              });
+              if (collectedVideos.length > 0) {
+                document.getElementById("jobProgressBar").style.width = "100%";
+                document.getElementById("jobStageText").textContent = `✅ 本地影片生成完成（共取得 ${collectedVideos.length} 個影片檔）！`;
+                document.getElementById("jobPercentText").textContent = "100%";
+                if (collectedVideos.length > 1) {
+                  renderSegmentsPlaylist(collectedVideos);
                 }
+                const lastVid = collectedVideos[collectedVideos.length - 1];
+                playVideoInStage(lastVid.url, `🎬 ${lastVid.subfolder ? lastVid.subfolder + "/" : ""}${lastVid.filename}`);
+                showToast("✅ 本地影片渲染完成！可前往步驟四預覽");
               }
               startBtn.disabled = false;
             }
@@ -4047,7 +4385,7 @@ Return ONLY valid JSON matching this schema:
         }, 3000);
       } catch (err) {
         if (cancelBtn) cancelBtn.style.display = "none";
-        alert(`執行失敗：${err.message}`);
+        showToast(`❌ 執行失敗：${err.message}`);
         startBtn.disabled = false;
       }
     }
@@ -4639,10 +4977,10 @@ Return ONLY valid JSON matching this schema:
           await mergeAndDownloadCloudClips(false, Math.max(0, (idx * 5) - 1.5));
           playCompletionChime();
         } catch (err) {
-          alert(`雲端重抽失敗: ${err.message}`);
+          showToast(`❌ 雲端重抽失敗: ${err.message}`);
         }
       } else {
-        alert("本地 ComfyUI 請直接重新執行排程任務。");
+        showToast("💡 本地模式請於步驟三重新啟動渲染任務");
       }
     }
 

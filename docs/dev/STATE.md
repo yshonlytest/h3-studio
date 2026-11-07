@@ -39,4 +39,10 @@
   - 驗證：`npm test --prefix film-chain`（52/52 passed）
 - [x] **M7（全套自動化測試與 Lint 總閘門，等待 Argon 驗收）**：
   - 執行：`python3 -m unittest discover -s tests && .venv/bin/ruff check . && npm test --prefix film-chain`
-  - 狀態：39 Python 單元測試全數通過、Ruff 零警報、52 前端單元測試全數通過。未執行真機 GPU 算圖。
+  - 狀態：39 Python 單元測試全數通過、Ruff 零警報、53 前端單元測試全數通過。未執行真機 GPU 算圖。
+- [x] **U1–U4（獨立程式碼審視報告 P0/P1/P2 全數落地）**：
+  - **P0 #1（雙軌模式防覆蓋）**：`onChainParadigmChange(true)` 偵測步驟二自訂段落並彈窗詢問是否覆寫，步驟二頂部新增「批次設為潛空間 / 批次設為九宮格」按鈕。
+  - **P0 #5 & #6（步驟一與步驟三等待回饋與預期管理）**：步驟一加入三階段動態進度列與按鈕狀態、移除強制 `scrollIntoView` 滾動突襲；步驟三本地面板加入「引擎自動偵測狀態 + 預估總時長」與 `#localPipelineGrid` 分段進度卡，並修復 ComfyUI `/history` 多段影片完整收集。
+  - **P1 #2（鏈式時間軸視覺化與隱藏無意義 Panel 選單）**：步驟二頂部新增 `#chainTimelineBar` 視覺化接力鏈，潛空間模式下自動隱藏 `Panel 1~9` 選單並改顯示「🔗 承接 Part N 潛空間尾幀」標籤。
+  - **P1 #3 & #4（5D 雙向非破壞性同步 + 2D 運鏡板升級）**：修改任一 5D 欄位時僅局部替換對應 `[Scene]` / `[Camera]` / `Timeline:` / `[Look]` / `Audio:` 段落，並提供「↩️ 復原上一版 Prompt」按鈕；2D 運鏡板畫布放大至 `280×160`、熱點半徑 `24px` 含 Hover 光圈。
+  - **P2（術語收合、觸控目標放大、手機 Tooltip 彈窗與 Toast 統一）**：首屏 Colab/本機卡技術細節收合進 `<details>`，`.info-tip` 點擊統一開啟說明視窗，消除阻斷式 `alert()`。
