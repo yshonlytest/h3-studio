@@ -60,6 +60,7 @@
 - [x] **C5（HUD 收納與注意力設計：預設縮小＋切路線發光提醒）**：
   - `film-chain/public/h3ServeBridge.js`：HUD 預設縮小（標題列可點擊展開），注入 `h3HudGlow` 環繞發光 CSS；新增 `H3LocalEnv.pingAttention()`——離線判定或使用者切到路線 3 時吸附注意力，點開即自動解除。
   - `film-chain/public/index.html`：`selectRoute('local')` 時呼叫 `window.H3LocalEnv.pingAttention()`。
+  - 修 Bug：離線判定完成時不再自動發光（效果只有在 `selectRoute('local')` 時觸發），避免開頁即閃爍。
 - [x] **C6（流程導正：Agent 必須帶使用者開網頁產出自己的影片，禁止偷跑範例）**：
   - 中樞精靈新增「🤖 複製引導 Prompt 交給 AI Agent」按鈕（`AGENT_ONBOARDING_PROMPT`）：四步架設指令＋環境就緒後引導開啟 `https://film-chain.onlytest.dev/`、選路線 3、修改使用者自己的故事提示詞走完步驟一~四；明文禁止未經同意執行 `examples/storyboards/` 示範（賽博偵探／仙俠），驗收標準為「自訂故事本機渲染成功」。
   - 步驟三指引卡補警示：Agent 代架環境時勿讓其直接跑範例 storyboard 浪費算力與點數。

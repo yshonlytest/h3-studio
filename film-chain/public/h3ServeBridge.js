@@ -299,7 +299,6 @@
       wizard.style.display = 'flex';
       onlineBody.style.display = 'none';
       showProgressView(false);
-      H3LocalEnv.pingAttention?.();
       return false;
     }
   }
