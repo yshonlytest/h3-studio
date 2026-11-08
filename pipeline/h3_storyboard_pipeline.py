@@ -649,6 +649,47 @@ def _resolve_segment_anchoring(
     return Path(ff_str).expanduser().resolve(), None, 1
 
 
+def _apply_manifest_subtitles(merged_file: Path, manifest: dict, output_prefix: str) -> Path:
+    """Generate .srt track and burn subtitle overlay if specified in manifest."""
+    subtitles_data = manifest.get("subtitles")
+    if not subtitles_data:
+        return merged_file
+    try:
+        from pipeline.h3_subtitles import (
+            BurnSubtitlesConfig,
+            SubtitleCue,
+            burn_subtitles_ffmpeg,
+            write_srt_file,
+        )
+        cues = [
+            SubtitleCue(
+                start_sec=float(c["start_sec"]),
+                end_sec=float(c["end_sec"]),
+                text=str(c["text"]),
+                speaker=str(c.get("speaker", "")),
+            )
+            for c in subtitles_data
+        ]
+        srt_path = merged_file.with_suffix(".srt")
+        write_srt_file(cues, srt_path)
+        print(f"[Subtitles] 📝 Exported subtitle track -> {srt_path.name}", flush=True)
+
+        sub_output = next_output_filepath(f"{output_prefix}_subtitled")
+        burn_subtitles_ffmpeg(
+            cues,
+            BurnSubtitlesConfig(
+                video_path=merged_file,
+                output_path=sub_output,
+                temp_dir=TEMP_DIR / "subtitles_overlay",
+            ),
+        )
+        print(f"[Subtitles] 🎬 Burned subtitles into video -> {sub_output.name}", flush=True)
+        return sub_output
+    except Exception as exc:
+        print(f"[Subtitles] ⚠️ Subtitle generation skipped: {exc}", flush=True)
+        return merged_file
+
+
 def _merge_and_finalize_storyboard(
     generated_videos: list[Path],
     manifest: dict,
@@ -672,6 +713,8 @@ def _merge_and_finalize_storyboard(
             print(f"[HealthCheck][Merged] ⚠️ {w}", flush=True)
     else:
         print(f"[HealthCheck][Merged] ✅ Final merged video healthy ({merged_report.duration_seconds:.2f}s)", flush=True)
+
+    merged_file = _apply_manifest_subtitles(merged_file, manifest, output_prefix)
 
     bgm_str = manifest.get("bgm_track")
     if bgm_str:

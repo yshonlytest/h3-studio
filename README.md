@@ -32,7 +32,7 @@ While raw CLI inference engines process isolated text prompts into disjointed 5-
 │  Creative Layer: Web Studio & Visual Staging                                 │
 │  • Film-Chain Studio UI (2D Top-down Camera Staging Board, IndexedDB)        │
 │  • Context-IR 5D Compiler ([Scene], [Camera], Timeline:, [Look], Audio:)     │
-│  • Golden Storyboard Templates (25s Cyberpunk Detective & 25s Xianxia Duel)  │
+│  • Golden Storyboard Templates (25s Latent Ink Sorcerer & 25s Grid Cyberpunk Detective) │
 └──────────────────────────────────────┬───────────────────────────────────────┘
                                        │ Dispatches Jobs
 ┌──────────────────────────────────────▼───────────────────────────────────────┐
@@ -133,13 +133,13 @@ pip install -e .
 # 2. Compile native Metal engine (engines/h3.c)
 cd engines/h3.c && make -j && cd ../..
 
-# 3. Run the official 25s Xianxia Aerial Duel Storyboard (Verified Ground Truth Benchmark)
+# 3. Run the verified 25s Ink Sorcerer Storyboard (Latent Chain Paradigm)
 python3 -m pipeline.h3_storyboard_pipeline \
-  --chain-manifest examples/storyboards/xianxia_aerial_duel_25s.json \
+  --chain-manifest examples/storyboards/ink_sorcerer_goblin_defense_25s.json \
   --mode turbo \
   --export-gdrive
 
-# 4. Or run the official 25s Cyberpunk Detective Storyboard
+# 4. Or run the verified 25s Cyberpunk Detective Storyboard (Grid Keyframes Paradigm)
 python3 -m pipeline.h3_storyboard_pipeline \
   --chain-manifest examples/storyboards/cyberpunk_detective_25s.json \
   --mode turbo \
@@ -157,7 +157,7 @@ Empirically measured with zero Swap (Ollama/LLM unmounted, pure resident unified
 | **Segment Time** | **~25 - 29 minutes / 5-second segment** | Includes Qwen3-VL, Text Encoder, DiT, Audio & Video VAE |
 | **Total 25s Runtime** | **2 hours 22 minutes (142 min)** | 5 segments chained + PR #76 latent context + concat |
 | **Memory Headroom** | Peak alloc: **~29.5 GiB**, resident: **~33 GiB** | Zero Swap thrashing (stable 5.4 GiB/s SSD streaming) |
-| **Output Deliverable**| `xianxia_aerial_duel_25s_merged_00001_.mp4` (**12.2 MB**, 23.05s) | FFmpeg quality-checked, zero black/frozen frames |
+| **Output Deliverable**| `ink_sorcerer_goblin_defense_25s_subtitled_00001_.mp4` (**14.8 MB**, 22.17s) | FFmpeg quality-checked, burned subtitles & audio-video mux |
 
 ---
 
@@ -185,19 +185,19 @@ export COMFY_DIR=/path/to/ComfyUI
 
 ---
 
-## 🎨 Golden Storyboard Templates / 官方分鏡範本
+## 🎨 Golden Storyboard Templates / 實測分鏡範本
 
 H3 Studio includes two verified 25-second continuous storyboard manifests in [`examples/storyboards/`](examples/storyboards/):
 
-1. **[`cyberpunk_detective_25s.json`](examples/storyboards/cyberpunk_detective_25s.json)**:
-   * **Theme**: Neo-Noir Cyberpunk Detective in rain-slicked metropolis.
-   * **Structure**: Rainstorm entrance $\to$ Holographic interface activation $\to$ Shadow dialogue (`<d>[Chinese] 看來今晚不會平靜了</d>`) $\to$ Combat alert with anchor reset $\to$ Neon puddle high-speed sprint.
-   * **Anchor Asset**: [`examples/assets/detective_anchor_ref.jpg`](examples/assets/detective_anchor_ref.jpg).
+1. **[`ink_sorcerer_goblin_defense_25s.json`](examples/storyboards/ink_sorcerer_goblin_defense_25s.json)** (Latent Chain Paradigm):
+   * **Theme**: Whimsical 2D watercolor fantasy scene of an ink scholar summoning magical beasts to defend against forest goblins.
+   * **Structure**: Whispering woods ambush $\to$ Kuro the Ink Stone Hound conjuration $\to$ Lotus shield deflection $\to$ Avian ink swarm dispersal $\to$ Peaceful wildflower dissolution.
+   * **Anchor Asset**: [`examples/assets/ink_sorcerer_anchor_ref.jpg`](examples/assets/ink_sorcerer_anchor_ref.jpg).
 
-2. **[`xianxia_aerial_duel_25s.json`](examples/storyboards/xianxia_aerial_duel_25s.json)**:
-   * **Theme**: Wuxia / Xianxia aerial duel between a Talisman Cultivator (符修) and a Sword Immortal (劍修) over mountain peaks.
-   * **Structure**: High-altitude cloud sea flight $\to$ Talisman blast & golden dragons $\to$ Crescent sword arc cleaving clouds $\to$ Canyon dive with mid-air clash (anchor reset) $\to$ Celestial Bagua formation climax.
-   * **Anchor Asset**: [`examples/assets/xianxia_anchor_ref.png`](examples/assets/xianxia_anchor_ref.png).
+2. **[`cyberpunk_detective_25s.json`](examples/storyboards/cyberpunk_detective_25s.json)** (Grid Keyframes Paradigm):
+   * **Theme**: Neo-Noir Cyberpunk Detective in rain-slicked metropolis.
+   * **Structure**: Rainstorm entrance $\to$ Holographic interface activation $\to$ Shadow dialogue (`<d>[Chinese] 看來今晚不會平靜了</d>`) $\to$ Combat alert $\to$ Neon puddle high-speed sprint.
+   * **Anchor Assets**: [`examples/assets/detective_anchor_ref.jpg`](examples/assets/detective_anchor_ref.jpg), [`examples/assets/detective_9grid_ref.jpg`](examples/assets/detective_9grid_ref.jpg).
 
 ---
 

@@ -2,8 +2,9 @@
 
 This directory contains standalone character and scene anchor references for running the official 25-second storyboard pipelines:
 
-- `detective_anchor_ref.jpg`: Character reference for the Cyberpunk Detective storyboard (`examples/storyboards/cyberpunk_detective_25s.json`).
-- `xianxia_anchor_ref.png`: Character reference for the Xianxia Aerial Duel storyboard (`examples/storyboards/xianxia_aerial_duel_25s.json`).
+- `detective_anchor_ref.jpg`: Character reference for the Cyberpunk Detective storyboard (`examples/storyboards/cyberpunk_detective_25s.json`, 9-grid keyframes paradigm).
+- `detective_9grid_ref.jpg`: 3x3 Keyframes storyboard grid reference for the Cyberpunk Detective storyboard.
+- `ink_sorcerer_anchor_ref.jpg`: Character and scene anchor reference for the Ink Sorcerer storyboard (`examples/storyboards/ink_sorcerer_goblin_defense_25s.json`, latent chain paradigm).
 
 ## Attribution & Usage
 

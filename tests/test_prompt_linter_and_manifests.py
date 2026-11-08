@@ -33,7 +33,7 @@ class TestPromptLinterAndManifests(unittest.TestCase):
         repo_root = Path(__file__).resolve().parent.parent
         manifest_files = [
             repo_root / "examples" / "storyboards" / "cyberpunk_detective_25s.json",
-            repo_root / "examples" / "storyboards" / "xianxia_aerial_duel_25s.json",
+            repo_root / "examples" / "storyboards" / "ink_sorcerer_goblin_defense_25s.json",
         ]
         for mf in manifest_files:
             self.assertTrue(mf.is_file(), f"Manifest file missing: {mf}")

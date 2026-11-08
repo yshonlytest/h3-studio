@@ -55,7 +55,7 @@ python3 scripts/runner.py chain --manifest /absolute/path/jobs.json --gpu A100 -
 
 ## Cost & consent guardrails
 
-- **Never run the bundled demo manifests** (`examples/storyboards/*.json`, e.g. `cyberpunk_detective_25s.json` or `xianxia_aerial_duel_25s.json`) unless the user explicitly says they want the demo. They are repo-verification fixtures that burn Compute Units for footage the user did not ask for.
+- **Never run the bundled demo manifests** (`examples/storyboards/*.json`, e.g. `cyberpunk_detective_25s.json` or `ink_sorcerer_goblin_defense_25s.json`) unless the user explicitly says they want the demo. They are repo-verification fixtures that burn Compute Units for footage the user did not ask for.
 - Chain manifests for h3-studio web-app jobs must come from the **user's own storyboard**: either downloaded from the web page (`colab_manifest_*.json`) or provided by the user. If the user has not finished a storyboard yet, guide them through the web page (steps 1–4) instead of substituting an example.
 - Report the expected Compute Units cost to the user **before** launching any batch.
 - If your host environment routes egress through a proxy that rejected the kernel WebSocket handshake (403 "WebSocket upgrades are not allowed"), `colab exec` cannot work — do not attempt to bypass the proxy policy. Instead: finish all preparation (project download, CLI install, auth check, manifest), hand the final `runner.py chain` command back to the user with its estimated cost, and let them run it in a terminal with unrestricted networking.

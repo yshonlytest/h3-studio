@@ -1,0 +1,54 @@
+{
+  "title": "The Ink Sorcerer & The Goblin Defense (25s Chained Storyboard) / 墨繪靈境・苔精退散防衛戰 (25秒連貫分鏡)",
+  "description": "5-segment continuous whimsical hand-painted 2D animated scene featuring Eli, an ink scholar defending against mischievous moss goblins by conjuring living watercolor ink creatures in an enchanted woodland.",
+  "mode": "turbo",
+  "width": 864,
+  "height": 480,
+  "frames": 124,
+  "steps": 6,
+  "layers": 50,
+  "reuse": 0,
+  "seed": 20261108,
+  "output_prefix": "storyboard_runs/ink_sorcerer_goblin_defense_25s",
+  "anchor_ref_image": "examples/assets/ink_sorcerer_anchor_ref.jpg",
+  "subtitles": [
+    { "start_sec": 0.5, "end_sec": 4.5, "speaker": "Eli", "text": "Easy, little troublemakers... don't make me paint your defeat." },
+    { "start_sec": 5.5, "end_sec": 9.5, "speaker": "Eli", "text": "Flow and awaken, Kuro! Shield the grove!" },
+    { "start_sec": 10.5, "end_sec": 14.5, "speaker": "Eli", "text": "Nice try from above! Brush of dawn, circle of shelter!" },
+    { "start_sec": 15.5, "end_sec": 19.5, "speaker": "Eli", "text": "Scatter like morning dew, bright wings of ink! Shoo them away!" },
+    { "start_sec": 20.5, "end_sec": 24.5, "speaker": "Eli", "text": "Back to nature, gentle spirits. The forest is safe once more." }
+  ],
+  "segments": [
+    {
+      "segment": 1,
+      "title": "Part 1 (0-5s): Whispering Woods Ambush / 密林遭遇與偷襲預警",
+      "first_frame": "examples/assets/ink_sorcerer_anchor_ref.jpg",
+      "chain_mode": "first_frame",
+      "prompt": "[Scene] Whimsical ancient forest bathed in warm dappled sunlight filtering through lush emerald canopies and mossy boulders. Eli, a young ink scholar with ruffled dark hair in an adventure mantle with brass vial bandoliers, unclasps his glowing ebonwood brush as two mischievous moss goblins with acorn caps emerge from the ferns. [Camera] Smooth low-angle tracking push-in, following Eli stepping back into defensive footing. Timeline: 0-2s Twigs snap as goblins brandish wooden clubs; 2-5s Eli unscrews an indigo ink vial, brandishing his brush as shimmering droplets levitate. [Look] Whimsical hand-painted 2D animated scene, soft watercolor textures, lush natural landscapes, warm ambient lighting. Audio: Rustling foliage, playful chittering goblin snarls, gentle hum of levitating ink; Eli speaks: \"Easy, little troublemakers... don't make me paint your defeat.\""
+    },
+    {
+      "segment": 2,
+      "title": "Part 2 (5-10s): Inkbound Conjuration: The Stone Hound / 墨痕化形與墨影石犬",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second hand-drawn animated film continuing seamlessly from the exact last frame and pose. [Scene] Same sun-dappled mossy forest clearing. Eli sweeps his ebonwood brush in a sweeping flourish through mid-air, drawing ribbons of shimmering indigo ink that coalesce into a magnificent three-dimensional ink stone hound, snarling protectively before the goblins. [Camera] Semi-orbital panning shot, circling from Eli's fluid calligraphy stroke to the ink beast landing with a heavy watercolor splash. Timeline: 0-2s Eli curves his brush with swift calligraphic momentum; 2-5s the ink hound materializes and stomps forward, scattering droplets. [Look] Whimsical hand-painted watercolor animation, lush natural backgrounds, soft rim highlights. Audio: Whoosh of heavy brush strokes, splash of magical ink, deep resonant growl of the ink hound; Eli commands: \"Flow and awaken, Kuro! Shield the grove!\""
+    },
+    {
+      "segment": 3,
+      "title": "Part 3 (10-15s): Flanking Attack & The Lotus Shield / 靈巧防禦與哥布林包抄",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second hand-drawn animated film continuing seamlessly from the exact last frame and pose. [Scene] Ancient woodland clearing under golden canopy light. The ink hound lunges to block the frontline club attack, while two flanking goblins swing down from canopy vines hurling pinecone projectiles toward Eli. Eli spins counter-clockwise, sketching an elliptical golden lotus shield in the air. [Camera] Dynamic over-the-shoulder medium shot, capturing the deflected projectile sparks and the layered depth of combat. Timeline: 0-2s Goblins swing from mossy ropes; 2-5s Eli sketches a radiant curved ink barrier that deflects the stones with ringing chimes. [Look] Expressive watercolor fantasy aesthetics, gentle character momentum, translucent brush stroke textures. Audio: Clashing wood against ink armor, ringing crystal chimes of the lotus shield; Eli calls out: \"Nice try from above! Brush of dawn, circle of shelter!\""
+    },
+    {
+      "segment": 4,
+      "title": "Part 4 (15-20s): Avian Ink Surge & Playful Dispersal / 墨浪狂潮與百鳥退敵",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second hand-drawn animated film continuing seamlessly from the exact last frame and pose. [Scene] Same sunlit mossy glade. Eli dips his brush into a rainbow prism ink vial and drives a grand sweeping arc toward the panicked goblins, releasing a surging swarm of luminescent watercolor ink swallows that flap playfully, disarming the attackers. [Camera] Low-angle dynamic whip-push, rushing along the flight path of the glowing ink birds. Timeline: 0-2s Eli unleashes the colorful ink wave with both hands; 2-5s dozens of miniature ink birds swoop down, pecking away clubs and chasing the bewildered goblins into retreat. [Look] High-energy whimsical hand-painted animation, vibrant watercolor splashes, warm golden particle streaks. Audio: Flapping wings of liquid ink, comedic startled goblin squeaks, rushing wind vortex; Eli laughs: \"Scatter like morning dew, bright wings of ink! Shoo them away!\""
+    },
+    {
+      "segment": 5,
+      "title": "Part 5 (20-25s): Dissolution & Peaceful Bloom / 墨歸平靜與森林守護",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second hand-drawn animated film continuing seamlessly from the exact last frame and pose. [Scene] Serene woodland clearing as the goblins scramble away into the deep underbrush. The ink hound and fluttering swallows dissolve into a gentle shower of sparkling watercolor droplets, seeping into the mossy earth to sprout glowing blooming wildflowers. Eli serenely sheathes his brush. [Camera] Gentle boom-up and wide crane pull-out, revealing the sunlit clearing transformed with fresh vibrant blossoms. Timeline: 0-2s The ink creatures dissolve into golden mist; 2-5s Eli kneels gently to touch a newly blossomed ink flower, smiling under the tranquil canopy. [Look] Whimsical hand-painted 2D animated scene, soft watercolor textures, lush natural landscapes, nostalgic fantasy atmosphere. Audio: Peaceful forest birdsong, gentle chime of dissolving magic, soft breeze rustling canopy leaves; Eli whispers: \"Back to nature, gentle spirits. The forest is safe once more.\""
+    }
+  ]
+}

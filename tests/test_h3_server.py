@@ -86,6 +86,7 @@ class TestH3Server(unittest.TestCase):
         self.assertIn("200 OK", resp)
         self.assertIn('"templates":', resp)
         self.assertIn("cyberpunk_detective_25s.json", resp)
+        self.assertIn("ink_sorcerer_goblin_defense_25s.json", resp)
 
     def test_expand_endpoint(self) -> None:
         body = json.dumps({

@@ -5,7 +5,7 @@
 ## 1. 四大核心問題與架構收斂定案（Argon 裁決，3.8 勿改）
 - **資產與路徑四層隔離（解決問題 3 & 4）**：
   1. `examples/`（Git 追蹤，開源範本）：僅放 JSON Manifest 與輕量錨定圖（`<2MB`）。
-  2. `film-chain/public/assets/demo/`（Git 追蹤，Cloudflare 線上靜態展示）：只放已驗證完稿的展示影片與九宮格（賽博偵探 `detective_*`；仙俠完稿後才由腳本發佈至此）。
+  2. `film-chain/public/assets/demo/`（Git 追蹤，Cloudflare 線上靜態展示）：只放已驗證完稿的展示影片與素材（九宮格專屬 `detective_*`、潛空間專屬 `ink_sorcerer_*`）。
   3. `outputs/storyboard_runs/`（`.gitignore`，本機算圖正式產出）：所有 CLI / Daemon 產出的 `.mp4`、`.h3.log`、`.state.json` 唯一落點。**廢除 `MiniMax-H3-h3c-ComfyUI/ComfyUI/output` 舊 fallback**。
   4. `scratch/`（`.gitignore`，純暫存）：僅供執行期中繼檔（`.h3ctx`、臨時 manifest），禁止存放成品影片。
 - **接力範式與重錨定修正（解決問題 1 & 2）**：
@@ -33,9 +33,9 @@
 - [x] **M5（修復 `h3ServeBridge.js` 假資料斷路，實作 `window.exportChainedManifest`）**：
   - 於 `film-chain/public/index.html`（Step 2 `syncSegmentsFromDOM` 附近，約 `L3352-3375`）實作並掛載 `window.exportChainedManifest()`，將當前 `currentPlan`、畫布設定、各段 `chain_mode` 與首幀轉為標準 Manifest 結構；刪除 `h3ServeBridge.js:173-192` 的 1 段式寫死 fallback，改為無分鏡時提示先於步驟一/二載入分鏡。
   - 驗證：`cd film-chain && npm test`
-- [x] **M6（Web UI 補齊「潛空間 vs 九宮格範式開關」、「本機 Context-IR 擴寫」與「官方範本載入」）**：
+- [x] **M6（Web UI 補齊「潛空間 vs 九宮格範式開關」、「本機 Context-IR 擴寫」與「實測範本載入」）**：
   - 於 `film-chain/public/index.html` Step 1 (`L1040-1065`)：`promptProviderSelect` 新增 `<option value="local-llm">🖥️ 本機 Context-IR / Local LLM (免 API Key)</option>`；新增「接力範式 (`chainParadigmSelect`)」下拉選單（`latent_chain` 一鏡到底 vs `grid_keyframes` 九宮格轉場），選 `latent_chain` 時批次將 Part 2~N 設為 `motion_context` 並摺疊九宮格切片列。
-  - 新增「載入官方 25s 範本（仙俠空戰 / 賽博偵探）」按鈕。
+  - 新增「載入實測 25s 範本（墨繪靈境潛空間 / 賽博偵探九宮格）」按鈕。
   - 驗證：`npm test --prefix film-chain`（52/52 passed）
 - [x] **M7（全套自動化測試與 Lint 總閘門，等待 Argon 驗收）**：
   - 執行：`python3 -m unittest discover -s tests && .venv/bin/ruff check . && npm test --prefix film-chain`
