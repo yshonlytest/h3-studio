@@ -1041,7 +1041,7 @@
               📄 上傳文檔 (.md/.txt/.pdf)
             </button>
             <button type="button" class="btn" onclick="loadSampleEduDoc()" style="padding:6px 12px; font-size:0.8rem; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe; min-height:34px;">
-              💡 載入銀行利潤範本文檔
+              💡 載入正確洗手教學範本文檔 (科普解說)
             </button>
           </div>
         </div>
@@ -1097,14 +1097,14 @@
             <div>
               <label style="font-size:0.78rem; color:#c084fc; display:block; margin-bottom:3px;">🧑‍🏫 講者視覺錨點 (Speaker Visual Anchor)</label>
               <select id="eduSpeakerVisualSelect" onchange="onEduSpeakerPresetChange(this)" style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;">
-                <option value="friendly young Taiwanese consultant in navy blue suit, smart spectacles" selected>👔 年輕男顧問 (海軍藍西裝/眼鏡)</option>
-                <option value="knowledgeable female professor in olive blazer, gentle smile">👩‍🏫 女性教授 (橄欖綠西裝/知性)</option>
-                <option value="Studio Ghibli style anime researcher in white shirt">🎨 吉卜力少年學者 (白襯衫手繪風)</option>
+                <option value="friendly young Taiwanese instructor in navy blue suit, smart spectacles" selected>👔 年輕講師 (海軍藍西裝/眼鏡)</option>
+                <option value="knowledgeable female teacher in olive blazer, gentle smile">👩‍🏫 女性教師 (橄欖綠西裝/知性)</option>
+                <option value="Japanese anime style anime researcher in white shirt">🎨 日式動畫少年學者 (白襯衫手繪風)</option>
                 <option value="custom">✏️ 自訂角色外貌描述...</option>
               </select>
             </div>
             <div style="grid-column: 1 / -1;">
-              <input type="text" id="eduSpeakerVisualInput" value="friendly young Taiwanese consultant in navy blue suit, smart spectacles" placeholder="自訂講者視覺錨點描述..." style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;" />
+              <input type="text" id="eduSpeakerVisualInput" value="friendly young Taiwanese instructor in navy blue suit, smart spectacles" placeholder="自訂講者視覺錨點描述..." style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;" />
             </div>
             <div>
               <label style="font-size:0.78rem; color:#c084fc; display:block; margin-bottom:3px;">🎙️ 旁白聲學特徵 (Acoustic Anchor)</label>
@@ -1112,7 +1112,7 @@
             </div>
             <div>
               <label style="font-size:0.78rem; color:#c084fc; display:block; margin-bottom:3px;">🎵 背景配樂風格 (BGM Style)</label>
-              <input type="text" id="eduBgmStyleInput" value="soft Studio Ghibli style acoustic piano background music" style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;" />
+              <input type="text" id="eduBgmStyleInput" value="soft acoustic piano background music, warm Japanese anime soundtrack" style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;" />
             </div>
           </div>
         </details>
@@ -1306,17 +1306,17 @@
       <!-- 2. 功能按鈕及時長統計與 Prompt 控制放在一起 -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px; padding:10px 14px; background:#0b101b; border:1px solid #1f2b3e; border-radius:10px;">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <strong style="font-size:0.92rem; color:#e2e8f0;">🎞️ 各分段腳本與微調</strong>
+          <strong id="step2ToolbarTitle" style="font-size:0.92rem; color:#e2e8f0;">🎞️ 各分段腳本與微調</strong>
           <span id="totalDurationBadge" class="badge">共 3 段，總長 15 秒</span>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <button type="button" class="btn" onclick="batchApplyChainMode('motion_context')" style="padding:6px 10px; font-size:0.8rem; background:#0f172a; border-color:#38bdf8; color:#7dd3fc;" title="將 Part 2 起所有段落設為潛空間一鏡到底">
+          <button type="button" id="btnBatchLatent" class="btn" onclick="batchApplyChainMode('motion_context')" style="padding:6px 10px; font-size:0.8rem; background:#0f172a; border-color:#38bdf8; color:#7dd3fc;" title="將所有段落設為連貫運鏡">
             🔗 批次設為潛空間
           </button>
-          <button type="button" class="btn" onclick="batchApplyChainMode('first_frame')" style="padding:6px 10px; font-size:0.8rem; background:#0f172a; border-color:#94a3b8; color:#cbd5e1;" title="將所有段落設為九宮格關鍵幀">
+          <button type="button" id="btnBatchGrid" class="btn" onclick="batchApplyChainMode('first_frame')" style="padding:6px 10px; font-size:0.8rem; background:#0f172a; border-color:#94a3b8; color:#cbd5e1;" title="將所有段落設為九宮格關鍵幀">
             🖼️ 批次設為九宮格
           </button>
-          <button type="button" class="btn" onclick="addSegmentCard()" style="padding:6px 12px; font-size:0.82rem; background:#1e293b; border-color:#38bdf8; color:#7dd3fc;">
+          <button type="button" id="btnAddSegment" class="btn" onclick="addSegmentCard()" style="padding:6px 12px; font-size:0.82rem; background:#1e293b; border-color:#38bdf8; color:#7dd3fc;">
             ➕ 新增一段 (+5秒)
           </button>
           <button type="button" id="replanBtn" class="btn" onclick="replanCurrentSegmentsViaAI()" style="padding:6px 14px; font-size:0.82rem; background:linear-gradient(135deg, #4f46e5, #6366f1); border-color:#6366f1; color:#fff; box-shadow:0 2px 8px rgba(99,102,241,0.25);">
@@ -2221,6 +2221,23 @@
           : "步驟二：教學長片分鏡台（自由秒數 · 語速監控 · 任意段數）";
       }
 
+      // Step 2 toolbar buttons adaptation
+      const btnBatchGrid = document.getElementById("btnBatchGrid");
+      const btnBatchLatent = document.getElementById("btnBatchLatent");
+      const btnAddSegment = document.getElementById("btnAddSegment");
+      const toolbarTitle = document.getElementById("step2ToolbarTitle");
+
+      if (btnBatchGrid) btnBatchGrid.style.display = isEdu ? "none" : "inline-flex";
+      if (btnBatchLatent) {
+        btnBatchLatent.textContent = isEdu ? "🔗 批次設為連貫接力" : "🔗 批次設為潛空間";
+      }
+      if (btnAddSegment) {
+        btnAddSegment.textContent = isEdu ? "➕ 新增教學分鏡 (+自適應秒數)" : "➕ 新增一段 (+5秒)";
+      }
+      if (toolbarTitle) {
+        toolbarTitle.textContent = isEdu ? "🎓 教學長片分鏡清單" : "📋 分鏡清單";
+      }
+
       // Toggle Edu controls strip in segment cards
       const eduStrips = document.querySelectorAll(".seg-edu-strip");
       eduStrips.forEach(el => { el.style.display = isEdu ? "flex" : "none"; });
@@ -2231,7 +2248,32 @@
         if (isEdu) el.style.display = "none";
       });
 
+      // Toggle chain mode select vs Edu badge in segment cards
+      const modeSelects = document.querySelectorAll(".seg-chain-mode-select");
+      modeSelects.forEach(el => {
+        const parent = el.closest(".seg-header-controls");
+        if (parent) {
+          const eduBadge = parent.querySelector(".seg-edu-mode-badge");
+          if (isEdu) {
+            el.parentElement.style.display = "none";
+            if (!eduBadge) {
+              const span = document.createElement("span");
+              span.className = "seg-edu-mode-badge";
+              span.style.cssText = "font-size:0.8rem; color:#d8b4fe; background:rgba(168,85,247,0.18); border:1px solid rgba(168,85,247,0.35); padding:4px 9px; border-radius:6px;";
+              span.textContent = "🎓 教學連貫分鏡";
+              parent.insertBefore(span, parent.firstChild);
+            } else {
+              eduBadge.style.display = "inline-flex";
+            }
+          } else {
+            el.parentElement.style.display = "inline-flex";
+            if (eduBadge) eduBadge.style.display = "none";
+          }
+        }
+      });
+
       updateDurationBadge();
+      renderChainTimelineBar();
       updateStep3UI();
     }
 
@@ -3733,34 +3775,64 @@ ${desc}${extra}
         bar.innerHTML = `<span style="font-size:0.8rem; color:#64748b;">尚無分鏡段落</span>`;
         return;
       }
+      const isEdu = activeProjectMode === "edu";
       const paradigm = document.getElementById("chainParadigmSelect")?.value || "latent_chain";
       const partsHtml = [];
+      let runningSec = 0;
+
       cards.forEach((card, idx) => {
-        const modeSelect = card.querySelector(".seg-chain-mode-select");
-        const mode = idx === 0 ? "first_frame" : (modeSelect ? modeSelect.value : "motion_context");
-        const panelVal = card.querySelector(".seg-panel-select")?.value || (idx + 1);
-        const isLatent = idx > 0 && mode === "motion_context";
-        if (idx > 0) {
-          partsHtml.push(
-            isLatent
-              ? `<span style="color:#38bdf8; font-size:0.78rem; font-weight:700; white-space:nowrap;">──🔗 潛空間接力──▶</span>`
-              : `<span style="color:#f59e0b; font-size:0.78rem; font-weight:700; white-space:nowrap;">──🖼️ 關鍵幀切換──▶</span>`
-          );
+        if (isEdu) {
+          const framesSelect = card.querySelector(".seg-frames-select");
+          const frames = framesSelect ? (parseInt(framesSelect.value, 10) || 124) : 124;
+          const sec = Math.round((frames / 24) * 10) / 10;
+          const startSec = Math.round(runningSec * 10) / 10;
+          runningSec += sec;
+          const endSec = Math.round(runningSec * 10) / 10;
+
+          const shotTypeSelect = card.querySelector(".seg-shot-type-select");
+          const shotType = shotTypeSelect ? shotTypeSelect.value : "presenter_chart";
+          let typeBadge = "📊 圖表";
+          if (shotType === "presenter_focus") typeBadge = "🎤 講者";
+          else if (shotType === "pure_b_roll") typeBadge = "🌄 空鏡";
+
+          if (idx > 0) {
+            partsHtml.push(`<span style="color:#a855f7; font-size:0.78rem; font-weight:700; white-space:nowrap;">──🎓 連貫教學──▶</span>`);
+          }
+          partsHtml.push(`
+            <button type="button" onclick="document.querySelectorAll('#segmentsContainer .segment-card')[${idx}]?.scrollIntoView({behavior:'smooth', block:'center'})" style="display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:8px; border:1px solid #7c3aed; background:rgba(124,58,237,0.18); color:#f3e8ff; font-size:0.8rem; cursor:pointer; white-space:nowrap;">
+              <strong>Part ${idx + 1}</strong>
+              <span style="color:#d8b4fe; font-size:0.75rem;">(${startSec}-${endSec}s)</span>
+              <span style="color:#c084fc; font-weight:600;">${typeBadge} (${frames}f)</span>
+            </button>
+          `);
+        } else {
+          const modeSelect = card.querySelector(".seg-chain-mode-select");
+          const mode = idx === 0 ? "first_frame" : (modeSelect ? modeSelect.value : "motion_context");
+          const panelVal = card.querySelector(".seg-panel-select")?.value || (idx + 1);
+          const isLatent = idx > 0 && mode === "motion_context";
+          if (idx > 0) {
+            partsHtml.push(
+              isLatent
+                ? `<span style="color:#38bdf8; font-size:0.78rem; font-weight:700; white-space:nowrap;">──🔗 潛空間接力──▶</span>`
+                : `<span style="color:#f59e0b; font-size:0.78rem; font-weight:700; white-space:nowrap;">──🖼️ 關鍵幀切換──▶</span>`
+            );
+          }
+          const badgeText = idx === 0
+            ? (paradigm === "latent_chain" ? "🖼️ 首幀錨定" : `🖼️ Panel ${panelVal}`)
+            : (isLatent ? "🔒 一鏡到底" : `🖼️ Panel ${panelVal}`);
+          const borderColor = isLatent ? "#0284c7" : "#475569";
+          const bg = isLatent ? "rgba(2,132,199,0.16)" : "rgba(30,41,59,0.7)";
+          partsHtml.push(`
+            <button type="button" onclick="document.querySelectorAll('#segmentsContainer .segment-card')[${idx}]?.scrollIntoView({behavior:'smooth', block:'center'})" style="display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:8px; border:1px solid ${borderColor}; background:${bg}; color:#e2e8f0; font-size:0.8rem; cursor:pointer; white-space:nowrap;">
+              <strong>Part ${idx + 1}</strong>
+              <span style="color:#94a3b8; font-size:0.75rem;">(${idx * 5}-${(idx + 1) * 5}s)</span>
+              <span style="color:${isLatent ? '#7dd3fc' : '#fcd34d'}; font-weight:600;">${badgeText}</span>
+            </button>
+          `);
         }
-        const badgeText = idx === 0
-          ? (paradigm === "latent_chain" ? "🖼️ 首幀錨定" : `🖼️ Panel ${panelVal}`)
-          : (isLatent ? "🔒 一鏡到底" : `🖼️ Panel ${panelVal}`);
-        const borderColor = isLatent ? "#0284c7" : "#475569";
-        const bg = isLatent ? "rgba(2,132,199,0.16)" : "rgba(30,41,59,0.7)";
-        partsHtml.push(`
-          <button type="button" onclick="document.querySelectorAll('#segmentsContainer .segment-card')[${idx}]?.scrollIntoView({behavior:'smooth', block:'center'})" style="display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:8px; border:1px solid ${borderColor}; background:${bg}; color:#e2e8f0; font-size:0.8rem; cursor:pointer; white-space:nowrap;">
-            <strong>Part ${idx + 1}</strong>
-            <span style="color:#94a3b8; font-size:0.75rem;">(${idx * 5}-${(idx + 1) * 5}s)</span>
-            <span style="color:${isLatent ? '#7dd3fc' : '#fcd34d'}; font-weight:600;">${badgeText}</span>
-          </button>
-        `);
       });
-      bar.innerHTML = `<span style="font-size:0.8rem; color:#94a3b8; font-weight:600; white-space:nowrap; margin-right:4px;">🧭 接力時間軸：</span>` + partsHtml.join("");
+      const prefixText = isEdu ? "🧭 教學長片時間軸：" : "🧭 接力時間軸：";
+      bar.innerHTML = `<span style="font-size:0.8rem; color:#94a3b8; font-weight:600; white-space:nowrap; margin-right:4px;">${prefixText}</span>` + partsHtml.join("");
     }
 
     const GOLDEN_TEMPLATES_FALLBACK = {
@@ -4216,16 +4288,19 @@ ${desc}${extra}
       const paradigm = document.getElementById("chainParadigmSelect")?.value || "latent_chain";
       const isLatentSeg = idx === 0 ? (paradigm === "latent_chain") : (!seg.chain_mode || seg.chain_mode === "motion_context");
       const initialDialogue = seg.dialogue || (seg.prompt && (seg.prompt.match(/<d>(?:\[\w+\])?\s*(.*?)<\/d>/) || [])[1]) || "";
-      const chainSelectHTML = idx === 0
-        ? `<span class="seg-latent-badge" style="display:${isLatentSeg ? 'inline-flex' : 'none'}; font-size:0.82rem; color:#7dd3fc; background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.35); padding:4px 10px; border-radius:6px;">🖼️ 首幀：主角參考圖錨定</span>`
-        : `<div style="display:inline-flex; align-items:center; gap:6px;">
-             <span style="font-size:0.82rem; color:var(--muted);">接力：</span>
-             <select class="seg-chain-mode-select" onchange="onSegChainModeChange(this)" style="padding:5px 8px; font-size:0.82rem; min-height:36px;">
-               <option value="motion_context" ${(!seg.chain_mode || seg.chain_mode === "motion_context") ? "selected" : ""}>🔗 潛空間（一鏡到底）</option>
-               <option value="first_frame" ${seg.chain_mode === "first_frame" ? "selected" : ""}>🖼️ 九宮格（關鍵幀）</option>
-             </select>
-             <span class="seg-latent-badge" style="display:${isLatentSeg ? 'inline-flex' : 'none'}; font-size:0.8rem; color:#7dd3fc; background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.3); padding:4px 9px; border-radius:6px;">🔗 承接 Part ${idx} 潛空間尾幀</span>
-           </div>`;
+      const isEdu = activeProjectMode === "edu";
+      const chainSelectHTML = isEdu
+        ? `<span class="seg-edu-mode-badge" style="font-size:0.8rem; color:#d8b4fe; background:rgba(168,85,247,0.18); border:1px solid rgba(168,85,247,0.35); padding:4px 9px; border-radius:6px;">🎓 教學連貫分鏡</span>`
+        : (idx === 0
+          ? `<span class="seg-latent-badge" style="display:${isLatentSeg ? 'inline-flex' : 'none'}; font-size:0.82rem; color:#7dd3fc; background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.35); padding:4px 10px; border-radius:6px;">🖼️ 首幀：主角參考圖錨定</span>`
+          : `<div style="display:inline-flex; align-items:center; gap:6px;">
+               <span style="font-size:0.82rem; color:var(--muted);">接力：</span>
+               <select class="seg-chain-mode-select" onchange="onSegChainModeChange(this)" style="padding:5px 8px; font-size:0.82rem; min-height:36px;">
+                 <option value="motion_context" ${(!seg.chain_mode || seg.chain_mode === "motion_context") ? "selected" : ""}>🔗 潛空間（一鏡到底）</option>
+                 <option value="first_frame" ${seg.chain_mode === "first_frame" ? "selected" : ""}>🖼️ 九宮格（關鍵幀）</option>
+               </select>
+               <span class="seg-latent-badge" style="display:${isLatentSeg ? 'inline-flex' : 'none'}; font-size:0.8rem; color:#7dd3fc; background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.3); padding:4px 9px; border-radius:6px;">🔗 承接 Part ${idx} 潛空間尾幀</span>
+             </div>`);
       div.innerHTML = `
         <div class="segment-card-header">
           <div class="seg-header-main">
@@ -4590,19 +4665,29 @@ ${desc}${extra}
         currentPlan = { project_slug: "custom_story", segments: [] };
         document.getElementById("segmentsContainer").innerHTML = "";
       }
+      const isEdu = activeProjectMode === "edu";
       const nextIdx = document.querySelectorAll("#segmentsContainer .segment-card").length;
       const totalEstimated = nextIdx + 1;
       const defaultPanel = typeof H3TimecodeHelper !== "undefined"
         ? H3TimecodeHelper.calculateDefaultEndPanel(nextIdx, totalEstimated)
         : Math.min(9, (nextIdx + 1) * 3);
-      const defaultTitle = typeof H3TimecodeHelper !== "undefined"
-        ? H3TimecodeHelper.formatSegmentTitle(nextIdx)
-        : `Part ${nextIdx + 1} (${nextIdx * 5}-${(nextIdx + 1) * 5}s)`;
+      const defaultTitle = isEdu
+        ? `Part ${nextIdx + 1} (教學分鏡)`
+        : (typeof H3TimecodeHelper !== "undefined"
+          ? H3TimecodeHelper.formatSegmentTitle(nextIdx)
+          : `Part ${nextIdx + 1} (${nextIdx * 5}-${(nextIdx + 1) * 5}s)`);
+      const defaultPrompt = isEdu
+        ? "Japanese anime aesthetic, hand-drawn educational scene. Audio: clear Mandarin studio voice, soft acoustic piano background music, <d>[Chinese] </d>."
+        : "Create a 5-second live-action cinematic film continuing seamlessly from the first frame to the last frame.";
 
       appendSegmentCardDOM({
         title: defaultTitle,
         end_panel: defaultPanel,
-        prompt: "Create a 5-second live-action cinematic film continuing seamlessly from the first frame to the last frame.",
+        shot_type: isEdu ? "presenter_chart" : undefined,
+        frames: isEdu ? 124 : 124,
+        dialogue: "",
+        chain_mode: isEdu ? "motion_context" : undefined,
+        prompt: defaultPrompt,
       }, nextIdx);
       syncSegmentsFromDOM();
     }
@@ -4631,25 +4716,35 @@ ${desc}${extra}
     }
 
     function loadSampleEduDoc() {
-      const sample = `# 第一章：銀行專案源起與核心目標
-銀行不是做慈善的，每一筆放款背後都有看不見的資金成本。
-過去各業務單位只看表面的放款放量，導致帳面賺錢但資本收益低落。
-因此，推動經濟利潤專案的核心目標，是為了建立更科學合理的績效衡量機制。
+      const sample = `# 第一章：病從口入與肉眼看不見的細菌
+病從口入，我們的手每天都會接觸成千上萬的肉眼看不見的細菌與病毒。
+如果沒有正確清潔，很容易在進食或揉眼睛時把病原體帶入體內。
+因此，落實正確洗手是守護全家人健康最有效、成本最低的防疫第一線。
 
-# 第二章：四大隱形成本與傳統利潤差異
-傳統會計利潤只看帳面利息收入減去利息支出。
-但真實的經濟利潤，必須進一步扣除四大隱形成本：
-第一，資金轉撥計價 FTP 成本；
-第二，作業成本與營運維持支出；
-第三，預期信用損失與風險準備；
-第四，股東權益資本的機會成本。
+# 第二章：洗手五步驟——濕搓沖捧擦
+正確洗手的第一步是掌握「濕、搓、沖、捧、擦」五大流程：
+第一步「濕」，先在水龍頭下把雙手徹底淋濕；
+第二步「搓」，抹上洗手乳或肥皂，起泡後至少搓揉二十秒；
+第三步「沖」，用乾淨流動清水將泡沫徹底洗淨；
+第四步「捧」，捧水將水龍頭開關沖洗乾淨，避免關水時二次污染；
+第五步「擦」，使用乾淨紙巾或手帕將雙手完全擦乾。
 
-# 第三章：資金轉撥計價與公平結算
-資金轉撥計價 FTP 讓存貸兩端各自公平結算真實貢獻。
-吸收存款的網點獲得資金轉撥收益，承做放款的單位支付資金採購成本。
-透過透明的定價曲線，消除利差盲區，激勵高附加價值業務。`;
+# 第三章：七字口訣深層清潔——內外夾弓大立腕
+在「搓」的二十秒關鍵時間內，必須精準執行「內、外、夾、弓、大、立、腕」七字口訣：
+「內」，掌心對掌心相互揉搓；
+「外」，手心搓手背，左右交替清潔；
+「夾」，雙手十指交叉搓揉指縫；
+「弓」，手指微彎弓起，指背摩擦對側手掌；
+「大」，清洗大拇指與虎口旋轉揉搓；
+「立」，指尖立起在掌心旋轉，清潔指甲縫污垢；
+「腕」，最後別忘記搓洗手腕至關節處。
+
+# 第四章：關鍵時機與洗手迷思破解
+許多人以為隨便沖水幾秒鐘就算洗手，這反而提供細菌滋生溫床。
+吃飯前、如廁後、擤鼻涕後以及抱小孩前，都是洗手關鍵時機。
+記住：洗手時間必須唱完兩次生日快樂歌，才能真正洗淨病菌，健康安心！`;
       document.getElementById("eduDocInput").value = sample;
-      showToast("💡 已載入銀行經濟利潤教學文檔範本");
+      showToast("💡 已載入正確洗手五步驟與七字口訣科普教學文檔");
       extractEduOutlines();
     }
 
@@ -4728,9 +4823,9 @@ ${desc}${extra}
       }
 
       const langCode = document.getElementById("eduLangCodeSelect")?.value || "zh-TW";
-      const speakerVisual = document.getElementById("eduSpeakerVisualInput")?.value || "friendly young Taiwanese consultant in navy blue suit, smart spectacles";
+      const speakerVisual = document.getElementById("eduSpeakerVisualInput")?.value || "friendly young anime researcher in white lab coat";
       const acousticAnchor = document.getElementById("eduAcousticAnchorInput")?.value || "clear Mandarin studio voice, steady professional narrator tone, natural pacing";
-      const bgmStyle = document.getElementById("eduBgmStyleInput")?.value || "soft Studio Ghibli style acoustic piano background music";
+      const bgmStyle = document.getElementById("eduBgmStyleInput")?.value || "soft acoustic piano background music, warm Japanese anime soundtrack";
 
       const segments = [];
       let globalIdx = 0;
@@ -4747,16 +4842,18 @@ ${desc}${extra}
           else frames = 186;
 
           let shotType = "presenter_chart";
+          const handKeywords = ["內", "外", "夾", "弓", "大", "立", "腕", "步驟", "訣", "濕", "搓", "沖", "捧", "擦"];
+          const isKeyAction = handKeywords.some(kw => sen.includes(kw)) || /\d/.test(sen);
+
           if (sIdx === 0 && cIdx === 0) shotType = "presenter_focus";
-          else if (sIdx === 0) shotType = "presenter_chart";
-          else if (sen.includes("成本") || sen.includes("FTP") || sen.includes("利潤") || /\d/.test(sen)) shotType = "presenter_chart";
+          else if (isKeyAction) shotType = "presenter_chart";
           else if (sIdx % 3 === 2) shotType = "pure_b_roll";
 
-          let visualPrompt = `Studio Ghibli aesthetic, educational scene illustrating ${chap.title}`;
+          let visualPrompt = `Japanese anime aesthetic, hand-drawn educational scene illustrating ${chap.title}`;
           if (shotType === "presenter_chart") {
-            visualPrompt += `, with ${speakerVisual} gesturing to chalk blackboard diagrams`;
+            visualPrompt += `, with ${speakerVisual} gesturing to blackboard diagrams and hand action steps`;
           } else if (shotType === "presenter_focus") {
-            visualPrompt += `, featuring ${speakerVisual} speaking confidently`;
+            visualPrompt += `, featuring ${speakerVisual} speaking warmly to the audience`;
           }
 
           const prompt = `${visualPrompt}. Audio: ${acousticAnchor}, ${bgmStyle}, <d>[Chinese] ${sen}</d>.`;
@@ -5032,7 +5129,7 @@ ${desc}${extra}
           language_code: document.getElementById("eduLangCodeSelect")?.value || "zh-TW",
           acoustic_anchor: document.getElementById("eduAcousticAnchorInput")?.value || "clear Mandarin studio voice, steady professional narrator tone, natural pacing",
           speaker_visual_anchor: document.getElementById("eduSpeakerVisualInput")?.value || "consistent presenter visible in side-profile or corner frame speaking clearly",
-          bgm_style: document.getElementById("eduBgmStyleInput")?.value || "soft Studio Ghibli style acoustic piano background music"
+          bgm_style: document.getElementById("eduBgmStyleInput")?.value || "soft acoustic piano background music, warm Japanese anime soundtrack"
         } : undefined,
         shots: isEdu ? segs.map((s, idx) => ({
           shot_id: idx + 1,
