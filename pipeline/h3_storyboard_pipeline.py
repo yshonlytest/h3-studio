@@ -24,6 +24,10 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from pipeline.config import (
     DEFAULT_FFMPEG_AUDIO_ARGS,
     DEFAULT_FFMPEG_ENCODE_ARGS,
@@ -32,6 +36,12 @@ from pipeline.config import (
     get_h3_binary_path,
     get_h3_model_dir,
     get_output_dir,
+)
+from pipeline.h3_edu_profile import (
+    GlobalProfile,
+    calculate_optimal_frames,
+    compile_shot_prompt,
+    resolve_checkpoint_dir,
 )
 from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor
 from pipeline.h3_gdrive_sync import dispatch_async_upload
@@ -776,19 +786,21 @@ def run_chained_manifest(
     manifest_path: Path,
     executor: PipelineExecutor | None = None,
     expand_llm: bool = False,
+    only_shots: set[int] | list[int] | None = None,
+    merge_only: bool = False,
 ) -> Path:
     """
-    Run a multi-segment (e.g. 5s + 5s + 5s) chained video generation job from a JSON manifest.
-    Each segment can either:
-      - specify its own `first_frame`, OR
-      - set `"use_prev_last_frame": true` to automatically extract the last frame of the previous segment!
-      - optionally specify `last_frame` to anchor the ending pose of that segment.
+    Run a multi-segment chained video generation job from a JSON manifest.
+    Supports fixed 5s, dynamic frames, auto_duration, and visual/acoustic anchors.
     """
     active_executor = executor or H3DirectExecutor()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    segments = manifest.get("segments", [])
+    segments = manifest.get("shots") or manifest.get("segments", [])
     if not segments:
-        raise ValueError("Manifest must contain a non-empty 'segments' list.")
+        raise ValueError("Manifest must contain a non-empty 'segments' or 'shots' list.")
+
+    auto_duration = bool(manifest.get("auto_duration", False))
+    global_profile = GlobalProfile.from_dict(manifest.get("global_profile"))
 
     width, height = validate_dimensions(manifest.get("width", 640), manifest.get("height", 480))
     width, height, swap_warn = recommend_safe_canvas(
@@ -799,7 +811,8 @@ def run_chained_manifest(
 
     output_prefix = manifest.get("output_prefix", "storyboard_runs/chained_full")
     manifest_mode = manifest.get("mode", os.environ.get("H3_ACTIVE_MODE", "turbo"))
-    manifest_model_dir = manifest.get("model_dir") or str(get_h3_model_dir(manifest_mode))
+    raw_model_dir = manifest.get("model_dir") or get_h3_model_dir(manifest_mode)
+    manifest_model_dir = str(resolve_checkpoint_dir(raw_model_dir))
     base_seed = manifest.get("seed", 20260931)
     frames = manifest.get("frames", 124)
     steps = manifest.get("steps", 20)
@@ -828,20 +841,41 @@ def run_chained_manifest(
         config_hash=cfg_hash,
     )
 
-    generated_videos: list[Path] = []
+    if merge_only:
+        generated_videos: list[Path] = []
+        for idx, _seg in enumerate(segments, start=1):
+            str_idx = str(idx)
+            vpath: Path | None = None
+            if str_idx in state.completed_segments:
+                cand = Path(state.completed_segments[str_idx].get("video_path", ""))
+                if cand.is_file():
+                    vpath = cand
+            if vpath is None:
+                cand = OUTPUT_DIR / f"{Path(output_prefix).name}_part{idx}.mp4"
+                if cand.is_file():
+                    vpath = cand
+            if vpath is None:
+                raise FileNotFoundError(f"Segment {idx} video not found for merge-only execution.")
+            generated_videos.append(vpath)
+        return _merge_and_finalize_storyboard(generated_videos, manifest, output_prefix, state, state_file)
+
+    generated_videos = []
     prev_video: Path | None = None
     prev_context: Path | None = None
+    only_shots_filter = {int(s) for s in only_shots} if only_shots else None
 
     for idx, seg in enumerate(segments, start=1):
+        shot_id = seg.get("shot_id", seg.get("segment", idx))
         print("\n==========================================", flush=True)
         print(f"🎬 Starting Segment {idx}/{len(segments)}: {seg.get('title', f'part_{idx}')}", flush=True)
         print("==========================================", flush=True)
 
         str_idx = str(idx)
         current_save_context = TEMP_DIR / f"{Path(output_prefix).name}_seg{idx}.h3ctx"
+        force_reroll = only_shots_filter is not None and (idx in only_shots_filter or shot_id in only_shots_filter)
 
         # Checkpoint Resume Guard: verify if segment was already completed and valid
-        if str_idx in state.completed_segments:
+        if not force_reroll and str_idx in state.completed_segments:
             cached_info = state.completed_segments[str_idx]
             cached_video = Path(cached_info.get("video_path", ""))
             if cached_video.is_file() and cached_video.stat().st_size > 1000:
@@ -854,6 +888,28 @@ def run_chained_manifest(
                     prev_context = cached_ctx if cached_ctx.is_file() else (current_save_context if current_save_context.is_file() else None)
                     continue
                 print(f"[Checkpoint] ⚠️ Cached segment {idx} failed health verification ({health_check.warnings}). Re-rendering...", flush=True)
+        elif not force_reroll and only_shots_filter is not None:
+            cand_video = OUTPUT_DIR / f"{Path(output_prefix).name}_part{idx}.mp4"
+            if cand_video.is_file() and cand_video.stat().st_size > 1000:
+                print(f"[Checkpoint] ⚡ Segment {idx}/{len(segments)} found on disk ({cand_video.name}). Skipping!", flush=True)
+                generated_videos.append(cand_video)
+                prev_video = cand_video
+                continue
+
+        # Dynamic frames calculation
+        if auto_duration and ("frames" not in seg or not seg.get("frames")):
+            dialogue_text = seg.get("dialogue") or ""
+            if not dialogue_text and seg.get("prompt"):
+                d_match = re.search(r"<d>(?:\[\w+\])?\s*(.*?)</d>", seg["prompt"])
+                if d_match:
+                    dialogue_text = d_match.group(1)
+            seg_frames = calculate_optimal_frames(
+                dialogue_text,
+                lang_code=global_profile.language_code,
+                shot_id=shot_id,
+            )
+        else:
+            seg_frames = seg.get("frames", frames)
 
         chain_ctx = ChainedSegmentContext(
             prev_video=prev_video,
@@ -864,7 +920,11 @@ def run_chained_manifest(
             seg, idx, manifest, chain_ctx
         )
         last_frame = Path(seg["last_frame"]).expanduser().resolve() if seg.get("last_frame") else None
-        prompt_text = resolve_segment_prompt(seg, idx, expand_llm=expand_llm)
+
+        compiled_shot_prompt = compile_shot_prompt(seg, global_profile, idx)
+        augmented_seg = {**seg, "prompt": compiled_shot_prompt}
+        prompt_text = resolve_segment_prompt(augmented_seg, idx, expand_llm=expand_llm)
+
         seg_job = SegmentJob(
             inputs=SegmentInputs(
                 prompt_text=prompt_text,
@@ -875,7 +935,7 @@ def run_chained_manifest(
             render=SegmentRender(
                 width=width,
                 height=height,
-                frames=seg.get("frames", frames),
+                frames=seg_frames,
                 steps=steps,
                 layers=layers,
                 reuse=reuse,
@@ -1066,6 +1126,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--anchor-every", type=int, default=0, help="Automatically reset character anchor every N segments (default: 0 = follow manifest)")
     parser.add_argument("--expand-llm", action="store_true", help="Expand 5D context_ir prompts using local LLM before execution")
     parser.add_argument("--model-dir", help="Override MiniMax-H3 model directory (e.g. models/MiniMax-H3-Turbo)")
+    parser.add_argument("--manifest", dest="chain_manifest", help="Path to JSON manifest (alias for --chain-manifest)")
+    parser.add_argument("--only-shots", type=str, default="", help="Comma-separated shot IDs/indices to run (e.g. '3,8,15')")
+    parser.add_argument("--merge-only", action="store_true", help="Skip inference and only merge existing segment outputs")
+    parser.add_argument("--output-dir", help="Override output directory")
     return parser
 
 
@@ -1179,6 +1243,12 @@ def main():
 
     render_w, render_h = _apply_cli_preset(args)
 
+    global OUTPUT_DIR
+    if getattr(args, "output_dir", None):
+        out_p = Path(args.output_dir).expanduser().resolve()
+        os.environ["H3_OUTPUT_DIR"] = str(out_p)
+        OUTPUT_DIR = out_p
+
     INPUT_DIR.mkdir(parents=True, exist_ok=True)
     WORKFLOWS_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1187,7 +1257,15 @@ def main():
         manifest_path = Path(args.chain_manifest).expanduser().resolve()
         if not manifest_path.is_file():
             sys.exit(f"Error: Chain manifest not found: {manifest_path}")
-        final_video = run_chained_manifest(manifest_path, expand_llm=bool(args.expand_llm))
+        only_shots_list = None
+        if getattr(args, "only_shots", ""):
+            only_shots_list = [int(x.strip()) for x in args.only_shots.split(",") if x.strip()]
+        final_video = run_chained_manifest(
+            manifest_path,
+            expand_llm=bool(args.expand_llm),
+            only_shots=only_shots_list,
+            merge_only=bool(args.merge_only),
+        )
         print(f"\n[SUCCESS] Chained video generated at: {final_video}", flush=True)
         return
 

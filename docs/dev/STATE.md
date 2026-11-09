@@ -76,3 +76,30 @@
   - **D3**：`renderPlanUI()` 有 `grid_image_prompt` 時在步驟二九宮格區顯示 Agent 代產提示＋生圖提示複製框（`copyGridImagePrompt`）：Agent 用自身訂閱生圖能力產 3×3 PNG（無文字浮水印）→「📁 更換九宮格圖」上傳。
   - **D4**：Colab Agent Prompt（靜態＋動態）補鐵律：使用者無劇本/生圖 Key 時由 Agent 訂閱額度代產（任務包／`H3StudioApplyPlan`／自行生九宮格上傳），不得因缺 Key 改跑示範分鏡。
   - 驗證：`node --check` 通過；前端測試 53/53 passed。
+- [x] **E1~E4（本地 H3.c 管線優化與「路線四：教學長片工作流」升級）**：
+  - **E1（Task 1：清理舊 Skill 並建立開源版 `h3c-local-film-chain`）**：停用誤導性雲端 Skill（將 `~/.gemini/config/skills/minimax-h3-colab-skill` 與 `film-chain/skills/minimax-h3-colab` 標記為 `.disabled`）；於 `.agents/skills/h3c-local-film-chain` 與 `film-chain/skills/h3c-local-film-chain` 建立通用本地執行規範（環境自動探測 `H3_ENGINE_BIN` / `H3_MODEL_DIR`、長文本知識點大綱拆解 16~22 字/鏡、嚴禁外部 TTS/倍速破壞原生音軌、限定局部重抽 `--only-shots`）。
+  - **E2（Task 2：升級 `storyboard.json` Schema）**：擴充支援 `project_mode: "edu_explainer"`, `auto_duration: true`, `global_profile`（語種、聲學特徵、講者視覺錨點、BGM）與 `shots` / `segments`。向下相容既有 Routes 1~3（未啟用時維持預設 124 幀 5.1 秒）；實作 `shot_type` 三模式（`presenter_focus`, `presenter_chart` 視覺鎖定防漂移, `pure_b_roll` 聲學標籤強化）。
+  - **E3（Task 3：升級後端 `h3_storyboard_pipeline.py` 與 `h3_edu_profile.py`）**：
+    - 相對路徑與 `sys.path.insert(0, str(PROJECT_ROOT))`，實作 `resolve_checkpoint_dir()` 自動相容 `FL2VA/` 子目錄。
+    - 實作 `calculate_optimal_frames()`：CJK ($T = N/4.0 + 0.8$)、拼音 ($T = W/2.5 + 0.8$)，對齊合法幀數 Bucket `[93, 124, 155, 186]`；超長（>26 字）拋出 `ValueError("Shot X 台詞過長...")` 攔截。
+    - 建立 `configs/pronunciation_lexicon.json` 跨語種校正字典，在送入 `<d>` 標籤前自動替換多音詞與方言偏誤詞。
+    - CLI 新增 `--manifest`, `--only-shots 3,8,15`, `--merge-only`, `--output-dir` 參數，支援單鏡局部重抽與無縫重新合成。
+    - 驗證：49 個 Python 單元測試全數通過（含新增 `tests/test_edu_workflow.py` 6 項深度測試）、Ruff 零警報。
+  - **E4（Task 4：`index.html` 新增【路線四：知識文檔轉教學長片 (Doc-to-Edu Studio)】）**：
+    - 新增路線四切換頁籤（`routeCardEdu`）與自適應網格排版，不影響既有三條路線。
+    - Step 1 新增文檔載入與大綱確認區（支援 Markdown/TXT/PDF 提示 minerU、大綱防漏 Checklist、預計分鏡數與總時長估算）。
+    - 新增 Global Profile 設定面板（語種、男/女/少年學者講者視覺錨點、旁白聲學特徵、BGM 風格、自動動態幀數開關）。
+    - 智慧分鏡卡片：即時計算台詞字數、動態對齊合法幀數標籤（93f/124f/155f/186f）、超過 26 字即時亮紅燈框線並提供「✂️ 一鍵拆分為兩鏡」按鈕、`shot_type` 模式切換與單鏡「🔄 局部重抽」指令一鍵複製。
+    - Step 3 新增教學長片專屬導出與執行面板，支援匯出標準 `edu_storyboard_manifest.json` 與複製 CLI 執行指令。
+    - 驗證：53 個前端測試全數通過、JavaScript 語法檢查通過。
+- [x] **E5（架構修復與升級：頂層雙軸解耦 專案模式 vs 算力路線 ＋ 模式 B 雙途徑文件解析引導）**：
+  - **頂層解耦**：移除混入算力卡片的「路線 4」，重構為頂層 **「專案模式（Project Mode）」** 卡片二選一（模式 A：自由提示詞短影片 vs 模式 B：知識文檔轉教學長片），並恢復乾淨的三大算力路線（路線 1：Colab、路線 2：商用 API、路線 3：本機 Metal）。
+  - **模式 B 文件解析雙途徑指引**：
+    - 途徑一：終端 AI Agent 兩階段對話代讀 Prompt（一鍵複製，嚴格要求 Agent 先確認回覆並向使用者索取下一句文件路徑/內容，待使用者提供後才執行無漏結構化 Markdown 拆解）。
+    - 途徑二：MinerU (Magic-PDF) 深度解析與前置依賴檢查安裝指引（提供 Agent 自動探測與安裝 Prompt、具備 macOS Homebrew 存在性檢查與 Linux apt-get 探測的本機自適應 Bash 腳本，以及 Colab 雲端安裝代碼，附一鍵複製按鈕）。
+  - **步驟二～五全流程連動**：
+    - 模式 B 下解除 9 格束縛，隱藏九宮格預覽與 Panel 選擇器；
+    - 即時動態時間軸：依各分鏡真實幀數（93f/124f/155f/186f，即 3.8s~7.7s）累計各鏡區間（`⏱️ 0 - 6.4s`, `⏱️ 6.4 - 11.5s`）與總時長（如 `共 24 段，總長 2 分 18 秒`）；
+    - 步驟三依當前所選路線（Colab/API/Local）切換對應長片任務包與本機 H3 原生 C 引擎局部重抽；
+    - 步驟五對齊教學字幕導出（修復動態時長累積 `baseSec` 與分段真實秒數 `segDurationSec`，根除 SRT/VTT 時間戳飄移）。
+  - **驗證**：49 Python 測試通過、53 JS 測試通過、Ruff 零警告、HTML 腳本語法檢驗 OK。

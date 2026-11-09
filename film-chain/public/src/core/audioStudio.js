@@ -102,12 +102,13 @@
 
     return validItems.map((item, idx) => {
       const partIdx = typeof item.partIndex === 'number' ? item.partIndex : idx;
-      const baseSec = partIdx * SEGMENT_DURATION;
+      const baseSec = typeof item.baseSec === 'number' ? item.baseSec : partIdx * SEGMENT_DURATION;
+      const segDur = typeof item.segDurationSec === 'number' ? item.segDurationSec : SEGMENT_DURATION;
       const offset = typeof item.startOffsetSec === 'number' ? item.startOffsetSec : 1.5;
-      const dur = typeof item.durationSec === 'number' ? item.durationSec : 2.5;
+      const dur = typeof item.durationSec === 'number' ? item.durationSec : Math.max(1.0, Math.min(2.5, segDur - 0.5));
 
       const startSec = baseSec + offset;
-      const endSec = Math.min(baseSec + SEGMENT_DURATION, startSec + dur);
+      const endSec = Math.min(baseSec + segDur, startSec + dur);
 
       return `${idx + 1}\n${formatTimecodeSrt(startSec)} --> ${formatTimecodeSrt(endSec)}\n${item.text.trim()}\n`;
     }).join('\n');
@@ -115,7 +116,7 @@
 
   /**
    * 生成標準 WebVTT 字幕檔內容
-   * @param {Array<{ partIndex: number, text: string, startOffsetSec?: number, durationSec?: number }>} items
+   * @param {Array<{ partIndex: number, text: string, startOffsetSec?: number, durationSec?: number, baseSec?: number, segDurationSec?: number }>} items
    * @returns {string}
    */
   function generateVtt(items = []) {
@@ -124,12 +125,13 @@
 
     const entries = validItems.map((item, idx) => {
       const partIdx = typeof item.partIndex === 'number' ? item.partIndex : idx;
-      const baseSec = partIdx * SEGMENT_DURATION;
+      const baseSec = typeof item.baseSec === 'number' ? item.baseSec : partIdx * SEGMENT_DURATION;
+      const segDur = typeof item.segDurationSec === 'number' ? item.segDurationSec : SEGMENT_DURATION;
       const offset = typeof item.startOffsetSec === 'number' ? item.startOffsetSec : 1.5;
-      const dur = typeof item.durationSec === 'number' ? item.durationSec : 2.5;
+      const dur = typeof item.durationSec === 'number' ? item.durationSec : Math.max(1.0, Math.min(2.5, segDur - 0.5));
 
       const startSec = baseSec + offset;
-      const endSec = Math.min(baseSec + SEGMENT_DURATION, startSec + dur);
+      const endSec = Math.min(baseSec + segDur, startSec + dur);
 
       return `${idx + 1}\n${formatTimecodeVtt(startSec)} --> ${formatTimecodeVtt(endSec)}\n${item.text.trim()}\n`;
     }).join('\n');

@@ -1,0 +1,47 @@
+{
+  "title": "銀行經濟利潤 (EP 01 專案源起) / Banking Economic Profit (Studio Ghibli 25s Chained)",
+  "description": "5-segment continuous Ghibli-style cinematic educational narrative for banking economic profit, featuring bilingual Context-IR prompts, smooth camera trajectories, dialogue synchronization, and anti-drift character anchoring.",
+  "mode": "turbo",
+  "width": 864,
+  "height": 480,
+  "frames": 124,
+  "steps": 6,
+  "layers": 50,
+  "reuse": 0,
+  "seed": 20261109,
+  "output_prefix": "storyboard_runs/ghibli_ep01_economic_profit",
+  "anchor_ref_image": "examples/assets/instructor_suit_ghibli.png",
+  "segments": [
+    {
+      "segment": 1,
+      "title": "Part 1 (0-5s): 晨光大廳與開場提問 / Sunlit Lobby Entrance & Hook",
+      "first_frame": "examples/assets/instructor_suit_ghibli.png",
+      "chain_mode": "first_frame",
+      "prompt": "[Scene] Charming vintage European-style bank atrium in Studio Ghibli cel-animation style, warm morning sunlight streaming through tall arched windows, potted ferns and brass teller lamps glowing gently. [Camera] Slow cinematic dolly-in starting from wide medium-shot, pushing closer to the young consultant. Timeline: 0-2.5s: Friendly young Taiwanese consultant in navy blue suit steps into the golden light, carrying a brown leather ledger notebook under arm. 2.5-5.0s: Turns warmly toward camera with an intelligent smile, gesturing invitingly. [Look] Studio Ghibli watercolor cel-animation aesthetic, soft hand-painted gouache background, gentle floating dust particles in warm golden hour light. Audio: Faint distant brass clock ticking, rustling ledger paper, peaceful morning ambience, <d>[Chinese] 大家都很好奇：銀行為什麼要推經濟利潤專案？</d>."
+    },
+    {
+      "segment": 2,
+      "title": "Part 2 (5-10s): 走向講台與天秤揭示 / Walking to Desk & Balance Scale Reveal",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Same warm sunlit vintage bank hall, rich dark oak furniture. [Camera] Smooth rightward tracking pan rotating slightly around the consultant as he steps toward a carved wooden desk. Timeline: 0-2.5s: Consultant walks smoothly to the desk, placing his ledger down and resting one hand near an antique brass balance scale. 2.5-5.0s: Points gently toward the balance scale, eyes alight with enthusiasm. [Look] Studio Ghibli animation look, rich polished wood grain reflections, warm brass metallic sheen. Audio: Crisp footsteps on parquet wooden floor, soft cloth movement, <d>[Chinese] 核心目標，就是為了建立更合理的績效衡量機制！</d>."
+    },
+    {
+      "segment": 3,
+      "title": "Part 3 (10-15s): 傳統利潤與四大成本 / Accounting vs Economic Profit Pillars",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and warm lighting of the previous segment. [Scene] Beside the vintage wooden desk, warm golden sunbeams. [Camera] Medium close-up with gentle low-angle tilt emphasizing clarity and authority. Timeline: 0-2.0s: Consultant taps the desk thoughtfully, then gestures to four glowing hand-painted wooden blocks appearing beside the ledger. 2.0-5.0s: The four blocks illuminate with gentle watercolor glow labeled Funds, Operations, Risk, and Capital. [Look] Hand-painted animation effects, glowing watercolor chalk texture, whimsical Studio Ghibli magical sparkle. Audio: Soft crystalline chime, warm acoustic cello tone, <d>[Chinese] 傳統利潤只看帳面，但真正的經濟利潤，必須扣除四大隱形成本！</d>."
+    },
+    {
+      "segment": 4,
+      "title": "Part 4 (15-20s): 資金天秤與公平衡量 / The Golden Balance Scale of Fair Value",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame and pose. [Scene] Close framing on the antique brass balance scale and consultant's expressive hands. [Camera] Slow cinematic push-in toward the brass pans. Timeline: 0-2.5s: The left pan holds heavy parchment loan contracts tilting down, while consultant gently places a sparkling starlight diamond into the right pan. 2.5-5.0s: The scale swings gracefully into perfect horizontal equilibrium, emitting a warm golden glow. [Look] Warm Hayao Miyazaki lighting, delicate specular highlights on brass arms, sparkling magical dust. Audio: Gentle mechanical brass balance creak, celestial glockenspiel note, <d>[Chinese] 資金轉撥計價 FTP，讓存貸兩端各自公平結算真實貢獻！</d>."
+    },
+    {
+      "segment": 5,
+      "title": "Part 5 (20-25s): 展望未來與溫馨結尾 / Warm Horizon & Future Outlook",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame and pose. [Scene] The grand vintage bank lobby, looking toward the wide arched windows overlooking a sunny European coastal town. [Camera] Slow graceful pull-back rising into a wide warm tableau. Timeline: 0-2.5s: Consultant stands tall with a confident, visionary expression, gazing toward the horizon before looking back to smile at viewers. 2.5-5.0s: Waves slightly in a cordial professional sign-off as golden sunlight floods the entire room. [Look] Nostalgic Studio Ghibli cinematic finish, lush green trees swaying outside window, warm golden lens flare. Audio: Uplifting acoustic piano and woodwind melody in Joe Hisaishi style, gentle wind breeze, <d>[Chinese] 讓我們攜手創造銀行與客戶雙贏的實質價值！</d>."
+    }
+  ]
+}

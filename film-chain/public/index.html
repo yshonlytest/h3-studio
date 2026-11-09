@@ -192,7 +192,7 @@
     }
     .route-tabs {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 14px;
       margin-top: 12px;
     }
@@ -222,6 +222,26 @@
       border-color: #f59e0b;
       background: rgba(245, 158, 11, 0.14);
       box-shadow: 0 0 18px rgba(245, 158, 11, 0.25);
+    }
+    .project-mode-card {
+      border: 2px solid #23314a;
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 14px 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .project-mode-card:hover { border-color: #475569; }
+    .project-mode-card.active.creative {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.22);
+    }
+    .project-mode-card.active.edu {
+      border-color: #a855f7;
+      background: rgba(168, 85, 247, 0.12);
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.25);
     }
     .route-tab-title {
       font-size: 0.98rem;
@@ -873,7 +893,48 @@
       </div>
     </div>
 
-    <!-- 🔀 Step 0: Route Selection -->
+    <!-- 🎬 Step 0A: Project Mode Selection -->
+    <div class="project-mode-selection-box" style="background:#0c101c; border:1.5px solid #2d3748; border-radius:var(--radius); padding:16px 20px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <strong style="font-size:0.96rem; color:#e2e8f0; display:flex; align-items:center; gap:8px;">
+          <span>🎬 選擇專案模式 (Project Mode)</span>
+          <span class="info-tip" role="button" tabindex="0" aria-label="查看專案模式說明">ⓘ
+            <span class="tooltip-content">
+              <strong>💡 兩大創作模式</strong><br>
+              • 模式 A：自由提示詞短影片（九宮格視覺錨定、固定 5.1 秒/段、15~45 秒創意短片）<br>
+              • 模式 B：知識文檔轉教學長片（長篇 Markdown/PDF 解析、大綱防漏、動態 3.8s~7.7s 自由秒數）
+            </span>
+          </span>
+        </strong>
+        <span id="currentModeBadge" class="badge ok" style="border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.15);">目前模式：🎬 模式 A：自由提示詞短影片</span>
+      </div>
+
+      <div class="project-mode-tabs" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin-top:12px;">
+        <!-- 模式 A: 自由提示詞短影片 -->
+        <div id="modeCardCreative" class="project-mode-card active creative" role="button" tabindex="0" onclick="selectProjectMode('creative')" onkeydown="if(event.key==='Enter'||event.key===' ')selectProjectMode('creative')">
+          <div class="project-mode-title" style="font-size:0.96rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+            <span style="color:#93c5fd;">🎬 模式 A：自由提示詞短影片 (Creative Storyboard)</span>
+            <span class="badge ok" style="font-size:0.7rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.2);">固定 5 秒 · 九宮格 · 15~45s</span>
+          </div>
+          <div class="project-mode-desc" style="font-size:0.78rem; color:var(--muted); line-height:1.45;">
+            適合創意微電影、廣告與短影片。提供 3×3 九宮格關鍵幀視覺錨定與 5D 運鏡參數，每段固定 124 幀（5.1 秒），總長支援 15/30/45 秒方案。
+          </div>
+        </div>
+
+        <!-- 模式 B: 知識文檔轉教學長片 -->
+        <div id="modeCardEdu" class="project-mode-card edu" role="button" tabindex="0" onclick="selectProjectMode('edu')" onkeydown="if(event.key==='Enter'||event.key===' ')selectProjectMode('edu')">
+          <div class="project-mode-title" style="font-size:0.96rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+            <span style="color:#d8b4fe;">🎓 模式 B：知識文檔轉教學長片 (Doc-to-Edu Studio)</span>
+            <span class="badge ok" style="font-size:0.7rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.2);">動態幀數 · 大綱防漏 · 自由秒數</span>
+          </div>
+          <div class="project-mode-desc" style="font-size:0.78rem; color:var(--muted); line-height:1.45;">
+            適合長篇技術報告、研究論文與知識科普教學。提供文檔解析引導、大綱章節防漏、字數語速紅綠燈、動態時長（93f~186f）與 Global Profile 防漂移錨點。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔀 Step 0B: Route Selection -->
     <div class="route-selection-box">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <strong style="font-size:0.96rem; color:#e2e8f0; display:flex; align-items:center; gap:8px;">
@@ -887,7 +948,7 @@
             </span>
           </span>
         </strong>
-        <span id="currentRouteBadge" class="badge ok" style="border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.15);">目前模式：☁️ Google Colab (Gemini Pro Agent)</span>
+        <span id="currentRouteBadge" class="badge ok" style="border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.15);">目前路線：☁️ Google Colab (Gemini Pro Agent)</span>
       </div>
 
       <div class="route-tabs">
@@ -966,7 +1027,117 @@
         </details>
       </div>
 
-      <div class="step1-container">
+      <!-- 🎓 模式 B: Doc-to-Edu Studio 文檔載入與知識點大綱確認區 -->
+      <div id="step1EduBox" style="display:none; background:#120726; border:1.5px solid #a855f7; border-radius:10px; padding:14px 16px; margin-bottom:16px; box-shadow:0 4px 18px rgba(168,85,247,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+          <div style="font-size:0.92rem; color:#f3e8ff; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.2rem;">🎓</span>
+            <span><strong style="color:#d8b4fe;">教學長片工作流 (Doc-to-Edu Studio)</strong></span>
+            <span class="badge ok" style="font-size:0.72rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.2);">大綱防漏 · 語速紅綠燈 · 動態幀數 · 防漂移錨點</span>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <input type="file" id="eduDocFileInput" accept=".md,.txt,.pdf" style="display:none;" onchange="handleEduFileUpload(this)" />
+            <button type="button" class="btn" onclick="document.getElementById('eduDocFileInput').click()" style="padding:6px 12px; font-size:0.8rem; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe; min-height:34px;">
+              📄 上傳文檔 (.md/.txt/.pdf)
+            </button>
+            <button type="button" class="btn" onclick="loadSampleEduDoc()" style="padding:6px 12px; font-size:0.8rem; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe; min-height:34px;">
+              💡 載入銀行利潤範本文檔
+            </button>
+          </div>
+        </div>
+
+        <!-- 文檔解析指引模組 (Agent 代讀 vs MinerU 深度解析) -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px; margin-bottom:12px;">
+          <!-- 指引 A: Agent 代讀 -->
+          <details style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:8px 12px;">
+            <summary style="cursor:pointer; color:#7dd3fc; font-weight:600; font-size:0.82rem; display:flex; align-items:center; justify-content:space-between;">
+              <span>🤖 途徑一：終端 AI Agent 兩階段對話代讀（免裝軟體 · 最推薦）</span>
+              <span style="font-size:0.72rem; color:#38bdf8;">展開 ▾</span>
+            </summary>
+            <div style="font-size:0.78rem; color:#cbd5e1; line-height:1.5; margin-top:8px;">
+              若你使用 Claude Code / Antigravity / Cursor 等 AI Agent，複製專用 Prompt 貼給 Agent，Agent 會主動向你索取下一句的文件路徑或內容，再進行結構化解析：
+              <div style="margin-top:6px; display:flex; gap:6px;">
+                <button type="button" class="btn" onclick="copyEduAgentDocPrompt()" style="padding:4px 10px; font-size:0.75rem; background:rgba(56,189,248,0.2); border-color:#38bdf8; color:#7dd3fc;">📋 複製 Agent 兩階段解讀 Prompt</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- 指引 B: MinerU 深度解析 -->
+          <details style="background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.25); border-radius:8px; padding:8px 12px;">
+            <summary style="cursor:pointer; color:#d8b4fe; font-weight:600; font-size:0.82rem; display:flex; align-items:center; justify-content:space-between;">
+              <span>🛠️ 途徑二：MinerU 深度解析與前置依賴檢查安裝指引</span>
+              <span style="font-size:0.72rem; color:#a855f7;">展開 ▾</span>
+            </summary>
+            <div style="font-size:0.78rem; color:#cbd5e1; line-height:1.5; margin-top:8px;">
+              面對雙欄論文、公式或掃描件 PDF，使用 MinerU 深度提取；內建 Homebrew / 系統套件檢查與依賴安裝：
+              <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <button type="button" class="btn" onclick="copyMineruAgentSetupPrompt()" style="padding:4px 10px; font-size:0.75rem; background:rgba(168,85,247,0.2); border-color:#a855f7; color:#d8b4fe;">🤖 複製 Agent 自動探測與安裝 Prompt</button>
+                <button type="button" class="btn" onclick="copyMineruLocalCmd()" style="padding:4px 10px; font-size:0.75rem; background:rgba(168,85,247,0.2); border-color:#a855f7; color:#d8b4fe;">💻 複製本機自適應檢測與安裝腳本 (macOS/Linux)</button>
+                <button type="button" class="btn" onclick="copyMineruColabCmd()" style="padding:4px 10px; font-size:0.75rem; background:rgba(168,85,247,0.2); border-color:#a855f7; color:#d8b4fe;">☁️ 複製 Colab 雲端安裝代碼</button>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <textarea id="eduDocInput" rows="5" placeholder="請在此貼上長篇知識報告、論文或技術文檔（支援 Markdown 標題 # / ##，將自動依章節拆解為無漏分鏡）..." style="width:100%; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:6px; font-family:monospace; font-size:0.82rem; padding:10px 12px; line-height:1.5; resize:vertical;"></textarea>
+
+        <!-- Global Profile Settings -->
+        <details open style="margin-top:10px; background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.2); border-radius:8px; padding:10px 12px;">
+          <summary style="cursor:pointer; color:#d8b4fe; font-weight:700; font-size:0.84rem;">⚙️ Global Profile 全局風格與防漂移錨點設定</summary>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:8px;">
+            <div>
+              <label style="font-size:0.78rem; color:#c084fc; display:block; margin-bottom:3px;">🗣️ 主要語種 (Language Code)</label>
+              <select id="eduLangCodeSelect" style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;">
+                <option value="zh-TW" selected>🇹🇼 繁體中文 (zh-TW)</option>
+                <option value="zh-CN">🇨🇳 簡體中文 (zh-CN)</option>
+                <option value="en">🇺🇸 英文 (en)</option>
+                <option value="ja">🇯🇵 日文 (ja)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.78rem; color:#c084fc; display:block; margin-bottom:3px;">🧑‍🏫 講者視覺錨點 (Speaker Visual Anchor)</label>
+              <select id="eduSpeakerVisualSelect" onchange="onEduSpeakerPresetChange(this)" style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;">
+                <option value="friendly young Taiwanese consultant in navy blue suit, smart spectacles" selected>👔 年輕男顧問 (海軍藍西裝/眼鏡)</option>
+                <option value="knowledgeable female professor in olive blazer, gentle smile">👩‍🏫 女性教授 (橄欖綠西裝/知性)</option>
+                <option value="Studio Ghibli style anime researcher in white shirt">🎨 吉卜力少年學者 (白襯衫手繪風)</option>
+                <option value="custom">✏️ 自訂角色外貌描述...</option>
+              </select>
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <input type="text" id="eduSpeakerVisualInput" value="friendly young Taiwanese consultant in navy blue suit, smart spectacles" placeholder="自訂講者視覺錨點描述..." style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;" />
+            </div>
+            <div>
+              <label style="font-size:0.78rem; color:#c084fc; display:block; margin-bottom:3px;">🎙️ 旁白聲學特徵 (Acoustic Anchor)</label>
+              <input type="text" id="eduAcousticAnchorInput" value="clear Mandarin studio voice, steady professional narrator tone, natural pacing" style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;" />
+            </div>
+            <div>
+              <label style="font-size:0.78rem; color:#c084fc; display:block; margin-bottom:3px;">🎵 背景配樂風格 (BGM Style)</label>
+              <input type="text" id="eduBgmStyleInput" value="soft Studio Ghibli style acoustic piano background music" style="width:100%; padding:6px 8px; font-size:0.82rem; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:4px;" />
+            </div>
+          </div>
+        </details>
+
+        <!-- Actions -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:12px;">
+          <button type="button" id="extractEduOutlinesBtn" class="btn primary" onclick="extractEduOutlines()" style="padding:8px 18px; font-size:0.86rem; background:linear-gradient(135deg, #7c3aed, #9333ea); border-color:#a855f7; color:#fff; font-weight:700;">
+            📋 Step 1：提取知識點大綱與分鏡規劃
+          </button>
+          <button type="button" id="generateEduStoryboardBtn" class="btn success" onclick="generateEduStoryboardFromOutlines()" style="display:none; padding:8px 20px; font-size:0.86rem; background:linear-gradient(135deg, #059669, #10b981); border-color:#34d399; color:#fff; font-weight:700;">
+            🎬 Step 2：生成教學分鏡卡片（至步驟二）
+          </button>
+        </div>
+
+        <!-- Structured Outline Checklist Preview Area -->
+        <div id="eduOutlinePreviewArea" style="display:none; margin-top:12px; background:#080312; border:1px solid #3b0764; border-radius:8px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:0.88rem; font-weight:700; color:#d8b4fe;">📑 知識點大綱防漏檢查清單</span>
+            <span id="eduOutlineSummaryBadge" class="badge ok" style="font-size:0.76rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.2);"></span>
+          </div>
+          <div id="eduOutlineList" style="max-height:220px; overflow-y:auto; font-size:0.8rem; line-height:1.6; color:#e9d5ff;"></div>
+        </div>
+      </div>
+
+      <div id="step1CreativeForm" class="step1-container">
         <!-- Left Column: Reference Image Only -->
         <div class="ref-image-col">
           <label>
@@ -1411,6 +1582,33 @@
         </button>
 
         <div id="localPipelineGrid" class="pipeline-tracker-grid" style="margin-top:12px; display:none;"></div>
+      </div>
+
+      <!-- Mode 4: Doc-to-Edu Studio Panel -->
+      <div id="panelEduView" style="display:none;">
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; font-size: 0.85rem; color: #d8b4fe;">
+          <strong>🎓 教學長片工作流（Doc-to-Edu Studio · 本地 H3.c 原生管線）：</strong><br>
+          本模式專為長篇報告、學術論文與深度教學文檔打造：
+          <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.6;">
+            <li><b>動態幀數控制</b>：依台詞自動適配 93f (3.8s) / 124f (5.1s) / 155f (6.4s) / 186f (7.7s)，徹底消除語速快轉。</li>
+            <li><b>雙重錨點防漂移</b>：圖表黑板鏡頭 (<code>presenter_chart</code>) 自動鎖定講者側影，純空鏡 (<code>pure_b_roll</code>) 強制注入旁白聲學標籤。</li>
+            <li><b>局部重抽 (In-place Reroll)</b>：單鏡瑕疵可透過 <code>--only-shots</code> 局部重抽並自動重新拼接，完美保留原生唇形同步與背景配樂。</li>
+          </ul>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+          <button type="button" class="btn primary" onclick="exportEduManifestJson()" style="padding:10px 18px; font-size:0.88rem; background:linear-gradient(135deg, #7c3aed, #9333ea); border-color:#a855f7; color:#fff; font-weight:700;">
+            💾 匯出教學長片 Manifest (JSON)
+          </button>
+          <button type="button" class="btn" onclick="copyEduPipelineCliCommand()" style="padding:10px 16px; font-size:0.88rem; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe; font-weight:700;">
+            📋 複製本地 H3 CLI 執行指令
+          </button>
+        </div>
+
+        <div style="background:#090614; border:1px solid #2e1065; border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:0.8rem; color:#a855f7; font-weight:600; margin-bottom:6px;">💻 本地 Native CLI 執行指令（零雲端費用 · 自動適配權重路徑）：</div>
+          <code id="eduPipelineCliCode" style="display:block; white-space:pre-wrap; word-break:break-all; font-size:0.78rem; color:#e9d5ff; background:#000; padding:10px; border-radius:6px; font-family:monospace;">python3 pipeline/h3_storyboard_pipeline.py --manifest storyboards/my_lecture.json --output-dir outputs/my_lecture</code>
+        </div>
       </div>
 
       <!-- Execution Progress -->
@@ -1976,7 +2174,67 @@
       fast:     { mode: "turbo", width: 512, height: 384, steps: 6,  layers: "40", reuse: 2, core_reuse: 0, token_reduction: false, render_width: 256, render_height: 192 },
     };
 
-    // ==================== Route Switching (Sets context for Step 3) ====================
+    // ==================== Project Mode & Route Switching ====================
+    let activeProjectMode = "creative"; // 'creative' (模式 A) or 'edu' (模式 B)
+
+    function selectProjectMode(mode) {
+      activeProjectMode = mode; // 'creative' or 'edu'
+      const isCreative = mode === "creative";
+      const isEdu = mode === "edu";
+
+      const cardCreative = document.getElementById("modeCardCreative");
+      const cardEdu = document.getElementById("modeCardEdu");
+      if (cardCreative) cardCreative.className = `project-mode-card ${isCreative ? "active creative" : ""}`;
+      if (cardEdu) cardEdu.className = `project-mode-card ${isEdu ? "active edu" : ""}`;
+
+      const badge = document.getElementById("currentModeBadge");
+      if (badge) {
+        if (isCreative) {
+          badge.textContent = "目前模式：🎬 模式 A：自由提示詞短影片";
+          badge.style.borderColor = "#38bdf8";
+          badge.style.color = "#7dd3fc";
+          badge.style.background = "rgba(56,189,248,0.15)";
+        } else {
+          badge.textContent = "目前模式：🎓 模式 B：知識文檔轉教學長片";
+          badge.style.borderColor = "#a855f7";
+          badge.style.color = "#d8b4fe";
+          badge.style.background = "rgba(168,85,247,0.15)";
+        }
+      }
+
+      // Step 1 Form Visibility
+      const creativeForm = document.getElementById("step1CreativeForm");
+      const eduBox = document.getElementById("step1EduBox");
+      if (creativeForm) creativeForm.style.display = isCreative ? "grid" : "none";
+      if (eduBox) eduBox.style.display = isEdu ? "block" : "none";
+
+      // Step 2: 9-Grid preview container & Step 2 header
+      const gridContainer = document.getElementById("gridPreviewContainer");
+      if (gridContainer) {
+        gridContainer.style.display = (isCreative && gridImageDataUrl) ? "block" : "none";
+      }
+
+      const step2HeaderTitle = document.getElementById("step2HeaderTitleText");
+      if (step2HeaderTitle) {
+        step2HeaderTitle.textContent = isCreative
+          ? "步驟二：分鏡腳本與運鏡微調（潛空間一鏡到底）"
+          : "步驟二：教學長片分鏡台（自由秒數 · 語速監控 · 任意段數）";
+      }
+
+      // Toggle Edu controls strip in segment cards
+      const eduStrips = document.querySelectorAll(".seg-edu-strip");
+      eduStrips.forEach(el => { el.style.display = isEdu ? "flex" : "none"; });
+
+      // In Edu mode, hide 9-panel picker controls since Edu mode is free of 9-panel restrictions
+      const panelPickers = document.querySelectorAll(".seg-panel-picker-group");
+      panelPickers.forEach(el => {
+        if (isEdu) el.style.display = "none";
+      });
+
+      updateDurationBadge();
+      updateStep3UI();
+    }
+
     function selectRoute(route) {
       activeRoute = route; // 'colab', 'cloud', or 'local'
 
@@ -1993,67 +2251,132 @@
       if (cardLocal) cardLocal.className = `route-tab-card ${isLocal ? "active local" : ""}`;
 
       const badge = document.getElementById("currentRouteBadge");
-      if (isColab) {
-        badge.textContent = "目前模式：☁️ Google Colab (Gemini Pro Agent)";
-        badge.className = "badge ok";
-        badge.style.borderColor = "#38bdf8";
-        badge.style.color = "#7dd3fc";
-        badge.style.background = "rgba(56,189,248,0.15)";
-      } else if (isCloud) {
-        badge.textContent = "目前模式：⚡ 商業雲端 API (Seedance / fal.ai)";
-        badge.className = "badge warn";
-        badge.style.borderColor = "";
-        badge.style.color = "";
-        badge.style.background = "";
-      } else {
-        badge.textContent = "目前模式：🖥️ 本機 ComfyUI (高技術門檻)";
-        badge.className = "badge ok";
-        badge.style.borderColor = "#f59e0b";
-        badge.style.color = "#fcd34d";
-        badge.style.background = "rgba(245,158,11,0.15)";
+      if (badge) {
+        if (isColab) {
+          badge.textContent = "目前路線：☁️ Google Colab (Gemini Pro Agent)";
+          badge.className = "badge ok";
+          badge.style.borderColor = "#38bdf8";
+          badge.style.color = "#7dd3fc";
+          badge.style.background = "rgba(56,189,248,0.15)";
+        } else if (isCloud) {
+          badge.textContent = "目前路線：⚡ 商業雲端 API (Seedance / fal.ai)";
+          badge.className = "badge warn";
+          badge.style.borderColor = "#10b981";
+          badge.style.color = "#6ee7b7";
+          badge.style.background = "rgba(16,185,129,0.15)";
+        } else {
+          badge.textContent = "目前路線：🖥️ 本機 Metal / ComfyUI";
+          badge.className = "badge ok";
+          badge.style.borderColor = "#f59e0b";
+          badge.style.color = "#fcd34d";
+          badge.style.background = "rgba(245,158,11,0.15)";
+        }
       }
 
-      // Update Step 1 Prompt Boxes
+      // Step 1: Colab prompt box
       const colabBox = document.getElementById("step1ColabPromptBox");
       if (colabBox) colabBox.style.display = isColab ? "block" : "none";
 
-      // 切到本機路線時，讓右下角「本地環境中樞」發光提醒使用者點開查看
+      // If local, ping local env hub
       if (isLocal && window.H3LocalEnv && typeof window.H3LocalEnv.pingAttention === "function") {
         window.H3LocalEnv.pingAttention();
       }
 
-      // Update Step 3 View Panels
+      updateStep3UI();
+    }
+
+    function updateStep3UI() {
+      const isColab = activeRoute === "colab";
+      const isCloud = activeRoute === "cloud";
+      const isLocal = activeRoute === "local";
+      const isEdu = activeProjectMode === "edu";
+
       const panelColab = document.getElementById("panelColabView");
       const panelCloud = document.getElementById("panelCloudView");
       const panelLocal = document.getElementById("panelLocalView");
+      const panelEdu = document.getElementById("panelEduView");
+
       if (panelColab) panelColab.style.display = isColab ? "block" : "none";
       if (panelCloud) panelCloud.style.display = isCloud ? "block" : "none";
-      if (panelLocal) panelLocal.style.display = isLocal ? "block" : "none";
+
+      // In Local route: Edu uses panelEduView, Creative uses panelLocalView
+      if (panelLocal) panelLocal.style.display = (isLocal && !isEdu) ? "block" : "none";
+      if (panelEdu) panelEdu.style.display = (isLocal && isEdu) ? "block" : "none";
 
       const step3Title = document.getElementById("step3TitleText");
       const step3Tag = document.getElementById("step3RouteTag");
+
+      if (!step3Title || !step3Tag) return;
+
       if (isColab) {
-        step3Title.textContent = "步驟三：Google Colab (Gemini Pro Agent) 任務包導出與執行";
+        step3Title.textContent = isEdu
+          ? "步驟三：Google Colab (Gemini Pro Agent) 教學長片任務包導出與執行"
+          : "步驟三：Google Colab (Gemini Pro Agent) 任務包導出與執行";
         step3Tag.textContent = "Colab Agent 模式";
         step3Tag.className = "badge ok";
         step3Tag.style.borderColor = "#38bdf8";
         step3Tag.style.color = "#7dd3fc";
-        renderColabPipelineTracker();
+        if (typeof renderColabPipelineTracker === "function") renderColabPipelineTracker();
       } else if (isCloud) {
-        step3Title.textContent = "步驟三：商業雲端 API 並行 / 接力渲染";
+        step3Title.textContent = isEdu
+          ? "步驟三：商業雲端 API 教學長片並行 / 接力渲染"
+          : "步驟三：商業雲端 API 並行 / 接力渲染";
         step3Tag.textContent = "雲端 API 模式";
         step3Tag.className = "badge ok";
         step3Tag.style.borderColor = "#10b981";
         step3Tag.style.color = "#6ee7b7";
-        syncCloudKeyUI();
-        updateCloudCostEstimate();
+        if (typeof syncCloudKeyUI === "function") syncCloudKeyUI();
+        if (typeof updateCloudCostEstimate === "function") updateCloudCostEstimate();
       } else {
-        step3Title.textContent = "步驟三：本地 ComfyUI 管線示範與對齊";
-        step3Tag.textContent = "本機示範模式";
-        step3Tag.className = "badge ok";
-        step3Tag.style.borderColor = "#f59e0b";
-        step3Tag.style.color = "#fcd34d";
+        if (isEdu) {
+          step3Title.textContent = "步驟三：本地 H3.c 原生管線教學長片導出與執行";
+          step3Tag.textContent = "本機 H3.c 原生模式";
+          step3Tag.className = "badge ok";
+          step3Tag.style.borderColor = "#a855f7";
+          step3Tag.style.color = "#d8b4fe";
+        } else {
+          step3Title.textContent = "步驟三：本地 Metal / ComfyUI 管線示範與對齊";
+          step3Tag.textContent = "本機示範模式";
+          step3Tag.className = "badge ok";
+          step3Tag.style.borderColor = "#f59e0b";
+          step3Tag.style.color = "#fcd34d";
+        }
       }
+
+      refreshAllSegmentCardModeUI();
+    }
+
+    function copyEduAgentDocPrompt() {
+      const prompt = `你現在是 H3 Storyboard Studio 的「長篇教學文檔架構解析專家」。
+請【先不要直接執行解析】，請先精確回覆我以下這句話：
+「收到！請在下一句提供你要解析的文件路徑（例如 docs/report.pdf 或 paper.md），或者直接把文檔文字貼給我。收到後我將立即為你進行無遺漏的章節與核心公式拆解，並輸出結構化 Markdown！」
+
+當我在下一句提供文檔路徑或內容後，你才正式執行以下任務：
+1. 完整閱讀文檔，依照原始脈絡劃分所有章節標題（#、##）。
+2. 保留所有關鍵論點、核心公式（LaTeX/文字）與專業術語，嚴禁偷工減料或跳過段落。
+3. 輸出乾淨完整的 Markdown 格式，並提示我將其貼回 Doc-to-Edu 介面以自動產生各分鏡卡片。`;
+      copyTextToClipboard(prompt, "📋 已複製 Agent 兩階段解讀 Prompt！直接貼給你的 Claude Code / Antigravity / Cursor");
+    }
+
+    function copyMineruAgentSetupPrompt() {
+      const prompt = `請幫我檢查並配置本地 MinerU (magic-pdf) 深度文檔解析環境：
+1. 探測當前作業系統（macOS / Linux / Windows）。
+2. 檢查系統依賴工具：
+   - 若為 macOS：檢查是否已安裝 Homebrew (command -v brew)。若未安裝，請先提示我執行 Homebrew 官方安裝指令 (/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)")；若已安裝，檢查並安裝 poppler 與 libreoffice (brew install poppler libreoffice)。
+   - 若為 Linux (Ubuntu/Debian)：執行 sudo apt-get update && sudo apt-get install -y poppler-utils libreoffice。
+3. 檢查 Python 3 環境並安裝 MinerU 核心套件：python3 -m pip install -U "magic-pdf[full]"。
+4. 執行 magic-pdf --version 驗證安裝狀態，並回報環境已就緒。`;
+      copyTextToClipboard(prompt, "📋 已複製交由 Agent 探測與配置 MinerU 的 Prompt！");
+    }
+
+    function copyMineruLocalCmd() {
+      const cmd = `# 1. 檢測作業系統與套件管理器\nOS_TYPE="$(uname -s)"\necho "檢測到作業系統: $OS_TYPE"\n\nif [ "$OS_TYPE" = "Darwin" ]; then\n  if ! command -v brew >/dev/null 2>&1; then\n    echo "⚠️ 未檢測到 Homebrew！請先執行以下指令安裝 Homebrew："\n    echo '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'\n    exit 1\n  fi\n  echo "✅ 檢測到 Homebrew，正在安裝系統依賴 poppler 與 libreoffice..."\n  brew install poppler libreoffice\nelif [ "$OS_TYPE" = "Linux" ]; then\n  if command -v apt-get >/dev/null 2>&1; then\n    echo "✅ 檢測到 apt-get，正在安裝系統依賴..."\n    sudo apt-get update && sudo apt-get install -y poppler-utils libreoffice\n  else\n    echo "請使用系統套件管理器安裝 poppler 與 libreoffice"\n  fi\nfi\n\n# 2. 升級 pip 並安裝 MinerU 核心套件\npython3 -m pip install --upgrade pip\npython3 -m pip install -U "magic-pdf[full]"\n\n# 3. 驗證安裝\nmagic-pdf --version && echo "🎉 MinerU 環境配置完成！執行 magic-pdf -p <your_file.pdf> -o ./output 即可解析。"`;
+      copyTextToClipboard(cmd, "📋 已複製具備前置檢查的 MinerU 本機安裝腳本！");
+    }
+
+    function copyMineruColabCmd() {
+      const cmd = `# Colab 雲端免本機安裝環境配置\n!apt-get update -qq && !apt-get install -y -qq poppler-utils libreoffice\n!python3 -m pip install -q -U "magic-pdf[full]"\n!magic-pdf --version\n# 執行解析 (請先在 Colab 左側檔案欄上傳 sample.pdf)\n!magic-pdf -p sample.pdf -o ./output`;
+      copyTextToClipboard(cmd, "📋 已複製 MinerU Colab 雲端安裝與執行代碼！");
     }
 
     function escapeHtml(str) {
@@ -3392,9 +3715,12 @@ ${desc}${extra}
               : `🔗 承接 Part ${idx} 潛空間尾幀`;
           }
         } else {
-          if (pickerGroup) pickerGroup.style.display = "inline-flex";
+          if (pickerGroup) pickerGroup.style.display = activeProjectMode === "edu" ? "none" : "inline-flex";
           if (latentBadge) latentBadge.style.display = "none";
         }
+        const isEdu = activeProjectMode === "edu";
+        const eduStrips = card.querySelectorAll(".seg-edu-strip");
+        eduStrips.forEach(el => { el.style.display = isEdu ? "flex" : "none"; });
       });
       renderChainTimelineBar();
     }
@@ -3792,6 +4118,7 @@ ${desc}${extra}
           const nameInput = document.getElementById("currentProjectNameInput");
           if (nameInput) nameInput.value = currentActiveProjectName;
         }
+        selectProjectMode("creative");
         renderPlanUI(plan);
         if (typeof scheduleAutoSave === "function") scheduleAutoSave();
         statusEl.style.color = "var(--success)";
@@ -3888,6 +4215,7 @@ ${desc}${extra}
           : { scene: "", camera: "", action: "", look: "", audio: "" });
       const paradigm = document.getElementById("chainParadigmSelect")?.value || "latent_chain";
       const isLatentSeg = idx === 0 ? (paradigm === "latent_chain") : (!seg.chain_mode || seg.chain_mode === "motion_context");
+      const initialDialogue = seg.dialogue || (seg.prompt && (seg.prompt.match(/<d>(?:\[\w+\])?\s*(.*?)<\/d>/) || [])[1]) || "";
       const chainSelectHTML = idx === 0
         ? `<span class="seg-latent-badge" style="display:${isLatentSeg ? 'inline-flex' : 'none'}; font-size:0.82rem; color:#7dd3fc; background:rgba(2,132,199,0.15); border:1px solid rgba(56,189,248,0.35); padding:4px 10px; border-radius:6px;">🖼️ 首幀：主角參考圖錨定</span>`
         : `<div style="display:inline-flex; align-items:center; gap:6px;">
@@ -3907,7 +4235,7 @@ ${desc}${extra}
           </div>
           <div class="seg-header-controls">
             ${chainSelectHTML}
-            <div class="seg-panel-picker-group" style="display:${isLatentSeg ? 'none' : 'inline-flex'}; align-items:center; gap:6px;">
+            <div class="seg-panel-picker-group" style="display:${(isLatentSeg || activeProjectMode === 'edu') ? 'none' : 'inline-flex'}; align-items:center; gap:6px;">
               <span style="font-size:0.82rem; color:var(--muted);">→ 目標尾幀：</span>
               ${renderMiniGridHTML(seg.end_panel || 9)}
               <select class="seg-panel-select" onchange="onPanelSelectChange(this)" style="width:100px; padding:5px 8px; font-size:0.82rem; min-height:36px;">
@@ -3917,6 +4245,35 @@ ${desc}${extra}
             <button type="button" onclick="removeSegmentCard(this)" style="padding:5px 10px; font-size:0.82rem; min-height:36px; color:var(--danger);">🗑️ 刪除</button>
           </div>
         </div>
+
+        <!-- 🎓 模式 B 教學長片控制列 (語速紅綠燈、動態幀數與防漂移錨點) -->
+        <div class="seg-edu-strip" style="display:${activeProjectMode === 'edu' ? 'flex' : 'none'}; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0 8px 0; padding:8px 10px; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.25); border-radius:6px;">
+          <span style="font-size:0.8rem; color:#d8b4fe; font-weight:600;">🎓 鏡頭模式：</span>
+          <select class="seg-shot-type-select" onchange="onShotTypeChange(this)" style="padding:4px 8px; font-size:0.8rem; min-height:32px; background:#0f0920; color:#d8b4fe; border:1px solid #a855f7; border-radius:4px;">
+            <option value="presenter_focus" ${seg.shot_type === 'presenter_focus' ? 'selected' : ''}>🎤 講者主鏡 (Presenter Focus)</option>
+            <option value="presenter_chart" ${(!seg.shot_type || seg.shot_type === 'presenter_chart') ? 'selected' : ''}>📊 圖表+講者側影 (防漂移錨點 · 推薦)</option>
+            <option value="pure_b_roll" ${seg.shot_type === 'pure_b_roll' ? 'selected' : ''}>🌄 純空鏡 (強化聲學旁白)</option>
+          </select>
+
+          <div style="flex:1; min-width:240px; display:flex; align-items:center; gap:6px;">
+            <span style="font-size:0.8rem; color:#d8b4fe;">台詞：</span>
+            <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（建議 16~22 字，超過 26 字亮紅燈警告）..." style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
+          </div>
+
+          <span class="seg-pacing-badge badge ok" style="font-size:0.76rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.2);">字數: 0</span>
+
+          <select class="seg-frames-select" onchange="onShotFramesChange(this)" style="padding:4px 8px; font-size:0.8rem; min-height:32px; background:#0f0920; color:#d8b4fe; border:1px solid #a855f7; border-radius:4px;">
+            <option value="93" ${Number(seg.frames) === 93 ? 'selected' : ''}>93f (3.8s)</option>
+            <option value="124" ${(!seg.frames || Number(seg.frames) === 124) ? 'selected' : ''}>124f (5.1s)</option>
+            <option value="155" ${Number(seg.frames) === 155 ? 'selected' : ''}>155f (6.4s)</option>
+            <option value="186" ${Number(seg.frames) === 186 ? 'selected' : ''}>186f (7.7s)</option>
+          </select>
+
+          <button type="button" class="seg-split-btn btn" onclick="splitSegmentCardInTwo(this)" style="display:none; padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(239,68,68,0.2); border-color:#ef4444; color:#fca5a5;">✂️ 一鍵拆分為兩鏡</button>
+
+          <button type="button" class="btn" onclick="rerollSingleShot(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe;">🔄 局部重抽</button>
+        </div>
+
         <details style="margin:6px 0 8px 0; font-size:0.82rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:8px 10px;">
           <summary style="cursor:pointer; color:#93c5fd; font-weight:600; padding:4px 0;">🧭 5D 分鏡參數（修改欄位自動同步至下方對應段落）</summary>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin-top:8px;">
@@ -3952,6 +4309,10 @@ ${desc}${extra}
         <textarea class="seg-prompt-input" oninput="onRawPromptInput(this)" rows="4">${seg.prompt || ""}</textarea>
       `;
       container.appendChild(div);
+      const dialInput = div.querySelector(".seg-dialogue-input");
+      if (dialInput && typeof onShotDialogueInput === "function") {
+        onShotDialogueInput(dialInput);
+      }
     }
 
     function onStagingDetailsToggle(detailsEl) {
@@ -4251,6 +4612,346 @@ ${desc}${extra}
       syncSegmentsFromDOM();
     }
 
+    // ==================== Route 4: Doc-to-Edu Studio Handlers ====================
+    let parsedEduChapters = [];
+
+    function handleEduFileUpload(inputEl) {
+      const file = inputEl.files && inputEl.files[0];
+      if (!file) return;
+      if (file.name.toLowerCase().endsWith(".pdf")) {
+        showToast("💡 偵測到 PDF 文件！建議先透過 minerU 解析為 Markdown，或貼上純文字內容以確保大綱完整。");
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById("eduDocInput").value = e.target.result;
+        showToast(`📄 已載入文檔：${file.name}`);
+        extractEduOutlines();
+      };
+      reader.readAsText(file);
+    }
+
+    function loadSampleEduDoc() {
+      const sample = `# 第一章：銀行專案源起與核心目標
+銀行不是做慈善的，每一筆放款背後都有看不見的資金成本。
+過去各業務單位只看表面的放款放量，導致帳面賺錢但資本收益低落。
+因此，推動經濟利潤專案的核心目標，是為了建立更科學合理的績效衡量機制。
+
+# 第二章：四大隱形成本與傳統利潤差異
+傳統會計利潤只看帳面利息收入減去利息支出。
+但真實的經濟利潤，必須進一步扣除四大隱形成本：
+第一，資金轉撥計價 FTP 成本；
+第二，作業成本與營運維持支出；
+第三，預期信用損失與風險準備；
+第四，股東權益資本的機會成本。
+
+# 第三章：資金轉撥計價與公平結算
+資金轉撥計價 FTP 讓存貸兩端各自公平結算真實貢獻。
+吸收存款的網點獲得資金轉撥收益，承做放款的單位支付資金採購成本。
+透過透明的定價曲線，消除利差盲區，激勵高附加價值業務。`;
+      document.getElementById("eduDocInput").value = sample;
+      showToast("💡 已載入銀行經濟利潤教學文檔範本");
+      extractEduOutlines();
+    }
+
+    function onEduSpeakerPresetChange(sel) {
+      const customInput = document.getElementById("eduSpeakerVisualInput");
+      if (!customInput) return;
+      if (sel.value === "custom") {
+        customInput.focus();
+      } else {
+        customInput.value = sel.value;
+      }
+    }
+
+    function extractEduOutlines() {
+      const rawText = (document.getElementById("eduDocInput")?.value || "").trim();
+      if (!rawText) {
+        showToast("⚠️ 請先在上方貼上或上傳長篇知識報告文檔！");
+        return;
+      }
+
+      const rawSections = rawText.split(/\n(?=#+\s+)/g);
+      const chapters = [];
+      let totalWords = 0;
+
+      rawSections.forEach((sec, idx) => {
+        const lines = sec.trim().split("\n");
+        let title = lines[0].replace(/^#+\s*/, "").trim();
+        if (!title) title = `章節 ${idx + 1}`;
+        const body = lines.slice(1).join(" ").trim() || lines[0];
+        const cjkCount = (body.match(/[\u4e00-\u9fff\u3400-\u4dbf\w]/g) || []).length;
+        totalWords += cjkCount;
+
+        const estShots = Math.max(1, Math.round(cjkCount / 20));
+        const estDuration = estShots * 6;
+
+        chapters.push({
+          chapter_id: idx + 1,
+          title,
+          body,
+          word_count: cjkCount,
+          est_shots: estShots,
+          est_duration_sec: estDuration
+        });
+      });
+
+      parsedEduChapters = chapters;
+      const totalShots = chapters.reduce((acc, c) => acc + c.est_shots, 0);
+      const totalSec = chapters.reduce((acc, c) => acc + c.est_duration_sec, 0);
+
+      const previewArea = document.getElementById("eduOutlinePreviewArea");
+      const badge = document.getElementById("eduOutlineSummaryBadge");
+      const listEl = document.getElementById("eduOutlineList");
+      const genBtn = document.getElementById("generateEduStoryboardBtn");
+
+      if (badge) badge.textContent = `共 ${chapters.length} 章節 · ${totalWords} 字 · 建議 ${totalShots} 分鏡 (~${totalSec}s)`;
+      if (listEl) {
+        listEl.innerHTML = chapters.map(c => `
+          <div style="padding:6px 0; border-bottom:1px solid #2e1065; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong style="color:#f3e8ff;">${escapeHtml(c.title)}</strong>
+              <div style="font-size:0.75rem; color:#a855f7;">${escapeHtml(c.body.slice(0, 48))}...</div>
+            </div>
+            <span class="badge" style="background:#1e0836; color:#d8b4fe; border-color:#7c3aed; font-size:0.74rem;">${c.word_count} 字 · ${c.est_shots} 鏡 (~${c.est_duration_sec}s)</span>
+          </div>
+        `).join("");
+      }
+      if (previewArea) previewArea.style.display = "block";
+      if (genBtn) genBtn.style.display = "inline-flex";
+      showToast(`✅ 大綱防漏檢查通過：共 ${chapters.length} 章節、預計 ${totalShots} 個分鏡`);
+    }
+
+    function generateEduStoryboardFromOutlines() {
+      if (!parsedEduChapters || !parsedEduChapters.length) {
+        extractEduOutlines();
+        if (!parsedEduChapters || !parsedEduChapters.length) return;
+      }
+
+      const langCode = document.getElementById("eduLangCodeSelect")?.value || "zh-TW";
+      const speakerVisual = document.getElementById("eduSpeakerVisualInput")?.value || "friendly young Taiwanese consultant in navy blue suit, smart spectacles";
+      const acousticAnchor = document.getElementById("eduAcousticAnchorInput")?.value || "clear Mandarin studio voice, steady professional narrator tone, natural pacing";
+      const bgmStyle = document.getElementById("eduBgmStyleInput")?.value || "soft Studio Ghibli style acoustic piano background music";
+
+      const segments = [];
+      let globalIdx = 0;
+
+      parsedEduChapters.forEach((chap, cIdx) => {
+        const sentences = chap.body.split(/[。！？\n]/).map(s => s.trim()).filter(Boolean);
+        sentences.forEach((sen, sIdx) => {
+          globalIdx++;
+          const cjk = (sen.match(/[\u4e00-\u9fff\u3400-\u4dbf\w]/g) || []).length;
+          let frames = 124;
+          if (cjk <= 12) frames = 93;
+          else if (cjk <= 18) frames = 124;
+          else if (cjk <= 22) frames = 155;
+          else frames = 186;
+
+          let shotType = "presenter_chart";
+          if (sIdx === 0 && cIdx === 0) shotType = "presenter_focus";
+          else if (sIdx === 0) shotType = "presenter_chart";
+          else if (sen.includes("成本") || sen.includes("FTP") || sen.includes("利潤") || /\d/.test(sen)) shotType = "presenter_chart";
+          else if (sIdx % 3 === 2) shotType = "pure_b_roll";
+
+          let visualPrompt = `Studio Ghibli aesthetic, educational scene illustrating ${chap.title}`;
+          if (shotType === "presenter_chart") {
+            visualPrompt += `, with ${speakerVisual} gesturing to chalk blackboard diagrams`;
+          } else if (shotType === "presenter_focus") {
+            visualPrompt += `, featuring ${speakerVisual} speaking confidently`;
+          }
+
+          const prompt = `${visualPrompt}. Audio: ${acousticAnchor}, ${bgmStyle}, <d>[Chinese] ${sen}</d>.`;
+
+          segments.push({
+            segment: globalIdx,
+            shot_id: globalIdx,
+            title: `Part ${globalIdx}: ${chap.title} (${sIdx + 1})`,
+            shot_type: shotType,
+            dialogue: sen,
+            frames: frames,
+            chain_mode: globalIdx === 1 ? "first_frame" : "motion_context",
+            prompt: prompt
+          });
+        });
+      });
+
+      currentPlan = {
+        title: "教學長片故事板",
+        project_mode: "edu_explainer",
+        auto_duration: true,
+        project_slug: "edu_lecture",
+        global_profile: {
+          language_code: langCode,
+          acoustic_anchor: acousticAnchor,
+          speaker_visual_anchor: speakerVisual,
+          bgm_style: bgmStyle
+        },
+        segments: segments
+      };
+
+      selectProjectMode("edu");
+      renderPlanUI(currentPlan);
+      document.getElementById("step2Card").scrollIntoView({ behavior: "smooth" });
+      showToast(`🎉 已成功生成 ${segments.length} 個分鏡卡片（含即時語速檢驗與動態幀數）！`);
+    }
+
+    function onShotDialogueInput(inputEl) {
+      const card = inputEl.closest(".segment-card");
+      if (!card) return;
+      const text = inputEl.value.trim();
+      const cjkChars = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\w]/g) || []).length;
+      const badge = card.querySelector(".seg-pacing-badge");
+      const framesSelect = card.querySelector(".seg-frames-select");
+      const splitBtn = card.querySelector(".seg-split-btn");
+
+      const promptEl = card.querySelector(".seg-prompt-input");
+      if (promptEl) {
+        if (/<d>.*?<\/d>/s.test(promptEl.value)) {
+          promptEl.value = promptEl.value.replace(/<d>(?:\[\w+\])?\s*.*?<\/d>/s, `<d>[Chinese] ${text}</d>`);
+        } else {
+          promptEl.value = `${promptEl.value.trim()} Audio: <d>[Chinese] ${text}</d>.`;
+        }
+      }
+
+      if (cjkChars > 26) {
+        card.style.border = "2px solid #ef4444";
+        card.style.boxShadow = "0 0 16px rgba(239,68,68,0.4)";
+        if (badge) {
+          badge.className = "badge danger";
+          badge.textContent = `🚨 語速過快！建議拆分 (${cjkChars} 字 > 26 上限)`;
+          badge.style.background = "rgba(239,68,68,0.25)";
+          badge.style.color = "#fca5a5";
+          badge.style.borderColor = "#ef4444";
+        }
+        if (splitBtn) splitBtn.style.display = "inline-flex";
+        if (framesSelect) framesSelect.value = "186";
+      } else {
+        card.style.border = "";
+        card.style.boxShadow = "";
+        if (splitBtn) splitBtn.style.display = "none";
+        let bucket = "124";
+        let desc = "124f (5.1s) 語速平穩";
+        if (cjkChars <= 12) { bucket = "93"; desc = "93f (3.8s) 留白充裕"; }
+        else if (cjkChars <= 18) { bucket = "124"; desc = "124f (5.1s) 語速平穩"; }
+        else if (cjkChars <= 22) { bucket = "155"; desc = "155f (6.4s) 語速自然"; }
+        else { bucket = "186"; desc = "186f (7.7s) 語速極限"; }
+
+        if (framesSelect) framesSelect.value = bucket;
+        if (badge) {
+          badge.className = "badge ok";
+          badge.textContent = `字數: ${cjkChars} · ${desc}`;
+          badge.style.background = "rgba(168,85,247,0.2)";
+          badge.style.color = "#d8b4fe";
+          badge.style.borderColor = "#a855f7";
+        }
+      }
+    }
+
+    function onShotTypeChange(selectEl) {
+      const card = selectEl.closest(".segment-card");
+      if (!card) return;
+      const shotType = selectEl.value;
+      const promptEl = card.querySelector(".seg-prompt-input");
+      const speakerVisual = document.getElementById("eduSpeakerVisualInput")?.value || "consistent presenter visible in side-profile";
+      const acousticAnchor = document.getElementById("eduAcousticAnchorInput")?.value || "clear Mandarin studio voice";
+
+      if (promptEl) {
+        let p = promptEl.value;
+        if (shotType === "presenter_chart") {
+          if (!p.includes(speakerVisual)) {
+            p = p.replace(/\.\s*(?=Audio:|$)/, `, with ${speakerVisual}. `);
+          }
+        } else if (shotType === "pure_b_roll") {
+          if (p.includes(speakerVisual)) {
+            p = p.replace(`, with ${speakerVisual}`, "");
+          }
+          if (!p.includes(acousticAnchor)) {
+            p = p.replace(/Audio:\s*/, `Audio: ${acousticAnchor}, `);
+          }
+        }
+        promptEl.value = p;
+      }
+      syncSegmentsFromDOM();
+    }
+
+    function onShotFramesChange() {
+      syncSegmentsFromDOM();
+    }
+
+    function splitSegmentCardInTwo(btnEl) {
+      const card = btnEl.closest(".segment-card");
+      if (!card) return;
+      const dialogueInput = card.querySelector(".seg-dialogue-input");
+      const fullText = (dialogueInput?.value || "").trim();
+      if (!fullText) return;
+
+      const mid = Math.floor(fullText.length / 2);
+      let cutIdx = -1;
+      const puncts = ["，", ",", "、", "；", ";", "。", " "];
+      for (let offset = 0; offset < mid; offset++) {
+        if (puncts.includes(fullText[mid + offset])) { cutIdx = mid + offset + 1; break; }
+        if (puncts.includes(fullText[mid - offset])) { cutIdx = mid - offset + 1; break; }
+      }
+      if (cutIdx === -1) cutIdx = mid;
+
+      const part1 = fullText.slice(0, cutIdx).trim();
+      const part2 = fullText.slice(cutIdx).trim();
+
+      dialogueInput.value = part1;
+      onShotDialogueInput(dialogueInput);
+
+      const cards = Array.from(document.querySelectorAll("#segmentsContainer .segment-card"));
+      const currentIdx = cards.indexOf(card);
+
+      appendSegmentCardDOM({
+        title: `Part ${currentIdx + 2} (拆分鏡)`,
+        shot_type: card.querySelector(".seg-shot-type-select")?.value || "presenter_chart",
+        dialogue: part2,
+        chain_mode: "motion_context",
+        prompt: `Create a cinematic film continuing seamlessly. [Scene] Same scene. Audio: <d>[Chinese] ${part2}</d>.`
+      }, currentIdx + 1);
+
+      const newCard = document.querySelector("#segmentsContainer .segment-card:last-child");
+      if (newCard && card.nextSibling) {
+        card.parentNode.insertBefore(newCard, card.nextSibling);
+      }
+
+      syncSegmentsFromDOM();
+      showToast("✂️ 已一鍵將過長台詞拆分為 2 個分鏡！");
+    }
+
+    function rerollSingleShot(shotNum) {
+      const manifestFile = (currentPlan && currentPlan.project_slug) ? `storyboards/${currentPlan.project_slug}.json` : "edu_storyboard_manifest.json";
+      const cmd = `python3 pipeline/h3_storyboard_pipeline.py --manifest ${manifestFile} --only-shots ${shotNum}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(cmd).catch(() => {});
+      }
+      showToast(`📋 已複製 Shot ${shotNum} 局部重抽指令！可直接於終端機執行或呼叫本地引擎。`);
+    }
+
+    function exportEduManifestJson() {
+      const manifest = window.exportChainedManifest();
+      if (!manifest) {
+        showToast("⚠️ 請先在步驟二建立至少 1 個分鏡！");
+        return;
+      }
+      const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "edu_storyboard_manifest.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("💾 已匯出 edu_storyboard_manifest.json！");
+    }
+
+    function copyEduPipelineCliCommand() {
+      const cmd = "python3 pipeline/h3_storyboard_pipeline.py --manifest edu_storyboard_manifest.json --output-dir outputs/edu_lecture";
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(cmd);
+      }
+      showToast("📋 已複製教學長片本地 CLI 執行指令！");
+    }
+
     function syncSegmentsFromDOM() {
       if (!currentPlan) return [];
       const prevSegs = currentPlan.segments || [];
@@ -4259,6 +4960,13 @@ ${desc}${extra}
       cards.forEach((card, i) => {
         const modeSelect = card.querySelector(".seg-chain-mode-select");
         const chainMode = modeSelect ? modeSelect.value : (i === 0 ? "first_frame" : "motion_context");
+        const shotTypeSelect = card.querySelector(".seg-shot-type-select");
+        const dialogueInput = card.querySelector(".seg-dialogue-input");
+        const framesSelect = card.querySelector(".seg-frames-select");
+        const shotType = shotTypeSelect ? shotTypeSelect.value : (prevSegs[i]?.shot_type || "presenter_focus");
+        const dialogue = dialogueInput ? dialogueInput.value.trim() : (prevSegs[i]?.dialogue || "");
+        const frames = framesSelect ? (parseInt(framesSelect.value, 10) || 124) : (prevSegs[i]?.frames || 124);
+
         const irFields = {
           scene: card.querySelector(".ir-scene")?.value.trim() || "",
           camera: card.querySelector(".ir-camera")?.value.trim() || "",
@@ -4275,6 +4983,10 @@ ${desc}${extra}
         } : undefined;
         segs.push({
           segment: i + 1,
+          shot_id: i + 1,
+          shot_type: shotType,
+          dialogue: dialogue,
+          frames: frames,
           title: card.querySelector(".seg-title-input").value.trim() || `Part ${i + 1}`,
           end_panel: parseInt(card.querySelector(".seg-panel-select").value, 10) || 9,
           chain_mode: chainMode,
@@ -4300,8 +5012,12 @@ ${desc}${extra}
       const defaultAnchor = (currentPlan && currentPlan.anchor_ref_image) || "examples/assets/detective_anchor_ref.jpg";
       const refImg = (typeof refImageDataUrl !== "undefined" && refImageDataUrl) ? "reference_character.png" : defaultAnchor;
       const speedCfg = SPEED_CONFIGS[selectedSpeed] || SPEED_CONFIGS.quality;
-      return {
+      const isEdu = activeProjectMode === "edu" || currentPlan?.project_mode === "edu_explainer";
+
+      const manifest = {
         title: title,
+        project_mode: isEdu ? "edu_explainer" : undefined,
+        auto_duration: isEdu ? true : false,
         mode: speedCfg.mode || (currentPlan && currentPlan.mode) || "turbo",
         width: speedCfg.width || 864,
         height: speedCfg.height || 480,
@@ -4312,8 +5028,27 @@ ${desc}${extra}
         seed: (currentPlan && currentPlan.seed) || 20261106,
         output_prefix: `storyboard_runs/${slug.replace(/[^a-zA-Z0-9_-]/g, "_")}`,
         anchor_ref_image: refImg,
+        global_profile: isEdu ? {
+          language_code: document.getElementById("eduLangCodeSelect")?.value || "zh-TW",
+          acoustic_anchor: document.getElementById("eduAcousticAnchorInput")?.value || "clear Mandarin studio voice, steady professional narrator tone, natural pacing",
+          speaker_visual_anchor: document.getElementById("eduSpeakerVisualInput")?.value || "consistent presenter visible in side-profile or corner frame speaking clearly",
+          bgm_style: document.getElementById("eduBgmStyleInput")?.value || "soft Studio Ghibli style acoustic piano background music"
+        } : undefined,
+        shots: isEdu ? segs.map((s, idx) => ({
+          shot_id: idx + 1,
+          shot_type: s.shot_type || "presenter_chart",
+          dialogue: s.dialogue || "",
+          frames: s.frames || 124,
+          first_frame: idx === 0 ? (s.first_frame || refImg) : undefined,
+          visual_prompt: s.prompt || "",
+          prompt: s.prompt || ""
+        })) : undefined,
         segments: segs.map((s, idx) => ({
           segment: idx + 1,
+          shot_id: idx + 1,
+          shot_type: s.shot_type || "presenter_chart",
+          dialogue: s.dialogue || "",
+          frames: s.frames || 124,
           title: s.title || `Part ${idx + 1}`,
           chain_mode: s.chain_mode || (idx === 0 ? "first_frame" : "motion_context"),
           first_frame: idx === 0 ? (s.first_frame || refImg) : undefined,
@@ -4322,20 +5057,60 @@ ${desc}${extra}
           prompt: s.prompt || "Cinematic film continuing seamlessly."
         }))
       };
+      Object.keys(manifest).forEach(k => manifest[k] === undefined && delete manifest[k]);
+      return manifest;
     };
 
     function updateDurationBadge() {
-      const count = document.querySelectorAll("#segmentsContainer .segment-card").length || (currentPlan?.segments?.length || 0);
-      const totalSec = typeof H3TimecodeHelper !== "undefined"
-        ? H3TimecodeHelper.calculateTotalSeconds(count)
-        : count * 5;
+      const cards = Array.from(document.querySelectorAll("#segmentsContainer .segment-card"));
+      const count = cards.length || (currentPlan?.segments?.length || 0);
+      const isEdu = activeProjectMode === "edu";
+
+      let totalSec = 0;
+      let runningSec = 0;
+
+      if (isEdu) {
+        cards.forEach((card, idx) => {
+          const framesSelect = card.querySelector(".seg-frames-select");
+          const frames = framesSelect ? (parseInt(framesSelect.value, 10) || 124) : 124;
+          const sec = Math.round((frames / 24) * 10) / 10;
+          const startSec = Math.round(runningSec * 10) / 10;
+          runningSec += sec;
+          const endSec = Math.round(runningSec * 10) / 10;
+
+          const timePill = card.querySelector(".time-pill");
+          if (timePill) {
+            timePill.textContent = `⏱️ ${startSec} - ${endSec}s (${frames}f)`;
+          }
+        });
+        totalSec = Math.round(runningSec * 10) / 10;
+      } else {
+        totalSec = typeof H3TimecodeHelper !== "undefined"
+          ? H3TimecodeHelper.calculateTotalSeconds(count)
+          : count * 5;
+        cards.forEach((card, idx) => {
+          const timePill = card.querySelector(".time-pill");
+          if (timePill) {
+            timePill.textContent = `⏱️ ${idx * 5} - ${(idx + 1) * 5}s`;
+          }
+        });
+      }
+
       const b2 = document.getElementById("totalDurationBadge");
-      if (b2) b2.textContent = `共 ${count} 段，總長 ${totalSec} 秒`;
+      if (b2) {
+        if (isEdu && totalSec >= 60) {
+          const mins = Math.floor(totalSec / 60);
+          const remSecs = Math.round((totalSec % 60) * 10) / 10;
+          b2.textContent = `共 ${count} 段，總長 ${mins} 分 ${remSecs} 秒 (${totalSec}s)`;
+        } else {
+          b2.textContent = `共 ${count} 段，總長 ${totalSec} 秒`;
+        }
+      }
 
       const b4 = document.getElementById("step4SegmentsBadge");
       if (b4) b4.textContent = `共 ${count} 段個別影片 ＋ 1 支完整彙整總片`;
 
-      renderColabPipelineTracker();
+      if (typeof renderColabPipelineTracker === "function") renderColabPipelineTracker();
       if (typeof updateLocalRenderEstimateUI === "function") updateLocalRenderEstimateUI();
     }
 
@@ -5529,8 +6304,14 @@ ${desc}${extra}
       if (!currentPlan || !Array.isArray(currentPlan.segments)) return;
       const segs = currentPlan.segments;
       const newItems = [];
+      const isEdu = activeProjectMode === "edu" || currentPlan?.project_mode === "edu_explainer";
+      let runningSec = 0;
 
       segs.forEach((seg, idx) => {
+        const segDur = isEdu ? Math.round(((seg.frames || 124) / 24) * 10) / 10 : 5.0;
+        const baseSec = isEdu ? Math.round(runningSec * 10) / 10 : idx * 5.0;
+        runningSec += segDur;
+
         const extracted = typeof H3AudioStudio !== 'undefined'
           ? H3AudioStudio.extractDialogueInfo(seg.prompt || "", idx)
           : { text: "", startOffsetSec: 1.5, durationSec: 2.5 };
@@ -5541,6 +6322,8 @@ ${desc}${extra}
           partTitle: seg.title || `Part ${idx + 1}`,
           role: "角色",
           text: existing && existing.userEdited ? existing.text : (extracted.text || ""),
+          baseSec: baseSec,
+          segDurationSec: segDur,
           startOffsetSec: existing && existing.userEdited ? existing.startOffsetSec : extracted.startOffsetSec,
           durationSec: existing && existing.userEdited ? existing.durationSec : extracted.durationSec,
           userEdited: existing ? existing.userEdited : false,
@@ -5562,8 +6345,8 @@ ${desc}${extra}
       }
 
       container.innerHTML = currentDialogueItems.map((item, idx) => {
-        const segSecStart = idx * 5;
-        const segSecEnd = (idx + 1) * 5;
+        const segSecStart = typeof item.baseSec === 'number' ? item.baseSec : idx * 5;
+        const segSecEnd = typeof item.segDurationSec === 'number' ? Math.round((segSecStart + item.segDurationSec) * 10) / 10 : (idx + 1) * 5;
         const hasText = item.text && item.text.trim();
 
         return `
