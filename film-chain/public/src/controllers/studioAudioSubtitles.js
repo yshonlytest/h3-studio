@@ -93,6 +93,9 @@
                 <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.12);" onclick="previewSingleDialogue(${idx})">
                   🔊 試聽發音
                 </button>
+                <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.12);" onclick="applySingleDialogueToVideo(${idx})" title="將試聽的語音直接換入該鏡影片音軌（無損換軌）">
+                  🔄 換入此段音軌
+                </button>
               </div>
             </div>
             <div>
@@ -156,6 +159,21 @@
         H3AudioStudio.speakWebSpeech({ text: item.text }).catch(err => {
           showToast(`❌ 語音播放失敗: ${err.message}`);
         });
+      }
+    }
+
+    async function applySingleDialogueToVideo(idx) {
+      const item = currentDialogueItems[idx];
+      if (!item || !item.text || !item.text.trim()) {
+        showToast("⚠️ 此段目前沒有填寫台詞文字！");
+        return;
+      }
+
+      showToast(`🔄 正在為 Part ${idx + 1} 抽換語音軌...`);
+      if (typeof replaceShotSpeechOnly === "function") {
+        await replaceShotSpeechOnly(idx + 1);
+      } else {
+        showToast("💡 提示：請於步驟二使用「純語音替換」或確認本機後端已啟動");
       }
     }
 

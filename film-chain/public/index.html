@@ -3622,8 +3622,11 @@ ${desc}${extra}
             <span style="font-size:0.8rem; color:#38bdf8; font-weight:600; white-space:nowrap;">🎙️ 台詞：</span>
             <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（如：真正的經濟利潤、正確洗手五步驟...）" style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
           </div>
-          <button type="button" class="btn" onclick="rerollShotAudio(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;" title="調用代理畫布在 15 秒內極速重抽 32kHz 音訊，並以 FFmpeg 無損替換原影片音軌">
-            🎙️ 快速重抽音軌
+          <button type="button" class="btn" onclick="rerollShotAudio(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;" title="調用 H3 代理畫布極速重抽 32kHz 音訊，保留原片環境音與背景音樂，並以 FFmpeg 無損換入原片">
+            🎙️ 代理重抽音軌
+          </button>
+          <button type="button" class="btn" onclick="replaceShotSpeechOnly(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(16,185,129,0.18); border-color:#10b981; color:#6ee7b7;" title="完全不跑影片算圖，直接以 TTS 清晰語音 1 秒無損抽換原影片音軌（0 GPU 算力負擔）">
+            ⚡ 純語音替換 (TTS)
           </button>
           <button type="button" class="btn" onclick="toggleShotPhoneticsDrawer(this, ${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fde68a;" title="展開查看破音字偵測、字幕文字 vs 口播讀音">
             🔤 雙軌發音校正 ▾
@@ -4320,6 +4323,61 @@ ${desc}${extra}
         }
       } catch (err) {
         showToast(`💡 提示：本機守護進程離線時可於終端機執行 h3_audio_reroller.py`);
+      }
+    }
+
+    async function replaceShotSpeechOnly(shotIdx) {
+      const cards = document.querySelectorAll("#segmentsContainer .segment-card");
+      const card = cards[shotIdx - 1];
+      const dialInput = card ? card.querySelector(".seg-dialogue-input") : null;
+      const spokenInput = card ? card.querySelector(".seg-spoken-dialogue-input") : null;
+      const textToSpeak = (spokenInput && spokenInput.value.trim()) || (dialInput && dialInput.value.trim()) || "";
+
+      if (!textToSpeak) {
+        showToast(`⚠️ Shot ${shotIdx} 尚未輸入台詞文字！`);
+        return;
+      }
+
+      showToast(`⚡ 正在以純語音模式秒級換入 Shot ${shotIdx}...`);
+      try {
+        let audioBase64 = null;
+        const geminiKey = (typeof getPrefs === "function" ? getPrefs().geminiKey : "") || document.getElementById("geminiKeyInput")?.value?.trim();
+        if (geminiKey && typeof H3AudioStudio !== "undefined") {
+          try {
+            audioBase64 = await H3AudioStudio.synthesizeSpeechGemini({
+              apiKey: geminiKey,
+              text: textToSpeak,
+              voice: "Puck"
+            });
+          } catch (_e) {
+            audioBase64 = null;
+          }
+        }
+
+        if (audioBase64) {
+          const res = await fetch("http://127.0.0.1:8080/api/replace-audio-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              shot_index: shotIdx,
+              audio_base64: audioBase64,
+              project_id: currentPlan?.project_slug || "default_project"
+            })
+          });
+          if (res.ok) {
+            showToast(`🎉 Shot ${shotIdx} 純語音已成功無損換入影片！（0 視訊算力消耗）`);
+            if (typeof playVideoInStage === "function") {
+              playVideoInStage(`outputs/shot_${shotIdx}.mp4?t=${Date.now()}`, `Shot ${shotIdx} (純語音換軌)`, true);
+            }
+            return;
+          }
+        }
+
+        // 若無獨立 TTS 憑證或端點未連線，直接無縫調用 H3 代理音軌重抽
+        await rerollShotAudio(shotIdx);
+      } catch (err) {
+        showToast(`💡 已自動調用 H3 代理音訊換軌：${err.message || err}`);
+        await rerollShotAudio(shotIdx);
       }
     }
 

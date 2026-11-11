@@ -225,6 +225,8 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._handle_reroll_shot(body or {})
         elif url.path == "/api/audio-reroll":
             self._handle_fast_audio_reroll(body or {})
+        elif url.path == "/api/replace-audio-stream":
+            self._handle_replace_audio_stream(body or {})
         elif url.path == "/api/lexicon":
             self._handle_lexicon_post(body or {})
         elif url.path == "/api/lint":
@@ -446,6 +448,53 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             })
         except Exception as exc:
             LOGGER.exception("Fast audio reroll failed for shot %s: %s", idx, exc)
+            self._send_json(500, {"ok": False, "error": str(exc)})
+
+    def _handle_replace_audio_stream(self, body: dict[str, Any]) -> None:
+        import base64
+        from pipeline.h3_subtitles import reconcile_av_duration
+
+        shot_index = body.get("shot_index")
+        audio_b64 = str(body.get("audio_base64", "")).strip()
+        video_path_str = str(body.get("video_path", "")).strip()
+
+        if shot_index is None:
+            self._send_json(400, {"ok": False, "error": "Missing shot_index"})
+            return
+        if not audio_b64:
+            self._send_json(400, {"ok": False, "error": "Missing audio_base64"})
+            return
+
+        idx = int(shot_index)
+        target_video = Path(video_path_str) if video_path_str else None
+        if not target_video or not target_video.is_file():
+            cand = REPO_ROOT / "outputs" / f"shot_{idx}.mp4"
+            target_video = cand if cand.is_file() else None
+
+        if not target_video:
+            self._send_json(404, {"ok": False, "error": f"Target video for shot {idx} not found"})
+            return
+
+        stage_dir = get_scratch_dir() / f"speech_swap_shot_{idx}"
+        stage_dir.mkdir(parents=True, exist_ok=True)
+        raw_audio_path = stage_dir / "custom_speech.wav"
+        try:
+            if "," in audio_b64:
+                audio_b64 = audio_b64.split(",", 1)[1]
+            raw_audio_path.write_bytes(base64.b64decode(audio_b64))
+
+            temp_muxed = stage_dir / f"muxed_shot_{idx}.mp4"
+            reconcile_av_duration(target_video, raw_audio_path, temp_muxed)
+            os.replace(str(temp_muxed), str(target_video))
+
+            self._send_json(200, {
+                "ok": True,
+                "message": f"Shot {idx} speech audio replaced losslessly (0 GPU overhead)",
+                "output_video_path": str(target_video),
+                "timestamp": time.time(),
+            })
+        except Exception as exc:
+            LOGGER.exception("Speech audio swap failed for shot %s: %s", idx, exc)
             self._send_json(500, {"ok": False, "error": str(exc)})
 
     def _handle_expand(self, body: dict[str, Any]) -> None:
