@@ -287,7 +287,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_h3_server.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_server.py tests/test_h3_server.py && grep -q "\- \[x\] \`F7-A2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F7-A2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F7-B` **實作 `workspaceSync.js` 串接步驟一～五閘道與鎖定狀態 UI**
+- [x] `F7-B` **實作 `workspaceSync.js` 串接步驟一～五閘道與鎖定狀態 UI**
   - **程式碼檔案**：新增 `film-chain/public/src/controllers/workspaceSync.js`、修改 `film-chain/public/h3ServeBridge.js`、`film-chain/public/index.html`、`film-chain/tests/dom_integrity.test.js`
   - **修改內容**：
     1. 訂閱後端 `/api/workspace-sync`，當 Agent CLI 推進時自動更新網頁步驟一～五閘道、顯示 `display_dialogue` / `spoken_dialogue` 雙軌標籤與 ETA 信賴度徽章（`實測` / `推估 (高/中/低信賴)`）。

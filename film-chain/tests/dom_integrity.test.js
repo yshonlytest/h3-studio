@@ -18,6 +18,7 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
   const jsFiles = [
     "../public/src/prompts/agentPrompts.js",
     "../public/src/controllers/studioAudioSubtitles.js",
+    "../public/src/controllers/workspaceSync.js",
     "../public/src/core/timecodeHelper.js",
     "../public/src/core/promptBuilder.js",
     "../public/src/core/comfyPayload.js",
