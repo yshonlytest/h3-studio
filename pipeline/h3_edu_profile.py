@@ -15,6 +15,9 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
+
+from pipeline.h3_phonetic_normalizer import NormalizedDialogueResult, normalize_dialogue
 
 LOGGER = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -161,6 +164,44 @@ def _build_fresh_prompt(
     return f"{visual} {audio_str}".strip()
 
 
+def resolve_shot_dialogues(
+    shot: dict[str, Any],
+    lang_code: str = "zh-TW",
+) -> NormalizedDialogueResult:
+    """Resolve dual-track dialogues (display vs spoken) with backwards compatibility."""
+    display_dialogue = str(shot.get("display_dialogue", "")).strip()
+    spoken_dialogue = str(shot.get("spoken_dialogue", "")).strip()
+    custom_overrides = shot.get("pronunciation_overrides", ())
+
+    if display_dialogue and spoken_dialogue:
+        return NormalizedDialogueResult(
+            display_dialogue=display_dialogue,
+            spoken_dialogue=spoken_dialogue,
+            pronunciation_overrides=tuple(custom_overrides) if isinstance(custom_overrides, tuple) else (),
+        )
+
+    raw_dialogue = str(shot.get("dialogue", "")).strip()
+    if not raw_dialogue and shot.get("prompt"):
+        d_match = re.search(r"<d>(?:\[\w+\])?\s*(.*?)</d>", str(shot["prompt"]))
+        if d_match:
+            raw_dialogue = d_match.group(1).strip()
+
+    norm_res = normalize_dialogue(
+        raw_dialogue,
+        lang_code=lang_code,
+        custom_overrides=custom_overrides,
+    )
+    final_display = display_dialogue or norm_res.display_dialogue
+    final_spoken = spoken_dialogue or norm_res.spoken_dialogue
+
+    return NormalizedDialogueResult(
+        display_dialogue=final_display,
+        spoken_dialogue=final_spoken,
+        pronunciation_overrides=norm_res.pronunciation_overrides,
+        diagnostic_warnings=norm_res.diagnostic_warnings,
+    )
+
+
 def compile_shot_prompt(
     shot: dict,
     profile: GlobalProfile,
@@ -168,10 +209,10 @@ def compile_shot_prompt(
 ) -> str:
     """Compile prompt for a shot applying visual and acoustic anchors and lexicon."""
     shot_type = shot.get("shot_type", "presenter_focus")
-    dialogue = shot.get("dialogue", "")
+    norm_diag = resolve_shot_dialogues(shot, profile.language_code)
+    clean_dialogue = norm_diag.spoken_dialogue
     visual_prompt = shot.get("visual_prompt", "")
     existing_prompt = shot.get("prompt", "")
-    clean_dialogue = apply_pronunciation_lexicon(dialogue, profile.language_code) if dialogue else ""
 
     if not existing_prompt and visual_prompt:
         return _build_fresh_prompt(shot, clean_dialogue, profile)

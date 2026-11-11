@@ -16,7 +16,7 @@
 - [x] `F1-2` 實作快取失效判定器 `evaluate_shot_invalidation` 與 8 情境測試
 - [x] `F1-3` 將分層 Hash 接入 `pipeline/h3_storyboard_pipeline.py`
 - [x] `F2-1` 建立受控三層發音正規化器 `pipeline/h3_phonetic_normalizer.py`
-- [ ] `F2-2` 接入 `pipeline/h3_edu_profile.py` 雙軌欄位並維持舊版相容
+- [x] `F2-2` 接入 `pipeline/h3_edu_profile.py` 雙軌欄位並維持舊版相容
 - [ ] `F3-A1` CJK 字體 `getmask` 實測載入驗證與動態畫布排版
 - [ ] `F3-A2` 中文 Character-Level 時間戳與兩階段語音對齊引擎
 - [ ] `F3-B` 音視訊時長差 `apad` 安全檢查與 `mov_text` 軟/硬字幕封裝

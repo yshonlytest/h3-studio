@@ -113,7 +113,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_phonetic_normalizer.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_phonetic_normalizer.py tests/test_phonetic_normalizer.py && grep -q "\- \[x\] \`F2-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F2-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F2-2` **接入 `pipeline/h3_edu_profile.py` 雙軌欄位並維持舊版相容**
+- [x] `F2-2` **接入 `pipeline/h3_edu_profile.py` 雙軌欄位並維持舊版相容**
   - **程式碼檔案**：`pipeline/h3_edu_profile.py`（讀取 `L57-201`）
   - **修改內容**：
     1. 新增 `resolve_shot_dialogues(shot: dict, lang_code: str = "zh-TW") -> NormalizedDialogueResult`：若 `shot` 已提供 `display_dialogue` / `spoken_dialogue` 則優先尊重；若僅提供 `dialogue` 則自動衍生雙軌。

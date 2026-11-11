@@ -42,6 +42,7 @@ from pipeline.h3_edu_profile import (
     calculate_optimal_frames,
     compile_shot_prompt,
     resolve_checkpoint_dir,
+    resolve_shot_dialogues,
 )
 from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor
 from pipeline.h3_gdrive_sync import dispatch_async_upload
@@ -887,13 +888,9 @@ def run_chained_manifest(
 
         # Dynamic frames calculation
         if auto_duration and ("frames" not in seg or not seg.get("frames")):
-            dialogue_text = seg.get("dialogue") or ""
-            if not dialogue_text and seg.get("prompt"):
-                d_match = re.search(r"<d>(?:\[\w+\])?\s*(.*?)</d>", seg["prompt"])
-                if d_match:
-                    dialogue_text = d_match.group(1)
+            norm_diag = resolve_shot_dialogues(seg, global_profile.language_code)
             seg_frames = calculate_optimal_frames(
-                dialogue_text,
+                norm_diag.spoken_dialogue,
                 lang_code=global_profile.language_code,
                 shot_id=shot_id,
             )
