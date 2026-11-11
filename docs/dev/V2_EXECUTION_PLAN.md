@@ -100,7 +100,7 @@ flowchart LR
 
 ## 階段 F2：Manifest 語音／字幕雙軌與受控發音正規化
 
-- [ ] `F2-1` **建立受控三層發音正規化器 `pipeline/h3_phonetic_normalizer.py`**
+- [x] `F2-1` **建立受控三層發音正規化器 `pipeline/h3_phonetic_normalizer.py`**
   - **程式碼檔案**：新增 `pipeline/h3_phonetic_normalizer.py`、擴充 `configs/pronunciation_lexicon.json`、新增 `tests/test_phonetic_normalizer.py`
   - **修改內容**：
     1. 新增 `@dataclass(frozen=True) class PronunciationOverride` (`original: str`, `replacement: str`, `reason: str`) 與 `@dataclass(frozen=True) class NormalizedDialogueResult` (`display_dialogue: str`, `spoken_dialogue: str`, `pronunciation_overrides: tuple[PronunciationOverride, ...]`, `diagnostic_warnings: tuple[str, ...]`)。
