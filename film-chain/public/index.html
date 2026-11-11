@@ -538,7 +538,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid #1f2b3e; flex-wrap:wrap; gap:12px;">
         <span style="font-size:0.82rem; color:var(--muted);">💡 每一段 Prompt、開口台詞或目標格都可直接在此修改，增減秒數會即時同步！</span>
         <button type="button" class="primary" onclick="confirmStep2AndProceed()" style="padding:10px 20px; font-size:0.92rem;">
-          ✅ 確認分鏡無誤，前往步驟三產片 (前往步驟三 ⬇️)
+          前往步驟三 ⬇️
         </button>
       </div>
     </section>
@@ -911,20 +911,14 @@
       <!-- 3 Track Cards Container -->
       <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:22px;">
 
-        <!-- Track 1: 🗣️ 角色對白軌 (Dialogue Track) -->
+        <!-- Track 1: 🗣️ 分段台詞與音軌 -->
         <div class="studio-track-card" style="background:#090e18; border:1px solid #1e293b; border-radius:12px; padding:16px 18px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-size:1.1rem;">🗣️</span>
-              <strong style="font-size:0.92rem; color:#e2e8f0;">角色對白語音軌 (TTS Dialogue Track)</strong>
+              <strong style="font-size:0.92rem; color:#e2e8f0;">分段台詞與音軌</strong>
             </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <label for="ttsEngineSelect" style="font-size:0.78rem; color:#94a3b8; margin:0;">配音引擎：</label>
-              <select id="ttsEngineSelect" onchange="onTtsEngineChange(this.value)" style="width:auto; padding:5px 10px; font-size:0.8rem; background:#0f172a; border:1px solid #334155; border-radius:6px; color:#cbd5e1;">
-                <option value="gemini" selected>🤖 Google Gemini 情感語音 (推薦)</option>
-                <option value="webspeech">🌐 瀏覽器原生 Web Speech (免 Key)</option>
-              </select>
-            </div>
+            <div style="font-size:0.76rem; color:#94a3b8;">原片 32kHz 音訊與台詞對齊</div>
           </div>
 
           <!-- Dialogue Items List -->
@@ -938,10 +932,10 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-size:1.1rem;">🎵</span>
-              <strong style="font-size:0.92rem; color:#e2e8f0;">背景音樂混音軌 (BGM Track)</strong>
+              <strong style="font-size:0.92rem; color:#e2e8f0;">背景音樂混音軌</strong>
             </div>
             <button type="button" id="previewBgmBtn" class="btn" style="padding:4px 12px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc;" onclick="toggleBgmAudioPreview()">
-              ▶️ 試聽襯樂
+              試聽
             </button>
           </div>
 
@@ -985,10 +979,10 @@
             </div>
             <div style="display:flex; gap:8px;">
               <button type="button" class="btn" style="padding:4px 10px; font-size:0.78rem; border-color:#a855f7; color:#d8b4fe;" onclick="downloadSubtitleFile('srt')">
-                ⬇️ 下載 .srt 字幕檔
+                下載 .srt
               </button>
               <button type="button" class="btn" style="padding:4px 10px; font-size:0.78rem; border-color:#a855f7; color:#d8b4fe;" onclick="downloadSubtitleFile('vtt')">
-                ⬇️ 下載 .vtt 檔
+                下載 .vtt
               </button>
             </div>
           </div>
@@ -996,11 +990,11 @@
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:0.84rem; color:#cbd5e1;">
             <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
               <input type="checkbox" id="enableSoftSubtitleCheck" checked onchange="toggleSoftSubtitleOverlay(this.checked)" style="width:auto;" />
-              <span>播放器即時動態軟字幕 (可隨時開關、自適應螢幕)</span>
+              <span>播放器動態軟字幕</span>
             </label>
             <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
               <input type="checkbox" id="burnInSubtitleCheck" style="width:auto;" />
-              <span>🔥 導出時將字幕壓印燒錄至影片像素中 (Hardcoded Burn-in)</span>
+              <span>燒錄硬字幕至影片像素</span>
             </label>
           </div>
         </div>
@@ -1010,7 +1004,7 @@
       <!-- Action Button -->
       <div style="display:flex; justify-content:center; margin-bottom:18px;">
         <button type="button" id="masterMixBtn" class="success" style="padding:14px 28px; font-size:1.02rem; font-weight:700; box-shadow:0 4px 18px rgba(16,185,129,0.35);" onclick="executeMasterAudioVideoMux()">
-          🎬 一鍵合成廣播級成片 (多軌混音 ＋ 對白 ＋ 襯樂 ＋ 字幕)
+          匯出成片
         </button>
       </div>
 
@@ -1029,10 +1023,10 @@
       <!-- Master Final Video Stage -->
       <div id="masterFinalVideoStage" style="display:none; background:#06090f; border:1px solid #10b981; border-radius:12px; padding:14px; text-align:center;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-          <strong style="font-size:0.92rem; color:#6ee7b7;">🌟 廣播級最終成片（聲影字幕多軌合一）</strong>
+          <strong style="font-size:0.92rem; color:#6ee7b7;">最終成片</strong>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <a id="downloadMasterVideoBtn" class="btn success" href="#" download="filmchain_master_cinematic.mp4" style="padding:6px 16px; font-size:0.84rem; font-weight:700;">⬇️ 下載最終影視成片 MP4</a>
-            <button type="button" id="saveMasterToDriveBtn" class="btn" onclick="saveVideoToGoogleDrive('master')" style="padding:6px 14px; font-size:0.82rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;">☁️ 儲存到雲端硬碟</button>
+            <a id="downloadMasterVideoBtn" class="btn success" href="#" download="filmchain_master_cinematic.mp4" style="padding:6px 16px; font-size:0.84rem; font-weight:700;">下載成片</a>
+            <button type="button" id="saveMasterToDriveBtn" class="btn" onclick="saveVideoToGoogleDrive('master')" style="padding:6px 14px; font-size:0.82rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;">存至雲端硬碟</button>
           </div>
         </div>
         <div style="position:relative; width:100%; border-radius:8px; overflow:hidden;">
@@ -3605,24 +3599,21 @@ ${desc}${extra}
             <option value="186" ${Number(seg.frames) === 186 ? 'selected' : ''}>186f (7.7s)</option>
           </select>
 
-          <button type="button" class="seg-split-btn btn" onclick="splitSegmentCardInTwo(this)" style="display:none; padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(239,68,68,0.2); border-color:#ef4444; color:#fca5a5;">✂️ 一鍵拆分為兩鏡</button>
-          <button type="button" class="btn" onclick="rerollSingleShot(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe;">🔄 局部重抽 (完整算圖)</button>
+          <button type="button" class="seg-split-btn btn" onclick="splitSegmentCardInTwo(this)" style="display:none; padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(239,68,68,0.2); border-color:#ef4444; color:#fca5a5;">拆分為兩鏡</button>
+          <button type="button" class="btn" onclick="rerollSingleShot(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe;">重算此鏡</button>
         </div>
 
         <!-- 🎙️ 鏡段音訊、發音校正與快速重抽控制列 (全模式通用) -->
         <div class="seg-audio-controls-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0 8px 0; padding:8px 10px; background:rgba(15,23,42,0.65); border:1px solid #1e3a5f; border-radius:6px;">
           <div style="flex:1; min-width:240px; display:flex; align-items:center; gap:6px;">
-            <span style="font-size:0.8rem; color:#38bdf8; font-weight:600; white-space:nowrap;">🎙️ 台詞：</span>
+            <span style="font-size:0.8rem; color:#38bdf8; font-weight:600; white-space:nowrap;">台詞：</span>
             <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（如：真正的經濟利潤、正確洗手五步驟...）" style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
           </div>
-          <button type="button" class="btn" onclick="rerollShotAudio(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;" title="調用 H3 代理畫布極速重抽 32kHz 音訊，保留原片環境音與背景音樂，並以 FFmpeg 無損換入原片">
-            🎙️ 代理重抽音軌
-          </button>
-          <button type="button" class="btn" onclick="replaceShotSpeechOnly(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(16,185,129,0.18); border-color:#10b981; color:#6ee7b7;" title="完全不跑影片算圖，直接以 TTS 清晰語音 1 秒無損抽換原影片音軌（0 GPU 算力負擔）">
-            ⚡ 純語音替換 (TTS)
+          <button type="button" class="btn" onclick="rerollShotAudio(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;" title="調用 H3 代理畫布重抽 32kHz 音訊，保留原片聲紋與背景音樂">
+            重抽音軌
           </button>
           <button type="button" class="btn" onclick="toggleShotPhoneticsDrawer(this, ${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fde68a;" title="展開查看破音字偵測、字幕文字 vs 口播讀音">
-            🔤 雙軌發音校正 ▾
+            發音校正 ▾
           </button>
           <span class="seg-phonetic-badge" style="font-size:0.74rem; color:#94a3b8;">${renderPhoneticHintBadge(initialDialogue)}</span>
         </div>
@@ -3639,7 +3630,7 @@ ${desc}${extra}
             </div>
           </div>
           <div style="font-size:0.72rem; color:#94a3b8; margin-top:6px;">
-            💡 雙軌解耦說明：字幕文字與模型發音完全分開。例如字幕寫「作業成本」，口播寫「作葉成本」，既保持畫面專業度，又徹底杜絕發音破音！
+            💡 字幕文字與發音分開設定，可精準校正破音字。
           </div>
         </div>
 
@@ -4270,7 +4261,7 @@ ${desc}${extra}
       if (!drawer) return;
       const isHidden = drawer.style.display === "none";
       drawer.style.display = isHidden ? "block" : "none";
-      btn.textContent = isHidden ? "🔤 收起發音校正 ▴" : "🔤 雙軌發音校正 ▾";
+      btn.textContent = isHidden ? "發音校正 ▴" : "發音校正 ▾";
     }
 
     function onDisplayDialogueChange(input, segIdx) {
@@ -5698,10 +5689,15 @@ ${desc}${extra}
     let segmentHistory = {};
     let activeVersionIndex = {};
 
-    function toggleRerollDrawer(idx) {
+    function toggleRerollDrawer(idx, btn) {
       const drawer = document.getElementById(`reroll-drawer-${idx}`);
       if (!drawer) return;
-      drawer.style.display = drawer.style.display === "none" ? "block" : "none";
+      const isHidden = drawer.style.display === "none";
+      drawer.style.display = isHidden ? "block" : "none";
+      const targetBtn = btn || document.getElementById(`btn-toggle-drawer-${idx}`);
+      if (targetBtn) {
+        targetBtn.textContent = isHidden ? "微調 ▴" : "微調 ▾";
+      }
     }
 
     function randomizeRerollSeed(idx) {
@@ -5925,24 +5921,24 @@ ${desc}${extra}
               <span class="badge ok" style="font-size:0.68rem; padding:2px 6px;">v${activeVer} / 共 ${totalVers} 版</span>
             </div>
             <div style="display:flex; gap:6px;">
-              <button type="button" class="btn" style="padding:4px 10px; font-size:0.75rem;" onclick="playVideoInStage('${item.url}', '${escapeHtml(item.title)}')">▶️ 單段試播</button>
-              <button type="button" class="btn" style="padding:4px 10px; font-size:0.75rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;" onclick="toggleRerollDrawer(${idx})">🔄 重抽 / 微調</button>
-              <a class="btn" href="${item.url}" download style="padding:4px 10px; font-size:0.75rem;">⬇️ 下載</a>
+              <button type="button" class="btn" style="padding:4px 10px; font-size:0.75rem;" onclick="playVideoInStage('${item.url}', '${escapeHtml(item.title)}')">試播</button>
+              <button type="button" id="btn-toggle-drawer-${idx}" class="btn" style="padding:4px 10px; font-size:0.75rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;" onclick="toggleRerollDrawer(${idx}, this)">微調 ▾</button>
+              <a class="btn" href="${item.url}" download style="padding:4px 10px; font-size:0.75rem;">下載</a>
             </div>
           </div>
 
           <div id="reroll-drawer-${idx}" style="display:none; background:#050914; border:1px solid #1e3a5f; border-top:none; border-radius:0 0 8px 8px; padding:12px 14px; margin-top:-2px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
               <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:0.74rem; color:#94a3b8;">📚 版本歷程 (可隨時切換復原)：</span>
+                <span style="font-size:0.74rem; color:#94a3b8;">版本歷程：</span>
                 ${versionsHtml}
               </div>
-              <div style="font-size:0.72rem; color:#64748b;">重抽後自動保留舊版，隨時可切換無損重縫</div>
+              <div style="font-size:0.72rem; color:#64748b;">自動保留歷史版本，可隨時復原</div>
             </div>
 
             <div style="margin-bottom:10px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <label style="font-size:0.76rem; color:#cbd5e1; font-weight:600;">📝 本段 Prompt (微調對白或鏡頭)</label>
+                <label style="font-size:0.76rem; color:#cbd5e1; font-weight:600;">本段提示詞：</label>
                 <div style="display:flex; align-items:center; gap:6px;">
                   <span style="font-size:0.72rem; color:#94a3b8;">目標尾幀：</span>
                   <select id="reroll-panel-${idx}" style="padding:3px 6px; font-size:0.76rem; width:90px; background:#091222; color:#cbd5e1; border:1px solid #1e293b; border-radius:4px;">
@@ -5955,22 +5951,19 @@ ${desc}${extra}
 
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
               <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:0.72rem; color:#94a3b8;">🎲 Seed:</span>
+                <span style="font-size:0.72rem; color:#94a3b8;">Seed:</span>
                 <input type="number" id="reroll-seed-${idx}" value="${20260931 + idx}" style="width:105px; padding:4px 6px; font-size:0.75rem; background:#070d1a; border:1px solid #1e293b; color:#cbd5e1; border-radius:4px;" />
-                <button type="button" class="btn" style="padding:3px 8px; font-size:0.72rem;" onclick="randomizeRerollSeed(${idx})">🎲 換種子</button>
+                <button type="button" class="btn" style="padding:3px 8px; font-size:0.72rem;" onclick="randomizeRerollSeed(${idx})">換種子</button>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" class="btn" style="padding:6px 12px; font-size:0.78rem; background:rgba(56,189,248,0.2); border-color:#38bdf8; color:#7dd3fc; font-weight:700;" onclick="rerollShotAudio(${idx + 1})" title="調用 H3 代理畫布極速重抽 32kHz 音軌，保留原片講者聲紋與背景音樂，無損換入原片">
-                  🎙️ 代理重抽音軌 (保留聲紋)
-                </button>
-                <button type="button" class="btn" style="padding:6px 12px; font-size:0.78rem; background:rgba(16,185,129,0.2); border-color:#10b981; color:#6ee7b7; font-weight:700;" onclick="replaceShotSpeechOnly(${idx + 1})" title="完全不跑影片算圖，直接以 TTS 清晰語音 1 秒無損抽換原影片音軌（0 GPU 算力負擔）">
-                  ⚡ 純語音替換 (TTS)
+                <button type="button" class="btn" style="padding:6px 12px; font-size:0.78rem; background:rgba(56,189,248,0.2); border-color:#38bdf8; color:#7dd3fc; font-weight:700;" onclick="rerollShotAudio(${idx + 1})" title="調用 H3 代理畫布極速重抽 32kHz 音軌，保留原片聲紋與背景音樂">
+                  重抽音軌
                 </button>
                 <button type="button" class="btn" style="padding:6px 14px; font-size:0.8rem; background:linear-gradient(135deg, #0284c7, #0369a1); border-color:#38bdf8; color:#fff; font-weight:700; box-shadow:0 2px 8px rgba(2,132,199,0.3);" onclick="triggerRerollExecution(${idx}, 'single')">
-                  ⚡ 畫面+音訊全段重抽
+                  重算此段
                 </button>
                 <button type="button" class="btn" style="padding:6px 14px; font-size:0.8rem; background:linear-gradient(135deg, #7c3aed, #6d28d9); border-color:#a855f7; color:#fff; font-weight:700; box-shadow:0 2px 8px rgba(124,58,237,0.3);" onclick="triggerRerollExecution(${idx}, 'cascade')">
-                  🔗 連鎖重跑 (極致無縫)
+                  連鎖重算
                 </button>
               </div>
             </div>

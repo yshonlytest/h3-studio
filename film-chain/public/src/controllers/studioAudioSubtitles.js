@@ -91,13 +91,10 @@
                 <input type="number" min="0" max="4.5" step="0.5" value="${item.startOffsetSec}" style="width:62px; padding:3px 6px; font-size:0.76rem; background:#0f172a; border:1px solid #334155; border-radius:4px; color:#cbd5e1;" onchange="updateDialogueOffset(${idx}, this.value)" />
                 <span style="font-size:0.74rem; color:#94a3b8;">秒</span>
                 <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.12);" onclick="previewSingleDialogue(${idx})">
-                  🔊 試聽發音
+                  試聽
                 </button>
-                <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.12);" onclick="applySingleDialogueToVideo(${idx})" title="將試聽的 TTS 語音無損抽換進該鏡影片音軌（0 GPU 算力消耗）">
-                  ⚡ 換入 TTS 語音
-                </button>
-                <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.12);" onclick="window.rerollShotAudio ? window.rerollShotAudio(${idx + 1}) : rerollShotAudio(${idx + 1})" title="調用 H3 代理畫布極速重抽 32kHz 音軌，保留原片講者聲紋與背景音樂">
-                  🎙️ 代理重抽音軌
+                <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.12);" onclick="window.rerollShotAudio ? window.rerollShotAudio(${idx + 1}) : rerollShotAudio(${idx + 1})" title="調用 H3 代理畫布重抽 32kHz 音軌，保留原片聲紋與背景音樂">
+                  重抽音軌
                 </button>
               </div>
             </div>
@@ -124,59 +121,23 @@
       }
     }
 
-    function onTtsEngineChange(val) {
-      showToast(`🎙️ 配音引擎已切換為：${val === 'gemini' ? 'Google Gemini 情感語音' : 'Web Speech 原生語音'}`);
-    }
+    function onTtsEngineChange(_val) {}
 
     async function previewSingleDialogue(idx) {
-      const item = currentDialogueItems[idx];
-      if (!item || !item.text || !item.text.trim()) {
-        showToast("⚠️ 此段目前沒有填寫台詞文字！");
-        return;
-      }
-
-      const engine = document.getElementById("ttsEngineSelect")?.value || "gemini";
-      showToast(`🗣️ 正在試聽 Part ${idx + 1} 台詞: 「${item.text}」...`);
-
-      if (engine === "gemini") {
-        const p = getPrefs();
-        const geminiKey = p.geminiKey || document.getElementById("geminiKeyInput")?.value?.trim();
-        if (geminiKey && typeof H3AudioStudio !== "undefined") {
-          try {
-            const dataUrl = await H3AudioStudio.synthesizeSpeechGemini({
-              apiKey: geminiKey,
-              text: item.text,
-              voice: "Puck"
-            });
-            const audio = new Audio(dataUrl);
-            audio.play();
-            return;
-          } catch (e) {
-            console.warn("Gemini TTS 降級至 Web Speech:", e);
-            showToast("ℹ️ Gemini 語音合成響應異常，自動轉為 Web Speech 發音");
-          }
-        }
-      }
-
-      if (typeof H3AudioStudio !== "undefined") {
-        H3AudioStudio.speakWebSpeech({ text: item.text }).catch(err => {
-          showToast(`❌ 語音播放失敗: ${err.message}`);
-        });
+      const shotUrl = `outputs/shot_${idx + 1}.mp4`;
+      try {
+        const audio = new Audio(shotUrl);
+        audio.currentTime = 0;
+        await audio.play();
+        showToast(`🔊 播放 Part ${idx + 1} 原片音訊...`);
+      } catch (_e) {
+        showToast(`💡 Part ${idx + 1} 尚未產出音訊，請點選「重抽音軌」`);
       }
     }
 
     async function applySingleDialogueToVideo(idx) {
-      const item = currentDialogueItems[idx];
-      if (!item || !item.text || !item.text.trim()) {
-        showToast("⚠️ 此段目前沒有填寫台詞文字！");
-        return;
-      }
-
-      showToast(`🔄 正在為 Part ${idx + 1} 抽換語音軌...`);
-      if (typeof replaceShotSpeechOnly === "function") {
-        await replaceShotSpeechOnly(idx + 1);
-      } else {
-        showToast("💡 提示：請於步驟二使用「純語音替換」或確認本機後端已啟動");
+      if (typeof rerollShotAudio === "function") {
+        await rerollShotAudio(idx + 1);
       }
     }
 
@@ -220,7 +181,7 @@
           bgmAudioSource = null;
         }
         isBgmPlaying = false;
-        if (btn) btn.textContent = "▶️ 試聽襯樂";
+        if (btn) btn.textContent = "試聽";
         return;
       }
 
@@ -263,7 +224,7 @@
         bgmAudioSource.start();
 
         isBgmPlaying = true;
-        if (btn) btn.textContent = "⏹️ 停止試聽";
+        if (btn) btn.textContent = "停止";
         showToast("🎶 正在試聽背景襯樂...");
       } catch (err) {
         showToast(`❌ 襯樂播放失敗: ${err.message}`);
@@ -374,53 +335,28 @@
           bgmBuffer = H3AudioStudio.generateProceduralBgmBuffer(audioCtx, bgmStyle, totalDurationSec);
         }
 
-        // 2. 取得或合成台詞語音
-        const engine = document.getElementById("ttsEngineSelect")?.value || "gemini";
-        const p = getPrefs();
-        const geminiKey = p.geminiKey || document.getElementById("geminiKeyInput")?.value?.trim();
-
+        // 2. 載入各鏡原片 32kHz 音訊軌
         progressBar.style.width = "30%";
         percentText.textContent = "30%";
-        logText.textContent = "正在合成各分段台詞語音軌...";
+        logText.textContent = "載入各鏡原片音訊軌...";
 
         const dialogueBuffers = [];
         for (let i = 0; i < currentDialogueItems.length; i++) {
           const item = currentDialogueItems[i];
-          if (item && item.text && item.text.trim()) {
-            let buf = null;
-            if (engine === "gemini" && geminiKey && typeof H3AudioStudio !== "undefined") {
-              try {
-                const dataUrl = await H3AudioStudio.synthesizeSpeechGemini({
-                  apiKey: geminiKey,
-                  text: item.text,
-                  voice: "Puck"
-                });
-                const res = await fetch(dataUrl);
-                const arrayBuf = await res.arrayBuffer();
-                buf = await audioCtx.decodeAudioData(arrayBuf);
-              } catch (e) {
-                console.warn("Gemini 合成失敗，使用內建音訊提示:", e);
-              }
+          let buf = null;
+          try {
+            const res = await fetch(`outputs/shot_${i + 1}.mp4`);
+            if (res.ok) {
+              const arrayBuf = await res.arrayBuffer();
+              buf = await audioCtx.decodeAudioData(arrayBuf);
             }
+          } catch (_e) {}
 
-            if (!buf) {
-              // 離線自然和聲語音緩衝區替代 (免外部網路依賴)
-              const dur = Math.max(1.5, item.durationSec || 2.5);
-              buf = audioCtx.createBuffer(2, Math.floor(sampleRate * dur), sampleRate);
-              const l = buf.getChannelData(0);
-              const r = buf.getChannelData(1);
-              for (let s = 0; s < l.length; s++) {
-                const t = s / sampleRate;
-                const tone = Math.sin(2 * Math.PI * 261.63 * t) * 0.15 * Math.exp(-t * 0.8);
-                l[s] = tone;
-                r[s] = tone;
-              }
-            }
-
+          if (buf) {
             dialogueBuffers.push({
               item,
               buffer: buf,
-              time: (i * 5) + (item.startOffsetSec || 1.5)
+              time: i * 5
             });
           }
         }
