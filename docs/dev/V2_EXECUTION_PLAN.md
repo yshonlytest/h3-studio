@@ -170,7 +170,7 @@ flowchart LR
 
 ## 階段 F4：數據分級 Telemetry 與五態 Colab Watchdog
 
-- [ ] `F4-1` **建立數據可信度分級之 `pipeline/h3_telemetry.py`**
+- [x] `F4-1` **建立數據可信度分級之 `pipeline/h3_telemetry.py`**
   - **程式碼檔案**：新增 `pipeline/h3_telemetry.py`、新增 `tests/test_telemetry_and_watchdog.py`
   - **修改內容**：
     1. 實作 `@dataclass(frozen=True) class SpecGroupKey` (`gpu_model: str`, `resolution: str`, `frames: int`, `mode: str`)。

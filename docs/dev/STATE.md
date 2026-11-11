@@ -20,7 +20,7 @@
 - [x] `F3-A1` CJK 字體 `getmask` 實測載入驗證與動態畫布排版
 - [x] `F3-A2` 中文 Character-Level 時間戳與兩階段語音對齊引擎
 - [x] `F3-B` 音視訊時長差 `apad` 安全檢查與 `mov_text` 軟/硬字幕封裝
-- [ ] `F4-1` 建立數據可信度分級之 `pipeline/h3_telemetry.py`
+- [x] `F4-1` 建立數據可信度分級之 `pipeline/h3_telemetry.py`
 - [ ] `F4-2` 收編通用化五態 `pipeline/h3_colab_watchdog.py`（含 `STALLED` 偵測）
 - [ ] `F5-1` 實作 `pipeline/h3_cli.py`：Manifest 驗證、表格編譯與語意切片 `digest`
 - [ ] `F5-2` 實作 `resolve-anchor` 四級防呆梯、`render-slide` 與更新 `SKILL.md`
