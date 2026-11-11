@@ -2025,7 +2025,23 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       });
       const effectiveSegs = segs.length > 0 ? segs : (currentPlan?.segments || []);
       const count = effectiveSegs.length || 1;
-      const totalSec = count * 5;
+      const isEdu = activeProjectMode === "edu";
+      let runningSec = 0;
+      const timeRanges = [];
+      effectiveSegs.forEach((seg, idx) => {
+        const timeMatch = (seg.title || "").match(/\((\d+)[-~](\d+)s\)/);
+        let s = runningSec;
+        let e = runningSec + 5;
+        if (timeMatch) {
+          s = parseInt(timeMatch[1], 10);
+          e = parseInt(timeMatch[2], 10);
+          runningSec = e;
+        } else {
+          runningSec += 5;
+        }
+        timeRanges.push({ startS: s, endS: e });
+      });
+      const totalSec = runningSec || (count * 5);
       const slug = currentPlan?.project_slug || "story_project";
       const minTime = Math.round(count * 4.5);
       const maxTime = Math.round(count * 5.0);
@@ -2044,13 +2060,12 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
 
       effectiveSegs.forEach((seg, idx) => {
         const isFirst = idx === 0;
-        const startS = idx * 5;
-        const endS = (idx + 1) * 5;
+        const { startS, endS } = timeRanges[idx] || { startS: idx * 5, endS: (idx + 1) * 5 };
         const rawTitle = seg.title || `Part ${idx + 1}`;
         const cleanTitle = rawTitle.replace(/^Part\s*\d+\s*\(.*?\):\s*/i, "").trim() || rawTitle;
-        const panelInfo = isFirst
-          ? `首段錨定九宮格 Panel ${seg.end_panel || 3}（124 幀 / 1376×768 音畫同步）`
-          : `自動截取 Part ${idx} 最後一幀作為本段首幀 · 錨定 Panel ${seg.end_panel || 9}`;
+        const panelInfo = isEdu
+          ? (isFirst ? `講師首幀錨定 · 幻燈片對齊（864×480 音畫同步）` : `上一段潛空間延續 · 講義圖表無損對齊`)
+          : (isFirst ? `首段錨定九宮格 Panel ${seg.end_panel || 3}（124 幀 / 1376×768 音畫同步）` : `自動截取 Part ${idx} 最後一幀作為本段首幀 · 錨定 Panel ${seg.end_panel || 9}`);
 
         cardsHtml += `
           <div id="stage-card-part-${idx + 1}" class="pipeline-step-card stage-render">
@@ -2145,8 +2160,30 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       const plan = currentPlan || SHISA_DEFAULT_CONFIG.plan;
       const effectiveSegs = segs.length > 0 ? segs : (plan.segments || []);
       const count = effectiveSegs.length || 1;
-      const totalSec = count * 5;
       const slug = plan.project_slug || "film_chain_story";
+      let runningSec = 0;
+
+      const jobs = effectiveSegs.map((seg, idx) => {
+        let dur = 5.0;
+        const timeMatch = (seg.title || "").match(/\((\d+)[-~](\d+)s\)/);
+        if (timeMatch) {
+          const s = parseInt(timeMatch[1], 10);
+          const e = parseInt(timeMatch[2], 10);
+          dur = e - s;
+          runningSec = e;
+        } else {
+          runningSec += 5.0;
+        }
+        return {
+          id: `${slug}_part${idx + 1}`,
+          title: seg.title || `Part ${idx + 1}`,
+          duration_seconds: dur,
+          end_panel: seg.end_panel,
+          prompt: seg.prompt,
+          seed: 20260931 + idx
+        };
+      });
+      const totalSec = runningSec || (count * 5);
 
       const manifest = {
         project: slug,
@@ -2154,14 +2191,7 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
         segment_count: count,
         skill: "minimax-h3-colab",
         gpu: "A100",
-        jobs: effectiveSegs.map((seg, idx) => ({
-          id: `${slug}_part${idx + 1}`,
-          title: seg.title || `Part ${idx + 1}`,
-          duration_seconds: 5.0,
-          end_panel: seg.end_panel,
-          prompt: seg.prompt,
-          seed: 20260931 + idx
-        }))
+        jobs: jobs
       };
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifest, null, 2));
@@ -3154,8 +3184,15 @@ ${desc}${extra}
         project_slug: "handwashing_guide_edu",
         project_mode: "edu_explainer",
         auto_duration: true,
-        anchor_ref_image: "examples/assets/instructor_suit_ghibli.png",
-        demo_ref_image: "examples/assets/instructor_suit_ghibli.png",
+        anchor_ref_image: "assets/demo/handwashing_instructor_ref.png",
+        demo_ref_image: "assets/demo/handwashing_instructor_ref.png",
+        merged_video_path: "assets/demo/handwashing_30s_merged.mp4",
+        part_videos: [
+          { title: "Part 1 (0-6s): 看不見的病菌防線", url: "assets/demo/handwashing_part1.mp4" },
+          { title: "Part 2 (6-14s): 洗手五步驟——濕搓沖捧擦", url: "assets/demo/handwashing_part2.mp4" },
+          { title: "Part 3 (14-22s): 七字口訣深層清潔——內外夾弓大立腕", url: "assets/demo/handwashing_part3.mp4" },
+          { title: "Part 4 (22-30s): 關鍵時機與兩次生日快樂歌", url: "assets/demo/handwashing_part4.mp4" }
+        ],
         reasoning_zh: "科普教學長片示範範本：講師主鏡與圖表側影防漂移錨點交替，內建雙軌發音正規化與真實秒數零漂移字幕。",
         expanded_story_zh: "由醫普講師解說雙手看不見的病原菌，循序示範「濕、搓、沖、捧、擦」五步驟與「內外夾弓大立腕」七字訣，並提醒如廁飲食前洗手唱兩次生日快樂歌。",
         segments: [
@@ -3163,8 +3200,8 @@ ${desc}${extra}
             segment: 1,
             title: "Part 1 (0-6s): 看不見的病菌防線 / Invisible Germs & The First Defense Line",
             shot_type: "presenter_focus",
-            first_frame: "examples/assets/instructor_suit_ghibli.png",
-            slide_image: "examples/assets/handwashing_c01_intro.png",
+            first_frame: "assets/demo/handwashing_instructor_ref.png",
+            slide_image: "assets/demo/handwashing_c01_intro.png",
             chain_mode: "first_frame",
             display_dialogue: "病從口入，我們的手每天都會接觸成千上萬看不見的病原菌。正確洗手是守護健康最有效的第一道防線！",
             spoken_dialogue: "病從口入，我們的手每天都會接觸成千上萬看不見的病原菌。正確洗手是守護健康最有效的第一道防線！",
@@ -3174,7 +3211,7 @@ ${desc}${extra}
             segment: 2,
             title: "Part 2 (6-14s): 洗手五步驟——濕搓沖捧擦 / Five Steps of Proper Handwashing",
             shot_type: "presenter_chart",
-            slide_image: "examples/assets/handwashing_c02_five_steps.png",
+            slide_image: "assets/demo/handwashing_c02_five_steps.png",
             chain_mode: "motion_context",
             display_dialogue: "正確洗手掌握五步驟「濕、搓、沖、捧、擦」：淋濕、肥皂起泡搓二十秒、清水沖淨、捧水沖洗水龍頭並完全擦乾！",
             spoken_dialogue: "正確洗手掌握五步驟「濕、搓、沖、捧、擦」：淋濕、肥皂起泡搓二十秒、清水沖淨、捧水沖洗水龍頭並完全擦乾！",
@@ -3184,7 +3221,7 @@ ${desc}${extra}
             segment: 3,
             title: "Part 3 (14-22s): 七字口訣深層清潔——內外夾弓大立腕 / Seven Key Gestures for Deep Cleansing",
             shot_type: "presenter_chart",
-            slide_image: "examples/assets/handwashing_c03_seven_keys.png",
+            slide_image: "assets/demo/handwashing_c03_seven_keys.png",
             chain_mode: "motion_context",
             display_dialogue: "深層清潔掌握七字口訣：「內、外、夾、弓、大、立、腕」，徹底洗淨指縫、指甲縫與手腕死角！",
             spoken_dialogue: "深層清潔掌握七字口訣：「內、外、夾、弓、大、立、萬」，徹底洗淨指縫、指甲縫與手腕死角！",
@@ -3194,7 +3231,7 @@ ${desc}${extra}
             segment: 4,
             title: "Part 4 (22-30s): 關鍵時機與兩次生日快樂歌 / Key Moments & Two Birthday Songs Rule",
             shot_type: "presenter_focus",
-            slide_image: "examples/assets/handwashing_c04_timing.png",
+            slide_image: "assets/demo/handwashing_c04_timing.png",
             chain_mode: "motion_context",
             display_dialogue: "吃飯前、如廁後以及抱小孩前都是關鍵時機。洗手唱完兩次生日快樂歌，才能真正洗淨病菌，守護全家人健康！",
             spoken_dialogue: "吃飯前、如廁後以及抱小孩前都是關鍵時機。洗手唱完兩次生日快樂歌，才能真正洗淨病菌，守護全家人健康！",
@@ -5938,6 +5975,11 @@ ${desc}${extra}
       const list = document.getElementById("cloudClipsList");
       box.style.display = "block";
       list.innerHTML = "";
+
+      const b4 = document.getElementById("step4SegmentsBadge");
+      if (b4 && currentPlaylist.length > 0) {
+        b4.textContent = `共 ${currentPlaylist.length} 段個別影片 ＋ 1 支完整彙整總片`;
+      }
 
       const segs = syncSegmentsFromDOM();
 
