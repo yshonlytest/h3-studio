@@ -140,7 +140,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_subtitles.py && grep -q "\- \[x\] \`F3-A1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F3-A1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F3-A2` **中文 Character-Level 時間戳與兩階段語音對齊引擎**
+- [x] `F3-A2` **中文 Character-Level 時間戳與兩階段語音對齊引擎**
   - **程式碼檔案**：`pipeline/h3_subtitles.py`、新增 `tests/test_subtitles_alignment.py`
   - **修改內容**：
     1. 新增 `@dataclass(frozen=True) class CharTimestamp` (`char: str`, `start: float`, `end: float`) 與 `@dataclass(frozen=True) class ShotSubtitleTrack` (`shot_id: str`, `start_frame: int`, `end_frame: int`, `display_dialogue: str`, `alignment_method: str`, `subtitle_segments: tuple[SubtitleCue, ...]`)。

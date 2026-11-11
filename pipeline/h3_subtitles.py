@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +21,169 @@ except ImportError:
     _HAS_PIL = False
 
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class CharTimestamp:
+    """Exact timestamp assigned to an individual character."""
+    char: str
+    start: float
+    end: float
+
+
+@dataclass(frozen=True)
+class ShotSubtitleTrack:
+    """Complete subtitle track metadata and cues for a single storyboard shot."""
+    shot_id: str
+    start_frame: int
+    end_frame: int
+    display_dialogue: str
+    alignment_method: str
+    subtitle_segments: tuple[SubtitleCue, ...]
+
+
+@dataclass(frozen=True)
+class AlignmentRequest:
+    """Encapsulation for shot subtitle alignment parameters."""
+    shot_id: str
+    display_dialogue: str
+    total_duration_sec: float
+    start_frame: int = 0
+    end_frame: int = 0
+    audio_path: Path | None = None
+    speech_onset_sec: float = 0.0
+    speech_offset_sec: float = 0.0
+    forced_align_callback: Any = None
+
+
+def split_cjk_dialogue_into_cards(text: str, max_chars: int = 22) -> list[str]:
+    """Split long CJK dialogue into readable subtitle cards at natural punctuation boundaries."""
+    raw = text.strip()
+    if not raw or len(raw) <= max_chars:
+        return [raw] if raw else []
+
+    tokens = re.split(r"([。！？；，、\n])", raw)
+    segments: list[str] = []
+    i = 0
+    while i < len(tokens):
+        t = tokens[i]
+        if i + 1 < len(tokens) and tokens[i + 1] in "。！？；，、\n":
+            t += tokens[i + 1]
+            i += 1
+        if t.strip():
+            segments.append(t.strip())
+        i += 1
+
+    cards: list[str] = []
+    current = ""
+    for seg in segments:
+        if not current:
+            current = seg
+        elif len(current) + len(seg) <= max_chars:
+            current += seg
+        else:
+            cards.append(current)
+            current = seg
+    if current:
+        cards.append(current)
+
+    return cards
+
+
+def _get_char_weight(ch: str) -> float:
+    """Assign duration weight to CJK character or punctuation pause."""
+    if ch in ("，", ","):
+        return 0.38
+    if ch in ("、", "/"):
+        return 0.25
+    if ch in ("。", "！", "？", "!", "?", ";", "；"):
+        return 0.55
+    if ch.isspace():
+        return 0.1
+    return 1.0
+
+
+def align_shot_subtitles(
+    req_or_shot_id: AlignmentRequest | str,
+    *args: Any,
+    **kwargs: Any,
+) -> ShotSubtitleTrack:
+    """Two-stage subtitle alignment engine: forced alignment callback or VAD character-weighted."""
+    if isinstance(req_or_shot_id, AlignmentRequest):
+        req = req_or_shot_id
+    else:
+        req = AlignmentRequest(
+            shot_id=str(req_or_shot_id),
+            display_dialogue=str(args[0] if len(args) > 0 else kwargs.get("display_dialogue", "")),
+            total_duration_sec=float(args[1] if len(args) > 1 else kwargs.get("total_duration_sec", 5.0)),
+            start_frame=int(args[2] if len(args) > 2 else kwargs.get("start_frame", 0)),
+            end_frame=int(args[3] if len(args) > 3 else kwargs.get("end_frame", 0)),
+            audio_path=kwargs.get("audio_path"),
+            speech_onset_sec=float(kwargs.get("speech_onset_sec", 0.0)),
+            speech_offset_sec=float(kwargs.get("speech_offset_sec", 0.0)),
+            forced_align_callback=kwargs.get("forced_align_callback"),
+        )
+
+    text = req.display_dialogue.strip()
+    if not text:
+        return ShotSubtitleTrack(
+            shot_id=req.shot_id,
+            start_frame=req.start_frame,
+            end_frame=req.end_frame,
+            display_dialogue="",
+            alignment_method="none",
+            subtitle_segments=(),
+        )
+
+    if req.forced_align_callback:
+        cues = req.forced_align_callback(text, req.total_duration_sec)
+        return ShotSubtitleTrack(
+            shot_id=req.shot_id,
+            start_frame=req.start_frame,
+            end_frame=req.end_frame,
+            display_dialogue=text,
+            alignment_method="forced_align",
+            subtitle_segments=tuple(cues),
+        )
+
+    onset = req.speech_onset_sec if req.speech_onset_sec > 0.0 else min(0.15, req.total_duration_sec * 0.05)
+    offset = req.speech_offset_sec if req.speech_offset_sec > onset else max(onset + 0.5, req.total_duration_sec - 0.15)
+    speech_duration = max(0.5, offset - onset)
+
+    weights = [_get_char_weight(c) for c in text]
+    total_weight = sum(weights) or 1.0
+    sec_per_weight = speech_duration / total_weight
+
+    char_stamps: list[CharTimestamp] = []
+    curr_time = onset
+    for idx, char in enumerate(text):
+        w = weights[idx]
+        char_dur = w * sec_per_weight
+        char_stamps.append(CharTimestamp(char=char, start=curr_time, end=curr_time + char_dur))
+        curr_time += char_dur
+
+    cards = split_cjk_dialogue_into_cards(text)
+    cues: list[SubtitleCue] = []
+    char_idx = 0
+    for card in cards:
+        card_len = len(card)
+        if char_idx < len(char_stamps):
+            card_start = char_stamps[char_idx].start
+            card_end = char_stamps[min(len(char_stamps) - 1, char_idx + card_len - 1)].end
+        else:
+            card_start = onset
+            card_end = offset
+        char_idx += card_len
+        cues.append(SubtitleCue(start_sec=round(card_start, 3), end_sec=round(card_end, 3), text=card))
+
+    return ShotSubtitleTrack(
+        shot_id=req.shot_id,
+        start_frame=req.start_frame,
+        end_frame=req.end_frame,
+        display_dialogue=text,
+        alignment_method="vad_char_weighted",
+        subtitle_segments=tuple(cues),
+    )
 
 
 @dataclass(frozen=True)
