@@ -214,7 +214,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_h3_cli.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_cli.py tests/test_h3_cli.py && grep -q "\- \[x\] \`F5-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F5-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F5-2` **實作 `resolve-anchor` 四級防呆梯、`render-slide` 與更新 `SKILL.md`**
+- [x] `F5-2` **實作 `resolve-anchor` 四級防呆梯、`render-slide` 與更新 `SKILL.md`**
   - **程式碼檔案**：`pipeline/h3_cli.py`、`.agents/skills/h3c-local-film-chain/SKILL.md`
   - **修改內容**：
     1. 子指令 `render-slide --title "..." --bullets "..." --output <png>`：使用 Pillow + 實測 CJK 字體繪製 `1376×768` / `864×480` 教學圖表卡。

@@ -188,6 +188,112 @@ def build_manifest_from_table(opts: BuildManifestOptions) -> dict[str, Any]:
     return manifest_data
 
 
+@dataclass(frozen=True)
+class RenderSlideOptions:
+    """Options for rendering clean slide graphic cards."""
+    title: str
+    bullets: tuple[str, ...]
+    output_path: Path
+    width: int = 864
+    height: int = 480
+
+
+@dataclass(frozen=True)
+class ResolveAnchorOptions:
+    """Options for four-level anchor resolution ladder."""
+    shot_id: str
+    hint: str
+    target_width: int = 864
+    target_height: int = 480
+    output_path: Path | None = None
+    default_anchor_path: Path | None = None
+
+
+def render_slide_card(opts: RenderSlideOptions) -> Path:
+    """Render a clean high-legibility slide card with title and bullet points."""
+    try:
+        from PIL import Image, ImageDraw
+
+        from pipeline.h3_subtitles import resolve_verified_cjk_font
+    except ImportError:
+        raise RuntimeError("Pillow is required for rendering slide cards.") from None
+
+    img = Image.new("RGB", (opts.width, opts.height), (20, 26, 35))
+    draw = ImageDraw.Draw(img)
+
+    title_size = max(24, int(32 * (opts.height / 480.0)))
+    body_size = max(18, int(22 * (opts.height / 480.0)))
+    title_font, _ = resolve_verified_cjk_font(title_size)
+    body_font, _ = resolve_verified_cjk_font(body_size)
+
+    margin_x = max(32, int(48 * (opts.width / 864.0)))
+    margin_y = max(32, int(48 * (opts.height / 480.0)))
+    draw.text((margin_x, margin_y), opts.title, fill=(80, 175, 255), font=title_font)
+
+    line_y = margin_y + title_size + 16
+    draw.line([(margin_x, line_y), (opts.width - margin_x, line_y)], fill=(50, 65, 85), width=2)
+
+    curr_y = line_y + 28
+    line_spacing = body_size + 14
+    for b in opts.bullets:
+        bullet_text = f"•  {b.strip()}"
+        draw.text((margin_x, curr_y), bullet_text, fill=(225, 235, 245), font=body_font)
+        curr_y += line_spacing
+
+    opts.output_path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(opts.output_path)
+    return opts.output_path
+
+
+def resolve_anchor_ladder(opts: ResolveAnchorOptions) -> tuple[Path, int]:
+    """Execute four-level anchor fallback ladder (Level 1 to Level 4)."""
+    hint = opts.hint.strip()
+    target_out = opts.output_path or Path(f"outputs/anchors/shot_{opts.shot_id}_anchor.png")
+
+    # Level 1 & 2: Existing file
+    if hint:
+        cand = Path(hint).expanduser().resolve()
+        if cand.is_file():
+            try:
+                from PIL import Image
+                with Image.open(cand) as im:
+                    if im.size == (opts.target_width, opts.target_height):
+                        return cand, 1
+                    resized = im.resize((opts.target_width, opts.target_height), Image.Resampling.LANCZOS)
+                    target_out.parent.mkdir(parents=True, exist_ok=True)
+                    resized.save(target_out)
+                    return target_out, 2
+            except Exception:
+                pass
+
+    # Level 3: Text description -> render clean slide card
+    if hint:
+        bullets = tuple(p.strip() for p in hint.replace("；", "，").split("，") if p.strip())
+        render_opts = RenderSlideOptions(
+            title=f"Shot {opts.shot_id}: {bullets[0] if bullets else '主題'}",
+            bullets=bullets[1:] if len(bullets) > 1 else bullets,
+            output_path=target_out,
+            width=opts.target_width,
+            height=opts.target_height,
+        )
+        render_slide_card(render_opts)
+        return target_out, 3
+
+    # Level 4: Fallback to default anchor or generic slide
+    if opts.default_anchor_path and Path(opts.default_anchor_path).is_file():
+        return Path(opts.default_anchor_path).resolve(), 4
+
+    fallback_opts = RenderSlideOptions(
+        title=f"Shot {opts.shot_id}",
+        bullets=("教學內容概覽", "架構與重點分析"),
+        output_path=target_out,
+        width=opts.target_width,
+        height=opts.target_height,
+    )
+    render_slide_card(fallback_opts)
+    return target_out, 4
+
+
 def semantic_digest_document(doc_path: Path | str, max_chars: int = 1000) -> list[str]:
     """Split document into semantic blocks preserving headers, paragraphs, and tables."""
     text = Path(doc_path).read_text(encoding="utf-8")
@@ -251,6 +357,20 @@ def main(argv: list[str] | None = None) -> int:
     digest_p.add_argument("--input", type=Path, required=True, help="Path to input markdown document")
     digest_p.add_argument("--max-chars", type=int, default=1000, help="Max chunk size")
 
+    slide_p = subparsers.add_parser("render-slide", help="Render clean slide graphic card")
+    slide_p.add_argument("--title", type=str, required=True, help="Slide title")
+    slide_p.add_argument("--bullets", type=str, required=True, help="Bullet points separated by commas or newlines")
+    slide_p.add_argument("--output", type=Path, required=True, help="Target PNG path")
+    slide_p.add_argument("--width", type=int, default=864, help="Width")
+    slide_p.add_argument("--height", type=int, default=480, help="Height")
+
+    anchor_p = subparsers.add_parser("resolve-anchor", help="Execute 4-level anchor ladder")
+    anchor_p.add_argument("--shot", type=str, required=True, help="Shot ID")
+    anchor_p.add_argument("--hint", type=str, default="", help="Path or text hint")
+    anchor_p.add_argument("--output", type=Path, help="Target anchor path")
+    anchor_p.add_argument("--width", type=int, default=864, help="Target width")
+    anchor_p.add_argument("--height", type=int, default=480, help="Target height")
+
     args = parser.parse_args(argv)
 
     if args.command == "validate-manifest":
@@ -271,6 +391,19 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "digest":
         chunks = semantic_digest_document(args.input, args.max_chars)
         print(f"✅ Split {args.input.name} into {len(chunks)} semantic chunks")
+        return 0
+
+    if args.command == "render-slide":
+        bullets_tuple = tuple(b.strip() for b in args.bullets.replace("\n", ",").split(",") if b.strip())
+        s_opts = RenderSlideOptions(title=args.title, bullets=bullets_tuple, output_path=args.output, width=args.width, height=args.height)
+        render_slide_card(s_opts)
+        print(f"✅ Rendered slide card -> {args.output}")
+        return 0
+
+    if args.command == "resolve-anchor":
+        a_opts = ResolveAnchorOptions(shot_id=args.shot, hint=args.hint, target_width=args.width, target_height=args.height, output_path=args.output)
+        path, level = resolve_anchor_ladder(a_opts)
+        print(f"✅ Resolved anchor for shot {args.shot} via Level {level} -> {path}")
         return 0
 
     return 0

@@ -9,8 +9,12 @@ from pathlib import Path
 
 from pipeline.h3_cli import (
     BuildManifestOptions,
+    RenderSlideOptions,
+    ResolveAnchorOptions,
     build_manifest_from_table,
     main,
+    render_slide_card,
+    resolve_anchor_ladder,
     semantic_digest_document,
     validate_manifest,
 )
@@ -108,6 +112,39 @@ Final closing thoughts.
             )
             code = main(["validate-manifest", "--manifest", str(m_path)])
             self.assertEqual(code, 0)
+
+    def test_render_slide_card(self) -> None:
+        try:
+            import PIL  # noqa: F401
+        except ImportError:
+            self.skipTest("Pillow not installed in current environment")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            out_p = tmp / "slide.png"
+            opts = RenderSlideOptions(
+                title="資產負債分析",
+                bullets=("核心一級資本", "風險加權資產總額"),
+                output_path=out_p,
+            )
+            res = render_slide_card(opts)
+            self.assertTrue(res.is_file())
+
+    def test_resolve_anchor_ladder(self) -> None:
+        try:
+            import PIL  # noqa: F401
+        except ImportError:
+            self.skipTest("Pillow not installed in current environment")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            out_p = tmp / "anchor.png"
+            opts = ResolveAnchorOptions(
+                shot_id="1",
+                hint="財務圖表架構",
+                output_path=out_p,
+            )
+            path, level = resolve_anchor_ladder(opts)
+            self.assertTrue(path.is_file())
+            self.assertEqual(level, 3)
 
 
 if __name__ == "__main__":
