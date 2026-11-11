@@ -284,6 +284,10 @@
         showProgressView(true, `正在執行分鏡 ${data.job.current_segment}/${data.job.total_segments}...`, 50);
         subscribeToEvents();
       }
+
+      if (window.H3WorkspaceSync && typeof window.H3WorkspaceSync.startSync === 'function') {
+        window.H3WorkspaceSync.startSync(window.currentActiveProjectId || 'fc_detective_25s_demo', 3000, DAEMON_URL);
+      }
       return true;
     } catch (_) {
       isDaemonOnline = false;

@@ -6,7 +6,11 @@ from pathlib import Path
 
 from pipeline.h3_state import (
     ChainState,
+    EnvironmentFingerprints,
+    ShotArtifactHashes,
+    collect_environment_fingerprints,
     compute_config_hash,
+    compute_shot_artifact_hashes,
     is_segment_done,
     load_state,
     save_state,
@@ -104,6 +108,33 @@ class TestH3State(unittest.TestCase):
         # Missing file:
         non_existent = Path(self.tmp_dir.name) / "seg2.mp4"
         self.assertFalse(is_segment_done(state, 2, non_existent))
+
+    def test_shot_artifact_hashes_computation(self) -> None:
+        seg = {
+            "prompt": "Cinematic hall. Audio: <d>[Chinese] 這是測試台詞</d>.",
+            "first_frame": "frame1.png",
+            "seed": 42,
+        }
+        hashes = compute_shot_artifact_hashes(seg, {"acoustic_anchor": "voice"}, {"width": 864})
+        self.assertIsInstance(hashes, ShotArtifactHashes)
+        self.assertTrue(hashes.visual_hash)
+        self.assertTrue(hashes.audio_hash)
+        self.assertTrue(hashes.mux_hash)
+        self.assertTrue(hashes.subtitle_hash)
+        self.assertTrue(hashes.final_hash)
+
+        # Dialogue change affects audio and subtitle, but not visual hash
+        seg_sub_change = dict(seg)
+        seg_sub_change["display_dialogue"] = "全新顯示字幕"
+        hashes_sub = compute_shot_artifact_hashes(seg_sub_change, {"acoustic_anchor": "voice"}, {"width": 864})
+        self.assertEqual(hashes.visual_hash, hashes_sub.visual_hash)
+        self.assertNotEqual(hashes.subtitle_hash, hashes_sub.subtitle_hash)
+
+    def test_environment_fingerprints(self) -> None:
+        fp = collect_environment_fingerprints(None, None)
+        self.assertIsInstance(fp, EnvironmentFingerprints)
+        self.assertEqual(fp.prompt_template_version, "v2.0")
+        self.assertEqual(fp.ffmpeg_mux_signature, "c:v_copy_c:a_aac_192k")
 
 
 if __name__ == "__main__":

@@ -249,8 +249,8 @@ def _read_linux_proc_meminfo() -> tuple[int, int]:
                     total_bytes = int(line.split()[1]) * 1024
                 elif line.startswith("MemAvailable:"):
                     avail_bytes = int(line.split()[1]) * 1024
-    except Exception:
-        pass
+    except OSError:
+        return total_bytes, avail_bytes
     return total_bytes, avail_bytes
 
 

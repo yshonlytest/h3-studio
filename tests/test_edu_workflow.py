@@ -12,6 +12,7 @@ from pipeline.h3_edu_profile import (
     calculate_optimal_frames,
     compile_shot_prompt,
     resolve_checkpoint_dir,
+    resolve_shot_dialogues,
 )
 from pipeline.h3_executor import NoopExecutor
 from pipeline.h3_storyboard_pipeline import VideoHealthReport, run_chained_manifest
@@ -69,7 +70,8 @@ class TestEduWorkflow(unittest.TestCase):
 
             fl2va_p = base_p / "FL2VA"
             fl2va_p.mkdir()
-            self.assertEqual(resolve_checkpoint_dir(base_p), fl2va_p)
+            self.assertEqual(resolve_checkpoint_dir(base_p), base_p)
+            self.assertEqual(resolve_checkpoint_dir(fl2va_p), base_p)
 
     def test_compile_shot_prompt_anchors(self):
         profile = GlobalProfile(
@@ -98,6 +100,25 @@ class TestEduWorkflow(unittest.TestCase):
         res_broll = compile_shot_prompt(shot_broll, profile, 2)
         self.assertNotIn("presenter visible in corner", res_broll)
         self.assertIn("clear studio voice", res_broll)
+
+    def test_resolve_shot_dialogues_dual_track(self):
+        # Explicit dual-track provided
+        shot_explicit = {
+            "display_dialogue": "原始字幕",
+            "spoken_dialogue": "發音台詞",
+        }
+        res_explicit = resolve_shot_dialogues(shot_explicit)
+        self.assertEqual(res_explicit.display_dialogue, "原始字幕")
+        self.assertEqual(res_explicit.spoken_dialogue, "發音台詞")
+
+        # Auto-derived from single dialogue
+        shot_single = {"dialogue": "2024年的作業成本是15.5%搞定！"}
+        res_single = resolve_shot_dialogues(shot_single)
+        self.assertEqual(res_single.display_dialogue, "2024年的作業成本是15.5%搞定！")
+        self.assertIn("二零二四年", res_single.spoken_dialogue)
+        self.assertIn("作葉成本", res_single.spoken_dialogue)
+        self.assertIn("百分之十五點五", res_single.spoken_dialogue)
+        self.assertIn("處理完成", res_single.spoken_dialogue)
 
     def test_run_chained_manifest_with_shots_and_auto_duration(self):
         with tempfile.TemporaryDirectory() as tmpdir:

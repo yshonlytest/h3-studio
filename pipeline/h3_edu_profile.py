@@ -15,10 +15,28 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
+
+from pipeline.h3_phonetic_normalizer import NormalizedDialogueResult, normalize_dialogue
 
 LOGGER = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 LEGAL_FRAME_BUCKETS = (93, 124, 155, 186)
+
+EXECUTION_TRACK_SPECS: dict[str, dict[str, Any]] = {
+    "local_5s": {
+        "buckets": (93, 124, 155, 186),
+        "max_cjk_chars": 26,
+        "default_size": (864, 480),
+        "supports_dual_image": False,
+    },
+    "colab_12s": {
+        "buckets": (241, 289),
+        "max_cjk_chars": 55,
+        "default_size": (1376, 768),
+        "supports_dual_image": True,
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -43,26 +61,33 @@ class GlobalProfile:
 
 
 def resolve_checkpoint_dir(model_dir: Path | str | None = None) -> Path:
-    """Resolve model checkpoint directory, automatically adapting to FL2VA/ subdirectory."""
+    """Resolve model checkpoint directory, ensuring it points to the root containing FL2VA/."""
     from pipeline.config import get_h3_model_dir
 
     cand = Path(model_dir).expanduser().resolve() if model_dir else get_h3_model_dir()
-    fl2va_sub = cand / "FL2VA"
-    return fl2va_sub if fl2va_sub.is_dir() else cand
+    if cand.name == "FL2VA":
+        return cand.parent
+    if (cand / "FL2VA").is_dir():
+        return cand
+    return cand
 
 
 def calculate_optimal_frames(
     dialogue: str,
-    lang_code: str = "zh-TW",
-    shot_id: int | str | None = None,
+    *args: Any,
+    **kwargs: Any,
 ) -> int:
     """Calculate optimal H3 frame count based on dialogue density and speech rate.
 
-    - CJK: target seconds T = (N / 4.0) + 0.8
-    - Pinyin / Latin: target seconds T = (W / 2.5) + 0.8
-    - Aligns T * 24 up to legal frame buckets: [93, 124, 155, 186]
-    - Raises ValueError if dialogue requires > 186 frames (e.g. > 26 CJK chars).
+    Supports local_5s (93..186 frames) and colab_12s (241..289 frames).
     """
+    lang_code = args[0] if len(args) > 0 else kwargs.get("lang_code", "zh-TW")
+    shot_id = args[1] if len(args) > 1 else kwargs.get("shot_id")
+    track = kwargs.get("execution_track") or (args[2] if len(args) > 2 else "local_5s")
+
+    spec = EXECUTION_TRACK_SPECS.get(str(track), EXECUTION_TRACK_SPECS["local_5s"])
+    buckets = spec["buckets"]
+
     clean_text = str(dialogue or "").strip()
     is_cjk = lang_code.lower().startswith(("zh", "ja", "ko"))
     if is_cjk:
@@ -76,7 +101,7 @@ def calculate_optimal_frames(
         target_seconds = (len(words) / 2.5) + 0.8
 
     raw_frames = target_seconds * 24.0
-    for bucket in LEGAL_FRAME_BUCKETS:
+    for bucket in buckets:
         if raw_frames <= bucket:
             return bucket
 
@@ -158,6 +183,44 @@ def _build_fresh_prompt(
     return f"{visual} {audio_str}".strip()
 
 
+def resolve_shot_dialogues(
+    shot: dict[str, Any],
+    lang_code: str = "zh-TW",
+) -> NormalizedDialogueResult:
+    """Resolve dual-track dialogues (display vs spoken) with backwards compatibility."""
+    display_dialogue = str(shot.get("display_dialogue", "")).strip()
+    spoken_dialogue = str(shot.get("spoken_dialogue", "")).strip()
+    custom_overrides = shot.get("pronunciation_overrides", ())
+
+    if display_dialogue and spoken_dialogue:
+        return NormalizedDialogueResult(
+            display_dialogue=display_dialogue,
+            spoken_dialogue=spoken_dialogue,
+            pronunciation_overrides=tuple(custom_overrides) if isinstance(custom_overrides, tuple) else (),
+        )
+
+    raw_dialogue = str(shot.get("dialogue", "")).strip()
+    if not raw_dialogue and shot.get("prompt"):
+        d_match = re.search(r"<d>(?:\[\w+\])?\s*(.*?)</d>", str(shot["prompt"]))
+        if d_match:
+            raw_dialogue = d_match.group(1).strip()
+
+    norm_res = normalize_dialogue(
+        raw_dialogue,
+        lang_code=lang_code,
+        custom_overrides=custom_overrides,
+    )
+    final_display = display_dialogue or norm_res.display_dialogue
+    final_spoken = spoken_dialogue or norm_res.spoken_dialogue
+
+    return NormalizedDialogueResult(
+        display_dialogue=final_display,
+        spoken_dialogue=final_spoken,
+        pronunciation_overrides=norm_res.pronunciation_overrides,
+        diagnostic_warnings=norm_res.diagnostic_warnings,
+    )
+
+
 def compile_shot_prompt(
     shot: dict,
     profile: GlobalProfile,
@@ -165,10 +228,10 @@ def compile_shot_prompt(
 ) -> str:
     """Compile prompt for a shot applying visual and acoustic anchors and lexicon."""
     shot_type = shot.get("shot_type", "presenter_focus")
-    dialogue = shot.get("dialogue", "")
+    norm_diag = resolve_shot_dialogues(shot, profile.language_code)
+    clean_dialogue = norm_diag.spoken_dialogue
     visual_prompt = shot.get("visual_prompt", "")
     existing_prompt = shot.get("prompt", "")
-    clean_dialogue = apply_pronunciation_lexicon(dialogue, profile.language_code) if dialogue else ""
 
     if not existing_prompt and visual_prompt:
         return _build_fresh_prompt(shot, clean_dialogue, profile)

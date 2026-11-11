@@ -4,7 +4,7 @@
   "description": "H3 Storyboard Studio - First/Last-frame chained video generation studio",
   "private": true,
   "scripts": {
-    "test": "node --test tests/core.test.js tests/worker_session.test.js tests/cloud_adapter.test.js tests/audio_studio.test.js tests/project_store.test.js",
+    "test": "node --test tests/core.test.js tests/worker_session.test.js tests/cloud_adapter.test.js tests/audio_studio.test.js tests/project_store.test.js tests/dom_integrity.test.js",
     "deploy": "wrangler deploy",
     "preview": "wrangler dev"
   },
