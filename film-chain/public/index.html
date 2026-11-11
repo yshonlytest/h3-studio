@@ -57,7 +57,7 @@
         <button type="button" class="btn" onclick="createNewBlankProject()" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;">
           ➕ 新專案
         </button>
-        <button type="button" class="btn" onclick="resetToDefaultDemoProject()" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14);" title="載入 25 秒賽博偵探九宮格專屬範本與實測成片">
+        <button type="button" class="btn" onclick="loadGoldenTemplate('detective')" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14);" title="載入 25 秒賽博偵探九宮格專屬範本與實測成片">
           🕵️ 賽博偵探 (九宮格)
         </button>
         <button type="button" class="btn" onclick="loadGoldenTemplate('ink_sorcerer')" style="padding:6px 10px; font-size:0.78rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.14);" title="載入 25 秒水墨奇幻潛空間專屬範本與實測成片">
@@ -1378,7 +1378,7 @@
     // ==================== Project Mode & Route Switching ====================
     let activeProjectMode = "creative"; // 'creative' (模式 A) or 'edu' (模式 B)
 
-    function selectProjectMode(mode) {
+    function selectProjectMode(mode, autoSwitch = true) {
       activeProjectMode = mode; // 'creative' or 'edu'
       const isCreative = mode === "creative";
       const isEdu = mode === "edu";
@@ -1400,6 +1400,16 @@
           badge.style.borderColor = "#a855f7";
           badge.style.color = "#d8b4fe";
           badge.style.background = "rgba(168,85,247,0.15)";
+        }
+      }
+
+      if (autoSwitch && !isRestoringProject) {
+        if (isEdu && currentActiveProjectId !== "fc_handwashing_edu_demo") {
+          loadGoldenTemplate("handwashing_edu");
+          return;
+        } else if (isCreative && currentActiveProjectId === "fc_handwashing_edu_demo") {
+          loadGoldenTemplate("detective");
+          return;
         }
       }
 
@@ -3194,83 +3204,126 @@ ${desc}${extra}
       }
     };
 
-    async function loadGoldenTemplate(templateKey) {
-      if (templateKey === "handwashing_edu") {
-        if (typeof selectProjectMode === "function") {
-          selectProjectMode("edu");
-        }
-      } else {
-        if (typeof selectProjectMode === "function") {
-          selectProjectMode("creative");
-        }
+    function createGoldenProjectObject(templateKey) {
+      if (templateKey === "ink_sorcerer") {
+        const tpl = GOLDEN_TEMPLATES_FALLBACK.ink_sorcerer;
+        return {
+          id: "fc_ink_sorcerer_25s_demo",
+          name: "🖌️ 墨繪靈境 25s 潛空間連貫示範專案",
+          updatedAt: Date.now(),
+          isDemo: true,
+          activeProjectMode: "creative",
+          chineseDesc: tpl.expanded_story_zh || tpl.title,
+          speedMode: "quality",
+          activeRoute: "colab",
+          refImageDataUrl: tpl.demo_ref_image || "",
+          refImageMime: "image/jpeg",
+          gridImageDataUrl: "",
+          slicedPanelsDataUrls: {},
+          plan: JSON.parse(JSON.stringify(tpl)),
+          playlist: JSON.parse(JSON.stringify(tpl.part_videos || [])),
+          mergedVideoUrl: tpl.merged_video_path || "",
+          segmentHistory: {},
+          activeVersionIndex: {},
+          dialogueItems: [],
+          bgmStyle: "fantasy",
+          bgmVolume: 35,
+          audioDucking: true,
+          softSubtitle: true,
+          burnInSubtitle: false
+        };
       }
+      if (templateKey === "handwashing_edu") {
+        const tpl = GOLDEN_TEMPLATES_FALLBACK.handwashing_edu;
+        return {
+          id: "fc_handwashing_edu_demo",
+          name: "🧼 正確洗手教學 30s 科普長片示範專案",
+          updatedAt: Date.now(),
+          isDemo: true,
+          activeProjectMode: "edu",
+          chineseDesc: tpl.expanded_story_zh || tpl.title,
+          speedMode: "quality",
+          activeRoute: "colab",
+          refImageDataUrl: tpl.demo_ref_image || "",
+          refImageMime: "image/png",
+          gridImageDataUrl: "",
+          slicedPanelsDataUrls: {},
+          plan: JSON.parse(JSON.stringify(tpl)),
+          playlist: JSON.parse(JSON.stringify(tpl.part_videos || [])),
+          mergedVideoUrl: tpl.merged_video_path || "",
+          segmentHistory: {},
+          activeVersionIndex: {},
+          dialogueItems: [],
+          bgmStyle: "fantasy",
+          bgmVolume: 35,
+          audioDucking: true,
+          softSubtitle: true,
+          burnInSubtitle: false
+        };
+      }
+      const detectiveTpl = GOLDEN_TEMPLATES_FALLBACK.detective || DEMO_PROJECT_CONFIG.plan;
+      return {
+        id: "fc_detective_25s_demo",
+        name: "🎬 賽博偵探 25s 電影級示範專案",
+        updatedAt: Date.now(),
+        isDemo: true,
+        activeProjectMode: "creative",
+        chineseDesc: DEMO_PROJECT_CONFIG.chinese_desc,
+        speedMode: "quality",
+        activeRoute: "colab",
+        refImageDataUrl: DEMO_PROJECT_CONFIG.ref_image_path,
+        refImageMime: "image/jpeg",
+        gridImageDataUrl: DEMO_PROJECT_CONFIG.grid_image_path,
+        slicedPanelsDataUrls: {},
+        plan: JSON.parse(JSON.stringify(detectiveTpl)),
+        playlist: JSON.parse(JSON.stringify(DEMO_PROJECT_CONFIG.part_videos)),
+        mergedVideoUrl: DEMO_PROJECT_CONFIG.merged_video_path,
+        segmentHistory: {},
+        activeVersionIndex: {},
+        dialogueItems: [],
+        bgmStyle: "fantasy",
+        bgmVolume: 35,
+        audioDucking: true,
+        softSubtitle: true,
+        burnInSubtitle: false
+      };
+    }
+
+    async function loadGoldenTemplate(templateKey) {
+      const mode = templateKey === "handwashing_edu" ? "edu" : "creative";
+      selectProjectMode(mode, false);
+
       const statusEl = document.getElementById("planStatusMsg");
       if (statusEl) {
         statusEl.style.color = "var(--muted)";
         statusEl.textContent = `⏳ 正在載入示範範本 (${templateKey})...`;
       }
 
-      const fallback = GOLDEN_TEMPLATES_FALLBACK[templateKey] || GOLDEN_TEMPLATES_FALLBACK.detective;
-      let manifestData = JSON.parse(JSON.stringify(fallback));
-      try {
-        const res = await fetch("http://127.0.0.1:8080/api/templates");
-        if (res.ok) {
-          const tplJson = await res.json();
-          const found = (tplJson.templates || []).find((t) => t.filename && t.filename.includes(templateKey));
-          if (found && found.manifest) {
-            manifestData = {
-              ...fallback,
-              ...found.manifest,
-              project_slug: fallback.project_slug,
-              reasoning_zh: fallback.reasoning_zh,
-              expanded_story_zh: fallback.expanded_story_zh,
-            };
-          }
-        }
-      } catch (_e) {
-        // Offline: use embedded GOLDEN_TEMPLATES_FALLBACK
+      const projObj = createGoldenProjectObject(templateKey);
+      if (typeof H3ProjectStore !== "undefined") {
+        try {
+          await H3ProjectStore.saveProject(projObj);
+          await H3ProjectStore.setLastActiveProjectId(projObj.id);
+        } catch (_e) {}
       }
 
-      const descInput = document.getElementById("chineseDesc");
-      if (descInput) descInput.value = manifestData.expanded_story_zh || manifestData.title;
-      if (fallback.demo_ref_image) {
-        const refImg = document.getElementById("refPreview");
-        if (refImg) {
-          refImg.src = fallback.demo_ref_image;
-          refImg.style.display = "block";
-        }
-        const icon = document.getElementById("refPlaceholderIcon");
-        if (icon) icon.style.display = "none";
-        const btnText = document.getElementById("refUploadBtnText");
-        if (btnText) btnText.textContent = "📷 載入圖片 (更換)";
-      }
+      await applyProjectStateToUI(projObj);
+
       const paradigmSelect = document.getElementById("chainParadigmSelect");
       if (paradigmSelect) {
         paradigmSelect.value = templateKey === "detective" ? "grid_keyframes" : "latent_chain";
       }
-      onChainParadigmChange();
-      renderPlanUI(manifestData);
 
-      if (fallback.part_videos && fallback.part_videos.length) {
-        renderSegmentsPlaylist(fallback.part_videos);
-      }
       const tplName = templateKey === "handwashing_edu"
         ? "洗手教學（長影片專屬）"
         : (templateKey === "ink_sorcerer" ? "墨繪靈境（潛空間專屬）" : "賽博偵探（九宮格專屬）");
-      if (fallback.merged_video_path) {
-        playVideoInStage(
-          fallback.merged_video_path,
-          `🎬 ${tplName} 25 秒完整合併成果`,
-          false
-        );
-      }
 
       if (statusEl) {
         statusEl.style.color = "var(--success)";
-        statusEl.innerHTML = `✅ 已載入「${escapeHtml(manifestData.title)}」（共 ${manifestData.segments.length * 5} 秒）！ <button type="button" class="btn" onclick="document.getElementById('step2Card')?.scrollIntoView({behavior:'smooth'})" style="margin-left:8px; padding:4px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc;">⬇️ 前往步驟二微調</button> <button type="button" class="btn" onclick="document.getElementById('step4Card')?.scrollIntoView({behavior:'smooth'})" style="margin-left:4px; padding:4px 10px; font-size:0.78rem; border-color:#10b981; color:#6ee7b7;">▶️ 前往步驟四看成片</button>`;
+        statusEl.innerHTML = `✅ 已載入「${escapeHtml(projObj.plan.title)}」！ <button type="button" class="btn" onclick="document.getElementById('step2Card')?.scrollIntoView({behavior:'smooth'})" style="margin-left:8px; padding:4px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc;">⬇️ 前往步驟二微調</button>`;
       }
       if (typeof showToast === "function") {
-        showToast(`✅ 已載入「${tplName}」25s 範本與成片`);
+        showToast(`✅ 已載入「${tplName}」示範專案`);
       }
     }
 
@@ -4028,9 +4081,11 @@ ${desc}${extra}
 許多人以為隨便沖水幾秒鐘就算洗手，這反而提供細菌滋生溫床。
 吃飯前、如廁後、擤鼻涕後以及抱小孩前，都是洗手關鍵時機。
 記住：洗手時間必須唱完兩次生日快樂歌，才能真正洗淨病菌，健康安心！`;
-      document.getElementById("eduDocInput").value = sample;
-      showToast("💡 已載入正確洗手五步驟與七字口訣科普教學文檔");
+      const input = document.getElementById("eduDocInput");
+      if (input) input.value = sample;
+      showToast("💡 已載入正確洗手教學文檔並同步套用分鏡");
       extractEduOutlines();
+      loadGoldenTemplate("handwashing_edu");
     }
 
     function onEduSpeakerPresetChange(sel) {
@@ -5984,30 +6039,7 @@ ${desc}${extra}
     let currentEditingPanelIndex = 1;
 
     function createDefaultDemoProjectObject() {
-      return {
-        id: "fc_detective_25s_demo",
-        name: "🎬 賽博偵探 25s 電影級示範專案",
-        updatedAt: Date.now(),
-        isDemo: true,
-        chineseDesc: DEMO_PROJECT_CONFIG.chinese_desc,
-        speedMode: "quality",
-        activeRoute: "colab",
-        refImageDataUrl: DEMO_PROJECT_CONFIG.ref_image_path,
-        refImageMime: "image/jpeg",
-        gridImageDataUrl: DEMO_PROJECT_CONFIG.grid_image_path,
-        slicedPanelsDataUrls: {},
-        plan: JSON.parse(JSON.stringify(DEMO_PROJECT_CONFIG.plan)),
-        playlist: JSON.parse(JSON.stringify(DEMO_PROJECT_CONFIG.part_videos)),
-        mergedVideoUrl: DEMO_PROJECT_CONFIG.merged_video_path,
-        segmentHistory: {},
-        activeVersionIndex: {},
-        dialogueItems: [],
-        bgmStyle: "fantasy",
-        bgmVolume: 35,
-        audioDucking: true,
-        softSubtitle: true,
-        burnInSubtitle: false
-      };
+      return createGoldenProjectObject("detective");
     }
     const createShisaDemoProjectObject = createDefaultDemoProjectObject;
 
@@ -6056,6 +6088,9 @@ ${desc}${extra}
 
         const nameInput = document.getElementById("currentProjectNameInput");
         if (nameInput) nameInput.value = currentActiveProjectName;
+
+        const projMode = proj.activeProjectMode || (proj.id === "fc_handwashing_edu_demo" || proj.plan?.project_mode === "edu_explainer" ? "edu" : "creative");
+        selectProjectMode(projMode, false);
 
         // 1. Reference Image
         const refImg = document.getElementById("refPreview");
@@ -6231,13 +6266,7 @@ ${desc}${extra}
     }
 
     async function resetToDefaultDemoProject() {
-      const demoProj = createDefaultDemoProjectObject();
-      if (typeof H3ProjectStore !== "undefined") {
-        await H3ProjectStore.saveProject(demoProj);
-        await H3ProjectStore.setLastActiveProjectId(demoProj.id);
-      }
-      await applyProjectStateToUI(demoProj);
-      showToast("🎬 已載入「賽博偵探 25s 電影級示範專案」");
+      await loadGoldenTemplate("detective");
     }
     const resetToShisaDemoProject = resetToDefaultDemoProject;
 
