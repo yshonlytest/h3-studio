@@ -37,6 +37,10 @@ class TestH3Subtitles(unittest.TestCase):
             self.assertIn("Second line", content)
 
     def test_render_subtitle_card(self):
+        try:
+            import PIL  # noqa: F401
+        except ImportError:
+            self.skipTest("Pillow not installed in current environment")
         img = render_subtitle_card("Test Subtitle Card", SubtitleCardConfig(width=640, height=360))
         self.assertEqual(img.size, (640, 360))
         self.assertEqual(img.mode, "RGBA")

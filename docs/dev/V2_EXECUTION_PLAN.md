@@ -28,7 +28,7 @@
   - **🔍 驗證與文件打勾斷言指令**：
     `test "$(git branch --show-current)" = "feat/v2-architecture-upgrade" && grep -q "\- \[x\] \`F0-BRANCH\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F0-BRANCH\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F0-PRE` **修復既有環境斷點（對齊 `resolve_checkpoint_dir` 與 Pillow 測試環境）**
+- [x] `F0-PRE` **修復既有環境斷點（對齊 `resolve_checkpoint_dir` 與 Pillow 測試環境）**
   - **程式碼檔案**：`tests/test_edu_workflow.py`（讀取 `L65-75`）、`pipeline/h3_subtitles.py`（讀取 `L1-20`）
   - **修改內容**：
     1. 修正 `tests/test_edu_workflow.py:65-73` 的 `test_resolve_checkpoint_dir`：對齊 `h3_edu_profile.resolve_checkpoint_dir()` 的真實規格（當傳入 `base_p / "FL2VA"` 或包含 `FL2VA/` 子目錄的 `base_p` 時，一律回傳包含 `FL2VA/` 的根目錄 `base_p`，因為 `h3.c` 需要從根目錄讀取 `FL2VA/` 與 `video_vae/`）。

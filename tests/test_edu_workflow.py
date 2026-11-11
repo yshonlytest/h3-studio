@@ -69,7 +69,8 @@ class TestEduWorkflow(unittest.TestCase):
 
             fl2va_p = base_p / "FL2VA"
             fl2va_p.mkdir()
-            self.assertEqual(resolve_checkpoint_dir(base_p), fl2va_p)
+            self.assertEqual(resolve_checkpoint_dir(base_p), base_p)
+            self.assertEqual(resolve_checkpoint_dir(fl2va_p), base_p)
 
     def test_compile_shot_prompt_anchors(self):
         profile = GlobalProfile(

@@ -8,7 +8,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-from PIL import Image, ImageDraw, ImageFont
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    _HAS_PIL = True
+except ImportError:
+    Image = None  # type: ignore[assignment]
+    ImageDraw = None  # type: ignore[assignment]
+    ImageFont = None  # type: ignore[assignment]
+    _HAS_PIL = False
 
 LOGGER = logging.getLogger(__name__)
 
@@ -59,6 +66,8 @@ def render_subtitle_card(
     text: str,
     cfg: SubtitleCardConfig | None = None,
 ) -> Image.Image:
+    if not _HAS_PIL or Image is None or ImageDraw is None:
+        raise RuntimeError("Pillow is required for rendering subtitle cards.")
     config = cfg or SubtitleCardConfig()
     img = Image.new("RGBA", (config.width, config.height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)

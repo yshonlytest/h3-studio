@@ -43,12 +43,15 @@ class GlobalProfile:
 
 
 def resolve_checkpoint_dir(model_dir: Path | str | None = None) -> Path:
-    """Resolve model checkpoint directory, automatically adapting to FL2VA/ subdirectory."""
+    """Resolve model checkpoint directory, ensuring it points to the root containing FL2VA/."""
     from pipeline.config import get_h3_model_dir
 
     cand = Path(model_dir).expanduser().resolve() if model_dir else get_h3_model_dir()
-    fl2va_sub = cand / "FL2VA"
-    return fl2va_sub if fl2va_sub.is_dir() else cand
+    if cand.name == "FL2VA":
+        return cand.parent
+    if (cand / "FL2VA").is_dir():
+        return cand
+    return cand
 
 
 def calculate_optimal_frames(
