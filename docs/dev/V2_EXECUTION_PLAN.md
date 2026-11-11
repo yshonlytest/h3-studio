@@ -235,7 +235,7 @@ flowchart LR
 
 ## 階段 F6：前端漸進式拆分與 DOM / Inline Handler 完整性測試
 
-- [ ] `F6-A1` **抽離 `index.html` 內嵌 CSS 與靜態長篇 Prompt（100% 保留閘道 DOM）**
+- [x] `F6-A1` **抽離 `index.html` 內嵌 CSS 與靜態長篇 Prompt（100% 保留閘道 DOM）**
   - **程式碼檔案**：新增 `film-chain/public/src/styles/studio.css`、新增 `film-chain/public/src/prompts/agentPrompts.js`、修改 `film-chain/public/index.html`
   - **修改內容**：
     1. 使用 `read_file` 讀取 `index.html` `L1-815`，將 `<style>...</style>` 內容完整移入 `src/styles/studio.css`，原處替換為 `<link rel="stylesheet" href="src/styles/studio.css">`。
