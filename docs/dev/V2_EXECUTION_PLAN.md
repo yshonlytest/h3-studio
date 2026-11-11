@@ -319,7 +319,7 @@ flowchart LR
 
 ## 階段 F9：Colab 12s 雙圖高吞吐獨立規格擴充
 
-- [ ] `F9-1` **於 `h3_edu_profile.py` 與 `h3_cli.py` 新增獨立 `colab_12s` 雙圖高吞吐規格**
+- [x] `F9-1` **於 `h3_edu_profile.py` 與 `h3_cli.py` 新增獨立 `colab_12s` 雙圖高吞吐規格**
   - **程式碼檔案**：`pipeline/h3_edu_profile.py`、`pipeline/h3_cli.py`、新增 `tests/test_colab_12s_profile.py`
   - **修改內容**：
     1. 新增 `EXECUTION_TRACK_SPECS` 常數：

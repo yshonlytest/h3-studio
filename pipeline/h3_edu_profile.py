@@ -23,6 +23,21 @@ LOGGER = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 LEGAL_FRAME_BUCKETS = (93, 124, 155, 186)
 
+EXECUTION_TRACK_SPECS: dict[str, dict[str, Any]] = {
+    "local_5s": {
+        "buckets": (93, 124, 155, 186),
+        "max_cjk_chars": 26,
+        "default_size": (864, 480),
+        "supports_dual_image": False,
+    },
+    "colab_12s": {
+        "buckets": (241, 289),
+        "max_cjk_chars": 55,
+        "default_size": (1376, 768),
+        "supports_dual_image": True,
+    },
+}
+
 
 @dataclass(frozen=True)
 class GlobalProfile:
@@ -59,16 +74,20 @@ def resolve_checkpoint_dir(model_dir: Path | str | None = None) -> Path:
 
 def calculate_optimal_frames(
     dialogue: str,
-    lang_code: str = "zh-TW",
-    shot_id: int | str | None = None,
+    *args: Any,
+    **kwargs: Any,
 ) -> int:
     """Calculate optimal H3 frame count based on dialogue density and speech rate.
 
-    - CJK: target seconds T = (N / 4.0) + 0.8
-    - Pinyin / Latin: target seconds T = (W / 2.5) + 0.8
-    - Aligns T * 24 up to legal frame buckets: [93, 124, 155, 186]
-    - Raises ValueError if dialogue requires > 186 frames (e.g. > 26 CJK chars).
+    Supports local_5s (93..186 frames) and colab_12s (241..289 frames).
     """
+    lang_code = args[0] if len(args) > 0 else kwargs.get("lang_code", "zh-TW")
+    shot_id = args[1] if len(args) > 1 else kwargs.get("shot_id")
+    track = kwargs.get("execution_track") or (args[2] if len(args) > 2 else "local_5s")
+
+    spec = EXECUTION_TRACK_SPECS.get(str(track), EXECUTION_TRACK_SPECS["local_5s"])
+    buckets = spec["buckets"]
+
     clean_text = str(dialogue or "").strip()
     is_cjk = lang_code.lower().startswith(("zh", "ja", "ko"))
     if is_cjk:
@@ -82,7 +101,7 @@ def calculate_optimal_frames(
         target_seconds = (len(words) / 2.5) + 0.8
 
     raw_frames = target_seconds * 24.0
-    for bucket in LEGAL_FRAME_BUCKETS:
+    for bucket in buckets:
         if raw_frames <= bucket:
             return bucket
 

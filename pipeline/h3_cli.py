@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.h3_edu_profile import (
-    LEGAL_FRAME_BUCKETS,
+    EXECUTION_TRACK_SPECS,
     GlobalProfile,
     calculate_optimal_frames,
     compile_shot_prompt,
@@ -59,23 +59,32 @@ def validate_manifest(manifest_path: Path | str) -> ValidationResult:
     env_fp = collect_environment_fingerprints(None, data.get("model_dir"))
     lang = data.get("language_code", "zh-TW")
 
+    track = data.get("execution_track", "local_5s")
+    track_spec = EXECUTION_TRACK_SPECS.get(str(track), EXECUTION_TRACK_SPECS["local_5s"])
+    valid_buckets = track_spec["buckets"]
+
     for idx, seg in enumerate(segments, start=1):
         shot_id = seg.get("shot_id", str(idx))
         diag_res = resolve_shot_dialogues(seg, lang)
         if not diag_res.display_dialogue and not seg.get("prompt"):
             errors.append(f"Segment {shot_id}: Missing dialogue and visual prompt.")
 
-        frames = seg.get("frames", data.get("frames", 93))
-        if frames not in LEGAL_FRAME_BUCKETS:
-            warnings.append(f"Segment {shot_id}: Frame count {frames} not in standard buckets {LEGAL_FRAME_BUCKETS}.")
+        frames = seg.get("frames", data.get("frames", valid_buckets[0]))
+        if frames not in valid_buckets:
+            warnings.append(f"Segment {shot_id}: Frame count {frames} not in standard buckets {valid_buckets}.")
+
+        ref_images = seg.get("reference_images") or []
+        if track == "colab_12s" and ref_images and len(ref_images) > 2:
+            warnings.append(f"Segment {shot_id}: colab_12s supports at most 2 reference images (speaker, slide).")
 
         ff = seg.get("first_frame")
         if ff and not Path(ff).expanduser().exists():
             warnings.append(f"Segment {shot_id}: first_frame file not found at {ff}.")
 
+        def_w, def_h = track_spec["default_size"]
         render_cfg = {
-            "width": seg.get("width") or data.get("width", 864),
-            "height": seg.get("height") or data.get("height", 480),
+            "width": seg.get("width") or data.get("width", def_w),
+            "height": seg.get("height") or data.get("height", def_h),
             "frames": frames,
             "steps": seg.get("steps") or data.get("steps", 6),
             "mode": data.get("mode", "sequential"),

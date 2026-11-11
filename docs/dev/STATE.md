@@ -30,4 +30,4 @@
 - [x] `F7-A2` 於 `pipeline/h3_server.py` 接入安全沙盒 API：`/api/workspace-sync` 與 `/api/reroll-shot`
 - [x] `F7-B` 實作 `workspaceSync.js` 串接步驟一～五閘道與鎖定狀態 UI
 - [x] `F8-1` 實作極速代理音訊重抽器 `h3_audio_reroller.py` 與 8 步跨批次快取失效整合測試
-- [ ] `F9-1` 於 `h3_edu_profile.py` 與 `h3_cli.py` 新增獨立 `colab_12s` 雙圖高吞吐規格
+- [x] `F9-1` 於 `h3_edu_profile.py` 與 `h3_cli.py` 新增獨立 `colab_12s` 雙圖高吞吐規格
