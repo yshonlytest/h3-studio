@@ -12,7 +12,7 @@
 - [x] `F0-3` 中文 Character-Level 時間戳與 VAD 能量包絡對齊實測
 - [x] `F0-BRANCH` 建立並切換至開發分支 `feat/v2-architecture-upgrade`
 - [x] `F0-PRE` 修復既有環境斷點（對齊 `resolve_checkpoint_dir` 與統一測試執行器）
-- [ ] `F1-1` 於 `pipeline/h3_state.py` 實作環境指紋與五節點 `ShotArtifactHashes`
+- [x] `F1-1` 於 `pipeline/h3_state.py` 實作環境指紋與五節點 `ShotArtifactHashes`
 - [ ] `F1-2` 實作快取失效判定器 `evaluate_shot_invalidation` 與 8 情境測試
 - [ ] `F1-3` 將分層 Hash 接入 `pipeline/h3_storyboard_pipeline.py`
 - [ ] `F2-1` 建立受控三層發音正規化器 `pipeline/h3_phonetic_normalizer.py`

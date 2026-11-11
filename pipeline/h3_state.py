@@ -1,16 +1,60 @@
+"""State management, DAG artifact hash calculation, and recovery for H3 pipelines."""
+
 from __future__ import annotations
 
 import hashlib
 import json
 import logging
 import os
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
 LOGGER = logging.getLogger(__name__)
 
-STATE_SCHEMA_VERSION = 1
+STATE_SCHEMA_VERSION = 2
+
+
+@dataclass(frozen=True)
+class EnvironmentFingerprints:
+    """Fingerprints of execution environment and model weights."""
+    engine_sha256: str = ""
+    model_fingerprint: str = ""
+    prompt_template_version: str = "v2.0"
+    ffmpeg_mux_signature: str = "c:v_copy_c:a_aac_192k"
+
+
+@dataclass(frozen=True)
+class ShotArtifactHashes:
+    """Five-node DAG hashes representing layered artifact cache validity."""
+    visual_hash: str
+    audio_hash: str
+    mux_hash: str
+    subtitle_hash: str
+    final_hash: str
+
+    def to_dict(self) -> dict[str, str]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ShotArtifactHashes:
+        return cls(
+            visual_hash=str(data.get("visual_hash", "")),
+            audio_hash=str(data.get("audio_hash", "")),
+            mux_hash=str(data.get("mux_hash", "")),
+            subtitle_hash=str(data.get("subtitle_hash", "")),
+            final_hash=str(data.get("final_hash", "")),
+        )
+
+
+@dataclass(frozen=True)
+class ShotHashContext:
+    """Encapsulation for shot hash inputs."""
+    seg: dict[str, Any]
+    profile_dict: dict[str, Any] = field(default_factory=dict)
+    render_cfg: dict[str, Any] = field(default_factory=dict)
+    env_fp: EnvironmentFingerprints | None = None
 
 
 @dataclass(frozen=True)
@@ -142,3 +186,116 @@ def is_segment_done(state: ChainState | None, idx: int, expected_video_path: Pat
     if not seg_info.get("is_valid", False):
         return False
     return expected_video_path.stat().st_size > 1000
+
+
+def collect_environment_fingerprints(
+    engine_bin: Path | str | None = None,
+    model_dir: Path | str | None = None,
+) -> EnvironmentFingerprints:
+    """Collect SHA256 fingerprints of binary and model weights."""
+    engine_sha = ""
+    if engine_bin:
+        epath = Path(engine_bin).resolve()
+        if epath.is_file():
+            try:
+                st = epath.stat()
+                with epath.open("rb") as f:
+                    chunk = f.read(65536)
+                engine_sha = hashlib.sha256(chunk + str(st.st_size).encode()).hexdigest()[:16]
+            except OSError:
+                pass
+
+    model_fp = ""
+    if model_dir:
+        mpath = Path(model_dir).resolve()
+        if mpath.is_dir():
+            try:
+                st_files = sorted(mpath.glob("*.safetensors"))
+                meta = [f"{p.name}:{p.stat().st_size}" for p in st_files]
+                if meta:
+                    model_fp = hashlib.sha256(";".join(meta).encode()).hexdigest()[:16]
+            except OSError:
+                pass
+
+    return EnvironmentFingerprints(
+        engine_sha256=engine_sha,
+        model_fingerprint=model_fp,
+    )
+
+
+def _extract_dialogue_components(seg: dict[str, Any], prompt: str) -> tuple[str, str]:
+    """Extract spoken dialogue and display dialogue from segment and prompt."""
+    spoken = str(seg.get("spoken_dialogue", "")).strip()
+    if not spoken:
+        d_match = re.search(r"<d>(.*?)</d>", prompt, flags=re.DOTALL)
+        spoken = d_match.group(1).strip() if d_match else str(seg.get("dialogue", "")).strip()
+    display = str(seg.get("display_dialogue", "")).strip() or str(seg.get("dialogue", "")).strip() or spoken
+    return spoken, display
+
+
+def compute_shot_artifact_hashes(
+    seg: dict[str, Any] | ShotHashContext,
+    *args: Any,
+    **kwargs: Any,
+) -> ShotArtifactHashes:
+    """Compute five-node DAG artifact hashes for a storyboard shot."""
+    if isinstance(seg, ShotHashContext):
+        s, p, rc, env = seg.seg, seg.profile_dict, seg.render_cfg, seg.env_fp or EnvironmentFingerprints()
+    else:
+        s = seg
+        p = args[0] if len(args) > 0 else kwargs.get("profile_dict", {})
+        rc = args[1] if len(args) > 1 else kwargs.get("render_cfg", {})
+        env = (args[2] if len(args) > 2 else kwargs.get("env_fp")) or EnvironmentFingerprints()
+
+    raw_prompt = str(s.get("prompt", ""))
+    vis_prompt = re.sub(r"<d>.*?</d>", "", raw_prompt, flags=re.DOTALL).strip()
+    spoken, display = _extract_dialogue_components(s, raw_prompt)
+
+    vis_data = {
+        "visual_prompt": vis_prompt,
+        "first_frame": s.get("first_frame"),
+        "last_frame": s.get("last_frame"),
+        "chain_mode": s.get("chain_mode") or rc.get("mode") or "sequential",
+        "width": s.get("width") or rc.get("width"),
+        "height": s.get("height") or rc.get("height"),
+        "frames": s.get("frames") or rc.get("frames"),
+        "steps": s.get("steps") or rc.get("steps"),
+        "layers": s.get("layers") or rc.get("layers"),
+        "reuse": s.get("reuse") or rc.get("reuse"),
+        "seed": s.get("seed") or rc.get("seed"),
+        "engine_sha256": env.engine_sha256,
+        "model_fingerprint": env.model_fingerprint,
+    }
+    visual_hash = hashlib.sha256(json.dumps(vis_data, sort_keys=True).encode()).hexdigest()[:16]
+
+    aud_data = {
+        "spoken": spoken,
+        "acoustic_anchor": s.get("acoustic_anchor") or p.get("acoustic_anchor", ""),
+        "bgm_style": s.get("bgm_style") or p.get("bgm_style", ""),
+        "frames": s.get("frames") or rc.get("frames"),
+        "seed": s.get("seed") or rc.get("seed"),
+        "model_fingerprint": env.model_fingerprint,
+    }
+    audio_hash = hashlib.sha256(json.dumps(aud_data, sort_keys=True).encode()).hexdigest()[:16]
+
+    mux_raw = f"{visual_hash}:{audio_hash}:{env.ffmpeg_mux_signature}"
+    mux_hash = hashlib.sha256(mux_raw.encode()).hexdigest()[:16]
+
+    sub_data = {
+        "display": display,
+        "segments": s.get("subtitle_segments", []),
+        "font_id": rc.get("font_id") or p.get("font_id", ""),
+    }
+    sub_hash = hashlib.sha256(json.dumps(sub_data, sort_keys=True).encode()).hexdigest()[:16]
+
+    burn = bool(rc.get("burn_subtitles", False))
+    final_raw = f"{mux_hash}:{sub_hash}:{burn}"
+    final_hash = hashlib.sha256(final_raw.encode()).hexdigest()[:16]
+
+    return ShotArtifactHashes(
+        visual_hash=visual_hash,
+        audio_hash=audio_hash,
+        mux_hash=mux_hash,
+        subtitle_hash=sub_hash,
+        final_hash=final_hash,
+    )

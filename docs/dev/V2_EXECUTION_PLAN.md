@@ -52,7 +52,7 @@ flowchart LR
     MA & SA --> FH["final_hash"] --> FA["Final Video (.mp4)"]
 ```
 
-- [ ] `F1-1` **於 `pipeline/h3_state.py` 實作環境指紋與五節點 `ShotArtifactHashes`**
+- [x] `F1-1` **於 `pipeline/h3_state.py` 實作環境指紋與五節點 `ShotArtifactHashes`**
   - **程式碼檔案**：`pipeline/h3_state.py`（讀取 `L1-144`）
   - **修改內容**：
     1. 將 `STATE_SCHEMA_VERSION` 升為 `2`（保留 `from_dict` 對 `v1` 的向下相容讀取）。
