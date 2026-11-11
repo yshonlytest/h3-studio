@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("h3_job_manager")
+LOGGER = logger
 
 
 class JobStatus(str, Enum):

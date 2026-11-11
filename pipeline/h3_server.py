@@ -8,8 +8,10 @@ and receive real-time progress events without third-party dependencies.
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
+import os
 import queue
 import re
 import sys
@@ -30,6 +32,7 @@ from pipeline.h3_presets import get_system_memory_status
 from pipeline.h3_prompt_linter import LintInput, analyze_dynamic_tension, lint_prompt
 from pipeline.h3_staging_board import CameraTrack, Point2D, compile_camera_direction
 from pipeline.h3_storyboard_pipeline import run_chained_manifest
+from pipeline.h3_subtitles import reconcile_av_duration
 from pipeline.h3_telemetry import (
     EstimatedMetrics,
     ExternalMetrics,
@@ -219,24 +222,21 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": "Invalid JSON body"})
             return
 
-        if url.path == "/api/workspace-sync":
-            self._handle_workspace_sync(url.query)
-        elif url.path == "/api/reroll-shot":
-            self._handle_reroll_shot(body or {})
-        elif url.path == "/api/audio-reroll":
-            self._handle_fast_audio_reroll(body or {})
-        elif url.path == "/api/replace-audio-stream":
-            self._handle_replace_audio_stream(body or {})
-        elif url.path == "/api/lexicon":
-            self._handle_lexicon_post(body or {})
-        elif url.path == "/api/lint":
-            self._handle_lint(body or {})
-        elif url.path == "/api/expand":
-            self._handle_expand(body or {})
-        elif url.path == "/api/render/start":
-            self._handle_render_start(body or {})
-        elif url.path == "/api/render/cancel":
-            self._handle_render_cancel()
+        payload = body or {}
+        handlers = {
+            "/api/workspace-sync": lambda: self._handle_workspace_sync(url.query),
+            "/api/reroll-shot": lambda: self._handle_reroll_shot(payload),
+            "/api/audio-reroll": lambda: self._handle_fast_audio_reroll(payload),
+            "/api/replace-audio-stream": lambda: self._handle_replace_audio_stream(payload),
+            "/api/lexicon": lambda: self._handle_lexicon_post(payload),
+            "/api/lint": lambda: self._handle_lint(payload),
+            "/api/expand": lambda: self._handle_expand(payload),
+            "/api/render/start": lambda: self._handle_render_start(payload),
+            "/api/render/cancel": self._handle_render_cancel,
+        }
+        handler = handlers.get(url.path)
+        if handler:
+            handler()
         else:
             self._send_json(404, {"error": "Endpoint not found", "path": url.path})
 
@@ -451,9 +451,6 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._send_json(500, {"ok": False, "error": str(exc)})
 
     def _handle_replace_audio_stream(self, body: dict[str, Any]) -> None:
-        import base64
-        from pipeline.h3_subtitles import reconcile_av_duration
-
         shot_index = body.get("shot_index")
         audio_b64 = str(body.get("audio_base64", "")).strip()
         video_path_str = str(body.get("video_path", "")).strip()
