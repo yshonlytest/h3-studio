@@ -410,3 +410,61 @@ def burn_subtitles_ffmpeg(
     ]
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     return cfg.output_path
+
+
+def mux_soft_subtitles_mp4(video_path: Path, srt_path: Path, output_path: Path) -> Path:
+    """Mux SRT subtitles as a soft mov_text track into an MP4 container."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i", str(video_path),
+        "-i", str(srt_path),
+        "-map", "0:v:0",
+        "-map", "0:a:0?",
+        "-map", "1:s:0",
+        "-c:v", "copy",
+        "-c:a", "copy",
+        "-c:s", "mov_text",
+        "-metadata:s:s:0", "language=zho",
+        str(output_path),
+    ]
+    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    return output_path
+
+
+def reconcile_av_duration(video_path: Path, audio_path: Path, output_path: Path) -> Path:
+    """Mux video and audio, padding audio with apad if shorter to protect speech offset."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    v_info = probe_media_streams(video_path)
+    a_info = probe_media_streams(audio_path)
+    v_dur = v_info.video_duration_sec
+    a_dur = a_info.audio_duration_sec
+
+    if a_dur > 0 and v_dur > a_dur + 0.05:
+        audio_filter = f"apad=pad_dur={v_dur - a_dur:.3f}"
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-i", str(audio_path),
+            "-filter_complex", f"[1:a]{audio_filter}[aout]",
+            "-map", "0:v:0",
+            "-map", "[aout]",
+            "-c:v", "copy",
+            "-c:a", "aac", "-b:a", "192k",
+            "-t", f"{v_dur:.3f}",
+            str(output_path),
+        ]
+    else:
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-i", str(audio_path),
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+            "-c:v", "copy",
+            "-c:a", "copy",
+            str(output_path),
+        ]
+    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    return output_path

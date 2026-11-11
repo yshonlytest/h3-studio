@@ -664,42 +664,92 @@ def _resolve_segment_anchoring(
     return Path(ff_str).expanduser().resolve(), None, 1
 
 
-def _apply_manifest_subtitles(merged_file: Path, manifest: dict, output_prefix: str) -> Path:
-    """Generate .srt track and burn subtitle overlay if specified in manifest."""
-    subtitles_data = manifest.get("subtitles")
-    if not subtitles_data:
-        return merged_file
+def _apply_manifest_subtitles(
+    merged_file: Path,
+    manifest: dict,
+    output_prefix: str,
+    generated_videos: list[Path] | None = None,
+) -> Path:
+    """Generate zero-drift .srt track and soft/burned subtitle overlay."""
     try:
         from pipeline.h3_subtitles import (
             BurnSubtitlesConfig,
             SubtitleCue,
+            align_shot_subtitles,
             burn_subtitles_ffmpeg,
+            mux_soft_subtitles_mp4,
+            probe_media_streams,
             write_srt_file,
         )
-        cues = [
-            SubtitleCue(
-                start_sec=float(c["start_sec"]),
-                end_sec=float(c["end_sec"]),
-                text=str(c["text"]),
-                speaker=str(c.get("speaker", "")),
-            )
-            for c in subtitles_data
-        ]
+        cues: list[SubtitleCue] = []
+        subtitles_data = manifest.get("subtitles")
+        if subtitles_data:
+            cues = [
+                SubtitleCue(
+                    start_sec=float(c["start_sec"]),
+                    end_sec=float(c["end_sec"]),
+                    text=str(c["text"]),
+                    speaker=str(c.get("speaker", "")),
+                )
+                for c in subtitles_data
+            ]
+        elif generated_videos and manifest.get("segments"):
+            elapsed = 0.0
+            segments_list = list(manifest.get("segments", []))
+            for idx, v_path in enumerate(generated_videos):
+                if idx >= len(segments_list):
+                    break
+                seg = segments_list[idx]
+                info = probe_media_streams(v_path)
+                diag_res = resolve_shot_dialogues(seg, manifest.get("language_code", "zh-TW"))
+                text = diag_res.display_dialogue
+                dur = info.video_duration_sec or 5.0
+                if text:
+                    track = align_shot_subtitles(
+                        str(seg.get("shot_id", "shot")),
+                        display_dialogue=text,
+                        total_duration_sec=dur,
+                    )
+                    for c in track.subtitle_segments:
+                        cues.append(
+                            SubtitleCue(
+                                start_sec=round(elapsed + c.start_sec, 3),
+                                end_sec=round(elapsed + c.end_sec, 3),
+                                text=c.text,
+                                speaker=c.speaker,
+                            )
+                        )
+                elapsed += dur
+
+        if not cues:
+            return merged_file
+
         srt_path = merged_file.with_suffix(".srt")
         write_srt_file(cues, srt_path)
         print(f"[Subtitles] 📝 Exported subtitle track -> {srt_path.name}", flush=True)
 
-        sub_output = next_output_filepath(f"{output_prefix}_subtitled")
-        burn_subtitles_ffmpeg(
-            cues,
-            BurnSubtitlesConfig(
-                video_path=merged_file,
-                output_path=sub_output,
-                temp_dir=TEMP_DIR / "subtitles_overlay",
-            ),
-        )
-        print(f"[Subtitles] 🎬 Burned subtitles into video -> {sub_output.name}", flush=True)
-        return sub_output
+        burn = bool(manifest.get("burn_subtitles", False))
+        if burn:
+            sub_output = next_output_filepath(f"{output_prefix}_burned")
+            burn_subtitles_ffmpeg(
+                cues,
+                BurnSubtitlesConfig(
+                    video_path=merged_file,
+                    output_path=sub_output,
+                    temp_dir=TEMP_DIR / "subtitles_overlay",
+                ),
+            )
+            print(f"[Subtitles] 🎬 Burned subtitles into video -> {sub_output.name}", flush=True)
+            return sub_output
+
+        sub_output = next_output_filepath(f"{output_prefix}_softsub")
+        try:
+            mux_soft_subtitles_mp4(merged_file, srt_path, sub_output)
+            print(f"[Subtitles] 🎬 Muxed soft subtitles -> {sub_output.name}", flush=True)
+            return sub_output
+        except Exception as mux_err:
+            print(f"[Subtitles] ⚠️ Soft subtitle muxing skipped: {mux_err}", flush=True)
+            return merged_file
     except Exception as exc:
         print(f"[Subtitles] ⚠️ Subtitle generation skipped: {exc}", flush=True)
         return merged_file
@@ -729,7 +779,7 @@ def _merge_and_finalize_storyboard(
     else:
         print(f"[HealthCheck][Merged] ✅ Final merged video healthy ({merged_report.duration_seconds:.2f}s)", flush=True)
 
-    merged_file = _apply_manifest_subtitles(merged_file, manifest, output_prefix)
+    merged_file = _apply_manifest_subtitles(merged_file, manifest, output_prefix, generated_videos)
 
     bgm_str = manifest.get("bgm_track")
     if bgm_str:

@@ -154,7 +154,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_subtitles_alignment.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_subtitles.py tests/test_subtitles_alignment.py && grep -q "\- \[x\] \`F3-A2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F3-A2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F3-B` **音視訊時長差 `apad` 安全檢查與 `mov_text` 軟/硬字幕封裝**
+- [x] `F3-B` **音視訊時長差 `apad` 安全檢查與 `mov_text` 軟/硬字幕封裝**
   - **程式碼檔案**：`pipeline/h3_subtitles.py`、`pipeline/h3_storyboard_pipeline.py`（切片讀取 `L660-740`）、新增 `tests/test_subtitles_muxing.py`
   - **修改內容**：
     1. 新增 `mux_soft_subtitles_mp4(video_path: Path, srt_path: Path, output_path: Path) -> Path`：明確執行 `ffmpeg -y -i video -i srt -map 0:v:0 -map 0:a:0? -map 1:s:0 -c:v copy -c:a copy -c:s mov_text -metadata:s:s:0 language=zho output`。
