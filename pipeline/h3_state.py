@@ -170,8 +170,8 @@ def save_state(path: Path, state: ChainState) -> bool:
         if temp_path.exists():
             try:
                 temp_path.unlink()
-            except OSError:
-                pass
+            except OSError as unlink_err:
+                LOGGER.debug("Cleanup of temp state file %s failed: %s", temp_path, unlink_err)
         return False
 
 
@@ -202,8 +202,8 @@ def collect_environment_fingerprints(
                 with epath.open("rb") as f:
                     chunk = f.read(65536)
                 engine_sha = hashlib.sha256(chunk + str(st.st_size).encode()).hexdigest()[:16]
-            except OSError:
-                pass
+            except OSError as exc:
+                LOGGER.debug("Could not fingerprint engine binary %s: %s", epath, exc)
 
     model_fp = ""
     if model_dir:
@@ -214,8 +214,8 @@ def collect_environment_fingerprints(
                 meta = [f"{p.name}:{p.stat().st_size}" for p in st_files]
                 if meta:
                     model_fp = hashlib.sha256(";".join(meta).encode()).hexdigest()[:16]
-            except OSError:
-                pass
+            except OSError as exc:
+                LOGGER.debug("Could not fingerprint model dir %s: %s", mpath, exc)
 
     return EnvironmentFingerprints(
         engine_sha256=engine_sha,

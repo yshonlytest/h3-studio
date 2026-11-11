@@ -7,6 +7,8 @@ Enforces the three P0 engineering guardrails:
   3. Optional persistent interactive session (h3_cli_run with h3_cache_set_enabled=1)
      controlled via stdin commands with automatic idle-timeout shutdown.
 """
+from __future__ import annotations
+
 import logging
 import os
 import re

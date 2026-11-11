@@ -277,8 +277,8 @@ def resolve_anchor_ladder(opts: ResolveAnchorOptions) -> tuple[Path, int]:
                     target_out.parent.mkdir(parents=True, exist_ok=True)
                     resized.save(target_out)
                     return target_out, 2
-            except Exception:
-                pass
+            except Exception as exc:
+                sys.stderr.write(f"[resolve_anchor] Image resize fallback triggered for {cand}: {exc}\n")
 
     # Level 3: Text description -> render clean slide card
     if hint:

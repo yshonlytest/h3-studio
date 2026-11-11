@@ -100,8 +100,8 @@ class ShotLock:
             if fd is not None:
                 try:
                     os.close(fd)
-                except OSError:
-                    pass
+                except OSError as close_err:
+                    LOGGER.debug("Ignored close error on failed lock fd: %s", close_err)
             self._fd = None
             self._acquired = False
             return False
@@ -111,19 +111,19 @@ class ShotLock:
         if self._acquired and self._fd is not None:
             try:
                 fcntl.flock(self._fd, fcntl.LOCK_UN)
-            except OSError:
-                pass
+            except OSError as unlock_err:
+                LOGGER.debug("Ignored flock unlock error: %s", unlock_err)
             try:
                 os.close(self._fd)
-            except OSError:
-                pass
+            except OSError as close_err:
+                LOGGER.debug("Ignored fd close error: %s", close_err)
             self._fd = None
             self._acquired = False
             try:
                 if self.lock_file.exists():
                     self.lock_file.unlink()
-            except OSError:
-                pass
+            except OSError as unlink_err:
+                LOGGER.debug("Ignored lock file unlink error: %s", unlink_err)
 
     def get_lock_info(self) -> Optional[Dict[str, Any]]:
         """Read metadata of the process currently holding the lock if any."""

@@ -88,7 +88,7 @@ class EventBroadcaster:
                 try:
                     q.put_nowait(payload)
                 except queue.Full:
-                    pass
+                    LOGGER.debug("Subscriber queue full; dropping event %s", event_type)
 
 
 class H3ServerHub:
@@ -172,8 +172,8 @@ class H3ServerHub:
             if manifest_file.is_file():
                 try:
                     manifest_file.unlink()
-                except OSError:
-                    pass
+                except OSError as exc:
+                    LOGGER.debug("Failed to unlink temporary manifest %s: %s", manifest_file, exc)
 
 
 HUB = H3ServerHub()
@@ -502,8 +502,8 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
                 except queue.Empty:
                     self.wfile.write(b": ping\n\n")
                     self.wfile.flush()
-        except (BrokenPipeError, ConnectionResetError):
-            pass
+        except (BrokenPipeError, ConnectionResetError) as exc:
+            LOGGER.debug("SSE client disconnected: %s", exc)
         finally:
             HUB.broadcaster.unsubscribe(sub)
 

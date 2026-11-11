@@ -174,7 +174,7 @@ def _check_pypinyin_diagnostics(text: str) -> tuple[str, ...]:
             if len(options) > 1 and "\u4e00" <= char <= "\u9fff":
                 warnings.append(f"Polyphonic character '{char}' has readings: {options}")
     except ImportError:
-        pass
+        return ()
     return tuple(warnings)
 
 

@@ -281,19 +281,19 @@ def probe_media_streams(video_path: Path) -> MediaStreamInfo:
                 try:
                     v_dur = float(s["duration"])
                 except (ValueError, TypeError):
-                    pass
+                    v_dur = 0.0
         elif ctype == "audio" and "duration" in s:
             try:
                 a_dur = float(s["duration"])
             except (ValueError, TypeError):
-                pass
+                a_dur = 0.0
 
     fmt_dur = 0.0
     if "format" in data and "duration" in data["format"]:
         try:
             fmt_dur = float(data["format"]["duration"])
         except (ValueError, TypeError):
-            pass
+            fmt_dur = 0.0
 
     return MediaStreamInfo(
         width=width or 864,
