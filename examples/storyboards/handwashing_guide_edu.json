@@ -1,0 +1,64 @@
+{
+  "title": "正確洗手五步驟與七字口訣科普教學 / Proper Handwashing Guide (5 Steps & 7 Key Gestures)",
+  "description": "4-segment comprehensive educational explainer storyboard for proper handwashing technique, featuring bilingual Context-IR prompts, slide infographic anchoring, dual-track phonetic dialogue, and anti-drift character continuity.",
+  "project_mode": "edu_explainer",
+  "auto_duration": true,
+  "mode": "turbo",
+  "width": 864,
+  "height": 480,
+  "frames": 124,
+  "steps": 6,
+  "layers": 50,
+  "reuse": 0,
+  "seed": 20261111,
+  "output_prefix": "storyboard_runs/handwashing_guide_edu",
+  "anchor_ref_image": "examples/assets/instructor_suit_ghibli.png",
+  "global_profile": {
+    "language_code": "zh-TW",
+    "acoustic_anchor": "gentle_mentor",
+    "bgm_ducking_db": -18.0
+  },
+  "segments": [
+    {
+      "segment": 1,
+      "title": "Part 1 (0-6s): 看不見的病菌防線 / Invisible Germs & The First Defense Line",
+      "shot_type": "presenter_focus",
+      "first_frame": "examples/assets/instructor_suit_ghibli.png",
+      "slide_image": "examples/assets/handwashing_c01_intro.png",
+      "chain_mode": "first_frame",
+      "display_dialogue": "病從口入，我們的手每天都會接觸成千上萬看不見的病原菌。正確洗手是守護健康最有效的第一道防線！",
+      "spoken_dialogue": "病從口入，我們的手每天都會接觸成千上萬看不見的病原菌。正確洗手是守護健康最有效的第一道防線！",
+      "prompt": "[Scene] Sunlit modern medical clinic and lecture studio, warm Studio Ghibli cel-animation style, soft morning ambient light streaming through clean glass windows. [Camera] Slow cinematic dolly-in pushing toward the friendly young medical instructor in professional attire. Timeline: 0-3.0s: Instructor steps warmly into light, gesturing invitingly to audience. 3.0-6.0s: Smiles with reassuring eye contact, emphasizing the invisible nature of bacteria. [Look] Gentle watercolor gouache background, sharp character contours, friendly reassuring atmosphere. Audio: Soft acoustic guitar and piano chords, gentle room ambience, <d>[Chinese] 病從口入，我們的手每天都會接觸成千上萬看不見的病原菌。正確洗手是守護健康最有效的第一道防線！</d>."
+    },
+    {
+      "segment": 2,
+      "title": "Part 2 (6-14s): 洗手五步驟——濕搓沖捧擦 / Five Steps of Proper Handwashing",
+      "shot_type": "presenter_chart",
+      "slide_image": "examples/assets/handwashing_c02_five_steps.png",
+      "chain_mode": "motion_context",
+      "display_dialogue": "正確洗手掌握五步驟「濕、搓、沖、捧、擦」：淋濕、肥皂起泡搓二十秒、清水沖淨、捧水沖洗水龍頭並完全擦乾！",
+      "spoken_dialogue": "正確洗手掌握五步驟「濕、搓、沖、捧、擦」：淋濕、肥皂起泡搓二十秒、清水沖淨、捧水沖洗水龍頭並完全擦乾！",
+      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Medical studio with interactive infographic slide card floating clearly beside instructor. [Camera] Medium shot tracking slightly rightward framing instructor and slide card simultaneously. Timeline: 0-4.0s: Instructor gestures to the five steps on slide: Wet, Rub, Rinse, Cup, and Wipe. 4.0-8.0s: Demonstrates the lathering motion with clear hand gestures. [Look] Clean educational clarity, vivid visual hierarchy on the infographic, warm Ghibli palette. Audio: Gentle water droplet chimes, crisp explanatory narration, <d>[Chinese] 正確洗手掌握五步驟「濕、搓、沖、捧、擦」：淋濕、肥皂起泡搓二十秒、清水沖淨、捧水沖洗水龍頭並完全擦乾！</d>."
+    },
+    {
+      "segment": 3,
+      "title": "Part 3 (14-22s): 七字口訣深層清潔——內外夾弓大立腕 / Seven Key Gestures for Deep Cleansing",
+      "shot_type": "presenter_chart",
+      "slide_image": "examples/assets/handwashing_c03_seven_keys.png",
+      "chain_mode": "motion_context",
+      "display_dialogue": "深層清潔掌握七字口訣：「內、外、夾、弓、大、立、腕」，徹底洗淨指縫、指甲縫與手腕死角！",
+      "spoken_dialogue": "深層清潔掌握七字口訣：「內、外、夾、弓、大、立、萬」，徹底洗淨指縫、指甲縫與手腕死角！",
+      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Medical demonstration studio with detailed seven-step hand gesture breakdown chart. [Camera] Dynamic close-up on instructor expressive hands performing each gesture rhythmically. Timeline: 0-4.0s: Palm to palm, back of hand, fingers interlocked, back of fingers. 4.0-8.0s: Thumbs rotated, fingertips cleaned, wrists washed thoroughly. [Look] Studio Ghibli cel animation, delicate hand contour lines, sparkling cleanliness gleam effect. Audio: Uplifting woodwind melody, rhythmic cheerful chime, <d>[Chinese] 深層清潔掌握七字口訣：「內、外、夾、弓、大、立、萬」，徹底洗淨指縫、指甲縫與手腕死角！</d>."
+    },
+    {
+      "segment": 4,
+      "title": "Part 4 (22-30s): 關鍵時機與兩次生日快樂歌 / Key Moments & Two Birthday Songs Rule",
+      "shot_type": "presenter_focus",
+      "slide_image": "examples/assets/handwashing_c04_timing.png",
+      "chain_mode": "motion_context",
+      "display_dialogue": "吃飯前、如廁後以及抱小孩前都是關鍵時機。洗手唱完兩次生日快樂歌，才能真正洗淨病菌，守護全家人健康！",
+      "spoken_dialogue": "吃飯前、如廁後以及抱小孩前都是關鍵時機。洗手唱完兩次生日快樂歌，才能真正洗淨病菌，守護全家人健康！",
+      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Warm golden sunlight filling the medical studio, peaceful clinic atmosphere. [Camera] Slow pull-back rising into a confident concluding tableau. Timeline: 0-4.0s: Instructor displays clean sparkling hands with a warm, encouraging smile. 4.0-8.0s: Cordially waves goodbye in a memorable sign-off gesture as warm light bathes the scene. [Look] Heartwarming Ghibli conclusion, soft watercolor background, inspiring atmosphere. Audio: Harmonious piano crescendo, gentle breeze ambience, <d>[Chinese] 吃飯前、如廁後以及抱小孩前都是關鍵時機。洗手唱完兩次生日快樂歌，才能真正洗淨病菌，守護全家人健康！</d>."
+    }
+  ]
+}

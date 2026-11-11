@@ -57,11 +57,17 @@
         <button type="button" class="btn" onclick="createNewBlankProject()" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;">
           ➕ 新專案
         </button>
+        <button type="button" class="btn" onclick="resetToDefaultDemoProject()" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14);" title="載入 25 秒賽博偵探九宮格專屬範本與實測成片">
+          🕵️ 賽博偵探 (九宮格)
+        </button>
         <button type="button" class="btn" onclick="loadGoldenTemplate('ink_sorcerer')" style="padding:6px 10px; font-size:0.78rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.14);" title="載入 25 秒水墨奇幻潛空間專屬範本與實測成片">
           🖌️ 墨繪靈境 (潛空間)
         </button>
-        <button type="button" class="btn" onclick="resetToDefaultDemoProject()" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14);" title="載入 25 秒賽博偵探九宮格專屬範本與實測成片">
-          🕵️ 賽博偵探 (九宮格)
+        <button type="button" class="btn" onclick="loadGoldenTemplate('handwashing_edu')" style="padding:6px 10px; font-size:0.78rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.14); font-weight:600;" title="載入洗手五步驟與七字口訣科普教學長片範本">
+          🧼 洗手教學 (長影片)
+        </button>
+        <button type="button" class="btn" onclick="openPronunciationLexiconModal()" style="padding:6px 10px; font-size:0.78rem; border-color:#f59e0b; color:#fde68a; background:rgba(245,158,11,0.14);" title="檢視與管理發音字典、破音字唯一字詞替換與全片體檢">
+          🔤 發音詞庫
         </button>
 
         <!-- ⚙️ 專案管理與備份收合選單 -->
@@ -410,10 +416,11 @@
               </select>
             </div>
             <div>
-              <label>⚡ 實測 25s 範本</label>
-              <div style="display:flex; gap:6px;">
-                <button type="button" class="btn" style="flex:1; padding:7px 8px; font-size:0.76rem; background:#1e293b;" onclick="loadGoldenTemplate('ink_sorcerer')">🖌️ 墨繪靈境 (潛空間)</button>
-                <button type="button" class="btn" style="flex:1; padding:7px 8px; font-size:0.76rem; background:#1e293b;" onclick="loadGoldenTemplate('detective')">🕵️ 賽博偵探 (九宮格)</button>
+              <label>⚡ 實測示範範本</label>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:#1e293b;" onclick="loadGoldenTemplate('detective')">🕵️ 賽博偵探 (九宮格)</button>
+                <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:#1e293b;" onclick="loadGoldenTemplate('ink_sorcerer')">🖌️ 墨繪靈境 (潛空間)</button>
+                <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe;" onclick="loadGoldenTemplate('handwashing_edu')">🧼 洗手教學 (長影片)</button>
               </div>
             </div>
           </div>
@@ -3139,14 +3146,76 @@ ${desc}${extra}
             prompt: "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame and pose. [Scene] Grand cyberpunk boulevard flanked by massive holographic billboards and glowing rain puddles. [Camera] High-speed dynamic tracking lead shot moving backwards as detective charges forward. Timeline: 0-3.0s: Detective sprints forward in full pursuit, combat boots violently shattering neon-lit water puddles into flying droplets. 3.0-5.0s: Leaps across steaming drainage grate, firing weapon off-screen, laser pulse illuminating entire boulevard. [Look] Intense motion blur on background neon streaks, sharp focused protagonist, cinematic lens flare. Audio: Rapid splashing footsteps, roaring plasma discharge echoing between skyscrapers, pounding thunderclap."
           }
         ]
+      },
+      handwashing_edu: {
+        title: "Proper Handwashing Guide (5 Steps & 7 Key Gestures) / 正確洗手五步驟與七字口訣科普教學",
+        project_slug: "handwashing_guide_edu",
+        project_mode: "edu_explainer",
+        auto_duration: true,
+        anchor_ref_image: "examples/assets/instructor_suit_ghibli.png",
+        demo_ref_image: "examples/assets/instructor_suit_ghibli.png",
+        reasoning_zh: "科普教學長片示範範本：講師主鏡與圖表側影防漂移錨點交替，內建雙軌發音正規化與真實秒數零漂移字幕。",
+        expanded_story_zh: "由醫普講師解說雙手看不見的病原菌，循序示範「濕、搓、沖、捧、擦」五步驟與「內外夾弓大立腕」七字訣，並提醒如廁飲食前洗手唱兩次生日快樂歌。",
+        segments: [
+          {
+            segment: 1,
+            title: "Part 1 (0-6s): 看不見的病菌防線 / Invisible Germs & The First Defense Line",
+            shot_type: "presenter_focus",
+            first_frame: "examples/assets/instructor_suit_ghibli.png",
+            slide_image: "examples/assets/handwashing_c01_intro.png",
+            chain_mode: "first_frame",
+            display_dialogue: "病從口入，我們的手每天都會接觸成千上萬看不見的病原菌。正確洗手是守護健康最有效的第一道防線！",
+            spoken_dialogue: "病從口入，我們的手每天都會接觸成千上萬看不見的病原菌。正確洗手是守護健康最有效的第一道防線！",
+            prompt: "[Scene] Sunlit modern medical clinic and lecture studio, warm Studio Ghibli cel-animation style, soft morning ambient light streaming through clean glass windows. [Camera] Slow cinematic dolly-in pushing toward the friendly young medical instructor in professional attire. Timeline: 0-3.0s: Instructor steps warmly into light, gesturing invitingly to audience. 3.0-6.0s: Smiles with reassuring eye contact, emphasizing the invisible nature of bacteria. [Look] Gentle watercolor gouache background, sharp character contours, friendly reassuring atmosphere. Audio: Soft acoustic guitar and piano chords, gentle room ambience, <d>[Chinese] 病從口入，我們的手每天都會接觸成千上萬看不見的病原菌。正確洗手是守護健康最有效的第一道防線！</d>."
+          },
+          {
+            segment: 2,
+            title: "Part 2 (6-14s): 洗手五步驟——濕搓沖捧擦 / Five Steps of Proper Handwashing",
+            shot_type: "presenter_chart",
+            slide_image: "examples/assets/handwashing_c02_five_steps.png",
+            chain_mode: "motion_context",
+            display_dialogue: "正確洗手掌握五步驟「濕、搓、沖、捧、擦」：淋濕、肥皂起泡搓二十秒、清水沖淨、捧水沖洗水龍頭並完全擦乾！",
+            spoken_dialogue: "正確洗手掌握五步驟「濕、搓、沖、捧、擦」：淋濕、肥皂起泡搓二十秒、清水沖淨、捧水沖洗水龍頭並完全擦乾！",
+            prompt: "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Medical studio with interactive infographic slide card floating clearly beside instructor. [Camera] Medium shot tracking slightly rightward framing instructor and slide card simultaneously. Timeline: 0-4.0s: Instructor gestures to the five steps on slide: Wet, Rub, Rinse, Cup, and Wipe. 4.0-8.0s: Demonstrates the lathering motion with clear hand gestures. [Look] Clean educational clarity, vivid visual hierarchy on the infographic, warm Ghibli palette. Audio: Gentle water droplet chimes, crisp explanatory narration, <d>[Chinese] 正確洗手掌握五步驟「濕、搓、沖、捧、擦」：淋濕、肥皂起泡搓二十秒、清水沖淨、捧水沖洗水龍頭並完全擦乾！</d>."
+          },
+          {
+            segment: 3,
+            title: "Part 3 (14-22s): 七字口訣深層清潔——內外夾弓大立腕 / Seven Key Gestures for Deep Cleansing",
+            shot_type: "presenter_chart",
+            slide_image: "examples/assets/handwashing_c03_seven_keys.png",
+            chain_mode: "motion_context",
+            display_dialogue: "深層清潔掌握七字口訣：「內、外、夾、弓、大、立、腕」，徹底洗淨指縫、指甲縫與手腕死角！",
+            spoken_dialogue: "深層清潔掌握七字口訣：「內、外、夾、弓、大、立、萬」，徹底洗淨指縫、指甲縫與手腕死角！",
+            prompt: "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Medical demonstration studio with detailed seven-step hand gesture breakdown chart. [Camera] Dynamic close-up on instructor expressive hands performing each gesture rhythmically. Timeline: 0-4.0s: Palm to palm, back of hand, fingers interlocked, back of fingers. 4.0-8.0s: Thumbs rotated, fingertips cleaned, wrists washed thoroughly. [Look] Studio Ghibli cel animation, delicate hand contour lines, sparkling cleanliness gleam effect. Audio: Uplifting woodwind melody, rhythmic cheerful chime, <d>[Chinese] 深層清潔掌握七字口訣：「內、外、夾、弓、大、立、萬」，徹底洗淨指縫、指甲縫與手腕死角！</d>."
+          },
+          {
+            segment: 4,
+            title: "Part 4 (22-30s): 關鍵時機與兩次生日快樂歌 / Key Moments & Two Birthday Songs Rule",
+            shot_type: "presenter_focus",
+            slide_image: "examples/assets/handwashing_c04_timing.png",
+            chain_mode: "motion_context",
+            display_dialogue: "吃飯前、如廁後以及抱小孩前都是關鍵時機。洗手唱完兩次生日快樂歌，才能真正洗淨病菌，守護全家人健康！",
+            spoken_dialogue: "吃飯前、如廁後以及抱小孩前都是關鍵時機。洗手唱完兩次生日快樂歌，才能真正洗淨病菌，守護全家人健康！",
+            prompt: "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Warm golden sunlight filling the medical studio, peaceful clinic atmosphere. [Camera] Slow pull-back rising into a confident concluding tableau. Timeline: 0-4.0s: Instructor displays clean sparkling hands with a warm, encouraging smile. 4.0-8.0s: Cordially waves goodbye in a memorable sign-off gesture as warm light bathes the scene. [Look] Heartwarming Ghibli conclusion, soft watercolor background, inspiring atmosphere. Audio: Harmonious piano crescendo, gentle breeze ambience, <d>[Chinese] 吃飯前、如廁後以及抱小孩前都是關鍵時機。洗手唱完兩次生日快樂歌，才能真正洗淨病菌，守護全家人健康！</d>."
+          }
+        ]
       }
     };
 
     async function loadGoldenTemplate(templateKey) {
+      if (templateKey === "handwashing_edu") {
+        if (typeof selectProjectMode === "function") {
+          selectProjectMode("edu");
+        }
+      } else {
+        if (typeof selectProjectMode === "function") {
+          selectProjectMode("creative");
+        }
+      }
       const statusEl = document.getElementById("planStatusMsg");
       if (statusEl) {
         statusEl.style.color = "var(--muted)";
-        statusEl.textContent = `⏳ 正在載入 25s 實測範本 (${templateKey})...`;
+        statusEl.textContent = `⏳ 正在載入示範範本 (${templateKey})...`;
       }
 
       const fallback = GOLDEN_TEMPLATES_FALLBACK[templateKey] || GOLDEN_TEMPLATES_FALLBACK.detective;
@@ -3193,7 +3262,9 @@ ${desc}${extra}
       if (fallback.part_videos && fallback.part_videos.length) {
         renderSegmentsPlaylist(fallback.part_videos);
       }
-      const tplName = templateKey === "ink_sorcerer" ? "墨繪靈境（潛空間專屬）" : "賽博偵探（九宮格專屬）";
+      const tplName = templateKey === "handwashing_edu"
+        ? "洗手教學（長影片專屬）"
+        : (templateKey === "ink_sorcerer" ? "墨繪靈境（潛空間專屬）" : "賽博偵探（九宮格專屬）");
       if (fallback.merged_video_path) {
         playVideoInStage(
           fallback.merged_video_path,
@@ -3532,11 +3603,6 @@ ${desc}${extra}
             <option value="pure_b_roll" ${seg.shot_type === 'pure_b_roll' ? 'selected' : ''}>🌄 純空鏡 (強化聲學旁白)</option>
           </select>
 
-          <div style="flex:1; min-width:240px; display:flex; align-items:center; gap:6px;">
-            <span style="font-size:0.8rem; color:#d8b4fe;">台詞：</span>
-            <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（建議 16~22 字，超過 26 字亮紅燈警告）..." style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
-          </div>
-
           <span class="seg-pacing-badge badge ok" style="font-size:0.76rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.2);">字數: 0</span>
 
           <select class="seg-frames-select" onchange="onShotFramesChange(this)" style="padding:4px 8px; font-size:0.8rem; min-height:32px; background:#0f0920; color:#d8b4fe; border:1px solid #a855f7; border-radius:4px;">
@@ -3547,8 +3613,38 @@ ${desc}${extra}
           </select>
 
           <button type="button" class="seg-split-btn btn" onclick="splitSegmentCardInTwo(this)" style="display:none; padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(239,68,68,0.2); border-color:#ef4444; color:#fca5a5;">✂️ 一鍵拆分為兩鏡</button>
+          <button type="button" class="btn" onclick="rerollSingleShot(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe;">🔄 局部重抽 (完整算圖)</button>
+        </div>
 
-          <button type="button" class="btn" onclick="rerollSingleShot(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe;">🔄 局部重抽</button>
+        <!-- 🎙️ 鏡段音訊、發音校正與快速重抽控制列 (全模式通用) -->
+        <div class="seg-audio-controls-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0 8px 0; padding:8px 10px; background:rgba(15,23,42,0.65); border:1px solid #1e3a5f; border-radius:6px;">
+          <div style="flex:1; min-width:240px; display:flex; align-items:center; gap:6px;">
+            <span style="font-size:0.8rem; color:#38bdf8; font-weight:600; white-space:nowrap;">🎙️ 台詞：</span>
+            <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（如：真正的經濟利潤、正確洗手五步驟...）" style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
+          </div>
+          <button type="button" class="btn" onclick="rerollShotAudio(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;" title="調用代理畫布在 15 秒內極速重抽 32kHz 音訊，並以 FFmpeg 無損替換原影片音軌">
+            🎙️ 快速重抽音軌
+          </button>
+          <button type="button" class="btn" onclick="toggleShotPhoneticsDrawer(this, ${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fde68a;" title="展開查看破音字偵測、字幕文字 vs 口播讀音">
+            🔤 雙軌發音校正 ▾
+          </button>
+          <span class="seg-phonetic-badge" style="font-size:0.74rem; color:#94a3b8;">${renderPhoneticHintBadge(initialDialogue)}</span>
+        </div>
+
+        <div class="seg-phonetics-drawer" style="display:none; margin:4px 0 8px 0; padding:10px; background:#070d1a; border:1px solid #334155; border-radius:6px;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+            <div>
+              <label style="font-size:0.76rem; color:#94a3b8;">📝 字幕顯示文字 (display_dialogue)</label>
+              <input type="text" class="seg-display-dialogue-input" value="${escapeHtml(seg.display_dialogue || initialDialogue)}" oninput="onDisplayDialogueChange(this, ${idx})" style="width:100%; padding:5px 8px; font-size:0.8rem; background:#0b1329; border:1px solid #3b82f6; border-radius:4px; color:#fff;" placeholder="觀眾在畫面上看到的字幕文字" />
+            </div>
+            <div>
+              <label style="font-size:0.76rem; color:#fde68a;">🗣️ 唯一發音口播讀音 (spoken_dialogue)</label>
+              <input type="text" class="seg-spoken-dialogue-input" value="${escapeHtml(seg.spoken_dialogue || initialDialogue)}" oninput="onSpokenDialogueChange(this, ${idx})" style="width:100%; padding:5px 8px; font-size:0.8rem; background:#0b1329; border:1px solid #f59e0b; border-radius:4px; color:#fff;" placeholder="模型實際朗讀的唯一讀音同音字（防破音與方言）" />
+            </div>
+          </div>
+          <div style="font-size:0.72rem; color:#94a3b8; margin-top:6px;">
+            💡 雙軌解耦說明：字幕文字與模型發音完全分開。例如字幕寫「作業成本」，口播寫「作葉成本」，既保持畫面專業度，又徹底杜絕發音破音！
+          </div>
         </div>
 
         <details style="margin:6px 0 8px 0; font-size:0.82rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:8px 10px;">
@@ -4141,6 +4237,236 @@ ${desc}${extra}
           badge.style.background = "rgba(168,85,247,0.2)";
           badge.style.color = "#d8b4fe";
           badge.style.borderColor = "#a855f7";
+        }
+      }
+      const phoneticBadge = card.querySelector(".seg-phonetic-badge");
+      if (phoneticBadge && typeof renderPhoneticHintBadge === "function") {
+        phoneticBadge.innerHTML = renderPhoneticHintBadge(text);
+      }
+    }
+
+    // ==================== 音訊與破音字唯一發音控制函式 ====================
+    let activeLexiconData = {
+      "zh-TW": {
+        "作業成本": "作葉成本",
+        "大立腕": "大立萬",
+        "立腕": "立萬",
+        "資本權重": "資本全重",
+        "資金調撥": "資金條撥",
+        "會計系統": "快計系統"
+      }
+    };
+
+    function renderPhoneticHintBadge(text) {
+      if (!text) return `<span style="color:#64748b;">(無台詞)</span>`;
+      const dict = activeLexiconData["zh-TW"] || {};
+      const matched = Object.keys(dict).filter((k) => text.includes(k));
+      if (matched.length > 0) {
+        return `<span style="color:#f59e0b; font-weight:600;" title="已自動套用唯一單音字防破音">🔤 破音校正: ${matched.map(k => `${k}➔${dict[k]}`).join("、")}</span>`;
+      }
+      return `<span style="color:#10b981;">✅ 發音檢測無多音歧義</span>`;
+    }
+
+    function toggleShotPhoneticsDrawer(btn, shotIdx) {
+      const card = btn.closest(".segment-card");
+      if (!card) return;
+      const drawer = card.querySelector(".seg-phonetics-drawer");
+      if (!drawer) return;
+      const isHidden = drawer.style.display === "none";
+      drawer.style.display = isHidden ? "block" : "none";
+      btn.textContent = isHidden ? "🔤 收起發音校正 ▴" : "🔤 雙軌發音校正 ▾";
+    }
+
+    function onDisplayDialogueChange(input, segIdx) {
+      if (currentPlan && currentPlan.segments && currentPlan.segments[segIdx]) {
+        currentPlan.segments[segIdx].display_dialogue = input.value.trim();
+        syncSegmentsFromDOM();
+      }
+    }
+
+    function onSpokenDialogueChange(input, segIdx) {
+      if (currentPlan && currentPlan.segments && currentPlan.segments[segIdx]) {
+        currentPlan.segments[segIdx].spoken_dialogue = input.value.trim();
+        syncSegmentsFromDOM();
+      }
+    }
+
+    async function rerollShotAudio(shotIdx) {
+      const cards = document.querySelectorAll("#segmentsContainer .segment-card");
+      const card = cards[shotIdx - 1];
+      const dialInput = card ? card.querySelector(".seg-dialogue-input") : null;
+      const spokenInput = card ? card.querySelector(".seg-spoken-dialogue-input") : null;
+      const spokenText = (spokenInput && spokenInput.value.trim()) || (dialInput && dialInput.value.trim()) || "";
+
+      showToast(`🎙️ 正以 256x160 代理畫布極速重抽 Shot ${shotIdx} 32kHz 音訊...`);
+      try {
+        const res = await fetch("http://127.0.0.1:8080/api/audio-reroll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            shot_index: shotIdx,
+            spoken_dialogue: spokenText,
+            project_id: currentPlan?.project_slug || "default_project"
+          })
+        });
+        if (res.ok) {
+          const json = await res.json();
+          showToast(`✅ Shot ${shotIdx} 音訊重抽並換入完成！`);
+          if (typeof playVideoInStage === "function") {
+            playVideoInStage(`outputs/shot_${shotIdx}.mp4?t=${Date.now()}`, `Shot ${shotIdx} (換入新音軌)`, true);
+          }
+        } else {
+          showToast(`⚠️ 後端音軌重抽回傳未完成，請確認守護進程運行中`);
+        }
+      } catch (err) {
+        showToast(`💡 提示：本機守護進程離線時可於終端機執行 h3_audio_reroller.py`);
+      }
+    }
+
+    async function openPronunciationLexiconModal() {
+      const modal = document.getElementById("lexiconModal");
+      if (!modal) return;
+      modal.style.display = "flex";
+      await loadPronunciationLexiconFromBackend();
+      renderLexiconTable();
+    }
+
+    function closePronunciationLexiconModal() {
+      const modal = document.getElementById("lexiconModal");
+      if (modal) modal.style.display = "none";
+    }
+
+    async function loadPronunciationLexiconFromBackend() {
+      try {
+        const res = await fetch("http://127.0.0.1:8080/api/lexicon");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.lexicon && typeof json.lexicon === "object") {
+            activeLexiconData = json.lexicon;
+          }
+        }
+      } catch (_e) {
+        // Fallback to activeLexiconData
+      }
+    }
+
+    function renderLexiconTable() {
+      const listEl = document.getElementById("lexiconRuleList");
+      if (!listEl) return;
+      const dict = activeLexiconData["zh-TW"] || {};
+      const keys = Object.keys(dict);
+      if (!keys.length) {
+        listEl.innerHTML = `<div style="color:#64748b; font-size:0.8rem; padding:8px 0;">目前無規則。可於上方新增。</div>`;
+        return;
+      }
+      listEl.innerHTML = keys.map((orig) => {
+        const spoken = dict[orig];
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:6px 12px; border-radius:6px; border:1px solid #1e293b;">
+            <div style="font-size:0.82rem; display:flex; align-items:center; gap:8px;">
+              <span style="color:#cbd5e1; font-weight:600;">${escapeHtml(orig)}</span>
+              <span style="color:#64748b;">➔</span>
+              <span style="color:#fde68a;">${escapeHtml(spoken)}</span>
+            </div>
+            <button type="button" class="btn" onclick="deleteLexiconRule('${escapeHtml(orig)}')" style="padding:2px 8px; font-size:0.75rem; background:rgba(239,68,68,0.2); border-color:#ef4444; color:#fca5a5;">刪除</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function addNewLexiconRule() {
+      const origInput = document.getElementById("newLexiconOriginal");
+      const spokenInput = document.getElementById("newLexiconSpoken");
+      const orig = origInput?.value.trim();
+      const spoken = spokenInput?.value.trim();
+      if (!orig || !spoken) {
+        showToast("⚠️ 請輸入原始詞與口播替換字");
+        return;
+      }
+      if (!activeLexiconData["zh-TW"]) activeLexiconData["zh-TW"] = {};
+      activeLexiconData["zh-TW"][orig] = spoken;
+      if (origInput) origInput.value = "";
+      if (spokenInput) spokenInput.value = "";
+      renderLexiconTable();
+      showToast(`➕ 已新增發音規則：${orig} ➔ ${spoken}`);
+    }
+
+    function deleteLexiconRule(key) {
+      if (activeLexiconData["zh-TW"] && activeLexiconData["zh-TW"][key]) {
+        delete activeLexiconData["zh-TW"][key];
+        renderLexiconTable();
+        showToast(`🗑️ 已刪除發音規則：${key}`);
+      }
+    }
+
+    async function savePronunciationLexiconToBackend() {
+      try {
+        const res = await fetch("http://127.0.0.1:8080/api/lexicon", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lexicon: activeLexiconData })
+        });
+        if (res.ok) {
+          showToast("💾 發音詞庫已成功儲存至 configs/pronunciation_lexicon.json");
+          closePronunciationLexiconModal();
+          updatePhoneticBadgesInCards();
+        } else {
+          showToast("⚠️ 儲存失敗，請檢查後端日誌");
+        }
+      } catch (err) {
+        showToast("💡 離線模式：已於前端暫存發音詞庫");
+        closePronunciationLexiconModal();
+        updatePhoneticBadgesInCards();
+      }
+    }
+
+    function updatePhoneticBadgesInCards() {
+      const cards = document.querySelectorAll("#segmentsContainer .segment-card");
+      cards.forEach((card) => {
+        const dial = card.querySelector(".seg-dialogue-input")?.value || "";
+        const badge = card.querySelector(".seg-phonetic-badge");
+        if (badge) badge.innerHTML = renderPhoneticHintBadge(dial);
+      });
+    }
+
+    function runFullProjectPhoneticsAudit() {
+      const cards = document.querySelectorAll("#segmentsContainer .segment-card");
+      const resultsEl = document.getElementById("lexiconAuditResults");
+      const summaryEl = document.getElementById("lexiconAuditSummary");
+      if (!cards.length) {
+        showToast("⚠️ 目前無分鏡段落，無法執行體檢");
+        return;
+      }
+
+      const dict = activeLexiconData["zh-TW"] || {};
+      let hitCount = 0;
+      const reportItems = [];
+
+      cards.forEach((card, idx) => {
+        const text = card.querySelector(".seg-dialogue-input")?.value || "";
+        const matched = Object.keys(dict).filter((k) => text.includes(k));
+        if (matched.length > 0) {
+          hitCount += matched.length;
+          reportItems.push(`
+            <div style="padding:6px 0; border-bottom:1px solid #1e293b;">
+              <span style="color:#7dd3fc; font-weight:600;">Part ${idx + 1}：</span>
+              <span>「${escapeHtml(text)}」</span>
+              <div style="color:#fde68a; font-size:0.75rem; margin-top:2px;">
+                ➔ 命中唯一發音替換：${matched.map(k => `<b>${k}</b> 轉為 <b>${dict[k]}</b>`).join("、")}
+              </div>
+            </div>
+          `);
+        }
+      });
+
+      if (resultsEl) {
+        resultsEl.style.display = "block";
+        if (reportItems.length > 0) {
+          resultsEl.innerHTML = reportItems.join("");
+          if (summaryEl) summaryEl.textContent = `⚡ 掃描完成：共命中 ${hitCount} 處破音字規則`;
+        } else {
+          resultsEl.innerHTML = `<span style="color:#10b981;">🎉 全片無多音歧義字詞，發音平穩！</span>`;
+          if (summaryEl) summaryEl.textContent = `✅ 全數通過`;
         }
       }
     }
@@ -6296,6 +6622,53 @@ ${desc}${extra}
       });
     });
   </script>
+  <!-- 🔤 發音詞庫與破音字管理彈窗 -->
+  <div id="lexiconModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0b1329; border:1px solid #38bdf8; border-radius:12px; width:100%; max-width:680px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 40px rgba(0,0,0,0.8);">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid #1e3a5f;">
+        <h3 style="margin:0; font-size:1.05rem; color:#7dd3fc; display:flex; align-items:center; gap:8px;">
+          <span>🔤 唯一發音詞庫與破音字管理中樞</span>
+        </h3>
+        <button type="button" class="btn" onclick="closePronunciationLexiconModal()" style="padding:4px 10px; font-size:0.8rem; background:#1e293b; color:#94a3b8; border:none; border-radius:6px; cursor:pointer;">✕ 關閉</button>
+      </div>
+
+      <div style="padding:16px 18px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px;">
+        <div style="font-size:0.82rem; color:#cbd5e1; line-height:1.5; background:rgba(56,189,248,0.08); padding:10px 12px; border-radius:8px; border:1px solid rgba(56,189,248,0.2);">
+          💡 <b>原理說明</b>：本專案採用 <b>雙軌解耦（Dual-Track Alignment）</b> 機制。字幕顯示原始字（<code>display_dialogue</code>），模型口播則自動替換為詞表中唯一讀音的同音字（<code>spoken_dialogue</code>），徹底根除國語／方言或多音字混淆（例如「作業成本」念成「作葉成本」，但畫面字幕依然是「作業成本」）。
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn" onclick="runFullProjectPhoneticsAudit()" style="padding:6px 14px; font-size:0.82rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-weight:600;">
+            🔍 執行全片台詞發音體檢
+          </button>
+          <span id="lexiconAuditSummary" style="font-size:0.8rem; color:#38bdf8;"></span>
+        </div>
+        <div id="lexiconAuditResults" style="display:none; padding:10px; background:#070d1a; border:1px solid #1e3a5f; border-radius:6px; font-size:0.8rem;"></div>
+
+        <div style="border-top:1px solid #1e293b; padding-top:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:600; font-size:0.85rem; color:#f8fafc;">📖 當前詞庫規則 (zh-TW)：</span>
+            <span style="font-size:0.75rem; color:#64748b;">自動同步至 configs/pronunciation_lexicon.json</span>
+          </div>
+
+          <div style="display:flex; gap:6px; margin-bottom:10px;">
+            <input type="text" id="newLexiconOriginal" placeholder="原始詞 (例: 作業成本)" style="flex:1; padding:6px 10px; font-size:0.82rem; background:#0f172a; border:1px solid #334155; border-radius:6px; color:#fff;" />
+            <span style="display:flex; align-items:center; color:#64748b;">➔</span>
+            <input type="text" id="newLexiconSpoken" placeholder="唯一讀音口播字 (例: 作葉成本)" style="flex:1; padding:6px 10px; font-size:0.82rem; background:#0f172a; border:1px solid #334155; border-radius:6px; color:#fff;" />
+            <button type="button" class="btn" onclick="addNewLexiconRule()" style="padding:6px 12px; font-size:0.8rem; background:#10b981; color:#fff; border:none; border-radius:6px;">➕ 新增</button>
+          </div>
+
+          <div id="lexiconRuleList" style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; padding-right:4px;"></div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; padding:12px 18px; border-top:1px solid #1e3a5f; background:#070d1a;">
+        <button type="button" class="btn" onclick="closePronunciationLexiconModal()" style="padding:6px 14px; font-size:0.82rem; background:#1e293b; color:#cbd5e1; border:none; border-radius:6px;">取消</button>
+        <button type="button" class="btn" onclick="savePronunciationLexiconToBackend()" style="padding:6px 16px; font-size:0.82rem; background:#38bdf8; color:#030712; font-weight:600; border:none; border-radius:6px;">💾 儲存並套用詞庫</button>
+      </div>
+    </div>
+  </div>
+
   <!-- H3 Studio Local Metal Daemon Progressive Bridge -->
   <script type="module" src="h3ServeBridge.js"></script>
 </body>

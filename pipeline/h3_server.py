@@ -197,6 +197,8 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._handle_status()
         elif url.path == "/api/workspace-sync":
             self._handle_workspace_sync(url.query)
+        elif url.path == "/api/lexicon":
+            self._handle_lexicon_get()
         elif url.path == "/api/render/events":
             self._handle_sse()
         elif url.path == "/api/templates":
@@ -221,6 +223,10 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._handle_workspace_sync(url.query)
         elif url.path == "/api/reroll-shot":
             self._handle_reroll_shot(body or {})
+        elif url.path == "/api/audio-reroll":
+            self._handle_fast_audio_reroll(body or {})
+        elif url.path == "/api/lexicon":
+            self._handle_lexicon_post(body or {})
         elif url.path == "/api/lint":
             self._handle_lint(body or {})
         elif url.path == "/api/expand":
@@ -376,6 +382,71 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
                 except Exception as exc:
                     LOGGER.warning("Failed to load template %s: %s", p.name, exc)
         self._send_json(200, {"ok": True, "templates": items})
+
+    def _handle_lexicon_get(self) -> None:
+        lex_file = REPO_ROOT / "configs" / "pronunciation_lexicon.json"
+        if not lex_file.is_file():
+            self._send_json(200, {"ok": True, "lexicon": {}})
+            return
+        try:
+            data = json.loads(lex_file.read_text(encoding="utf-8"))
+            self._send_json(200, {"ok": True, "lexicon": data})
+        except Exception as exc:
+            LOGGER.error("Failed to read pronunciation lexicon: %s", exc)
+            self._send_json(500, {"ok": False, "error": str(exc)})
+
+    def _handle_lexicon_post(self, body: dict[str, Any]) -> None:
+        lex_file = REPO_ROOT / "configs" / "pronunciation_lexicon.json"
+        lexicon = body.get("lexicon")
+        if not isinstance(lexicon, dict):
+            self._send_json(400, {"ok": False, "error": "Missing valid 'lexicon' dict"})
+            return
+        try:
+            lex_file.parent.mkdir(parents=True, exist_ok=True)
+            lex_file.write_text(json.dumps(lexicon, indent=2, ensure_ascii=False), encoding="utf-8")
+            self._send_json(200, {"ok": True, "message": "Lexicon updated successfully", "lexicon": lexicon})
+        except Exception as exc:
+            LOGGER.error("Failed to update pronunciation lexicon: %s", exc)
+            self._send_json(500, {"ok": False, "error": str(exc)})
+
+    def _handle_fast_audio_reroll(self, body: dict[str, Any]) -> None:
+        from pipeline.h3_audio_reroller import AudioRerollRequest, reroll_shot_audio_fast
+
+        shot_index = body.get("shot_index")
+        spoken_dialogue = str(body.get("spoken_dialogue", "")).strip()
+        video_path_str = str(body.get("video_path", "")).strip()
+
+        if shot_index is None:
+            self._send_json(400, {"ok": False, "error": "Missing shot_index"})
+            return
+
+        idx = int(shot_index)
+        target_video = Path(video_path_str) if video_path_str else None
+        if not target_video or not target_video.is_file():
+            cand = REPO_ROOT / "outputs" / f"shot_{idx}.mp4"
+            target_video = cand if cand.is_file() else None
+
+        if not target_video:
+            self._send_json(404, {"ok": False, "error": f"Target video for shot {idx} not found"})
+            return
+
+        try:
+            req = AudioRerollRequest(
+                shot_index=idx,
+                spoken_dialogue=spoken_dialogue,
+                original_video_path=target_video,
+                output_video_path=target_video,
+            )
+            out_p = reroll_shot_audio_fast(req)
+            self._send_json(200, {
+                "ok": True,
+                "message": f"Shot {idx} audio rerolled successfully",
+                "output_video_path": str(out_p),
+                "timestamp": time.time(),
+            })
+        except Exception as exc:
+            LOGGER.exception("Fast audio reroll failed for shot %s: %s", idx, exc)
+            self._send_json(500, {"ok": False, "error": str(exc)})
 
     def _handle_expand(self, body: dict[str, Any]) -> None:
         raw_ir = body.get("context_ir") or {}
