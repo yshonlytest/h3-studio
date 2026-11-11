@@ -276,7 +276,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_job_manager_and_locks.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_job_manager.py tests/test_job_manager_and_locks.py && grep -q "\- \[x\] \`F7-A1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F7-A1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F7-A2` **於 `pipeline/h3_server.py` 接入安全沙盒 API：`/api/workspace-sync` 與 `/api/reroll-shot`**
+- [x] `F7-A2` **於 `pipeline/h3_server.py` 接入安全沙盒 API：`/api/workspace-sync` 與 `/api/reroll-shot`**
   - **程式碼檔案**：`pipeline/h3_server.py`、`tests/test_h3_server.py`
   - **修改內容**：
     1. 新增 `validate_safe_project_id(project_id: str) -> Path`：嚴格限制 `^[a-zA-Z0-9_-]{1,64}$` 並驗證解析路徑位於 `get_output_dir()` 內，防堵 Path Traversal。

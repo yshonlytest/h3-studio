@@ -145,6 +145,59 @@ class TestH3Server(unittest.TestCase):
         self.assertIn("200 OK", resp)
         self.assertIn('"file_id": "fake_id_123"', resp)
 
+    def test_validate_safe_project_id_traversal(self) -> None:
+        from pipeline.h3_server import validate_safe_project_id
+        with self.assertRaises(ValueError):
+            validate_safe_project_id("../evil_path")
+        with self.assertRaises(ValueError):
+            validate_safe_project_id("invalid/char")
+        valid_path = validate_safe_project_id("valid_demo_project_01")
+        self.assertEqual(valid_path.name, "valid_demo_project_01")
+
+    def test_workspace_sync_endpoint(self) -> None:
+        raw = b"GET /api/workspace-sync?project_id=valid_demo_project_01 HTTP/1.1\r\nHost: localhost\r\n\r\n"
+        resp = self._call_handler(raw)
+        self.assertIn("200 OK", resp)
+        self.assertIn('"project_id": "valid_demo_project_01"', resp)
+        self.assertIn('"telemetry":', resp)
+
+    def test_reroll_shot_endpoint_and_lock_conflict(self) -> None:
+        from pipeline.config import get_output_dir
+        from pipeline.h3_job_manager import ShotLock
+
+        p_dir = get_output_dir() / "test_reroll_project"
+        p_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            body = json.dumps({
+                "project_id": "test_reroll_project",
+                "shot_index": 0,
+                "idempotency_key": "key_123"
+            }).encode("utf-8")
+            raw = (
+                b"POST /api/reroll-shot HTTP/1.1\r\n"
+                b"Host: localhost\r\n"
+                b"Content-Type: application/json\r\n"
+                b"Content-Length: " + str(len(body)).encode("utf-8") + b"\r\n\r\n" + body
+            )
+
+            # When shot is not locked, reroll succeeds
+            resp = self._call_handler(raw)
+            self.assertIn("200 OK", resp)
+            self.assertIn('"message": "Shot 0 reroll initiated"', resp)
+
+            # When shot is actively locked by another process
+            lock = ShotLock(p_dir, shot_index=0)
+            self.assertTrue(lock.acquire(job_id="active_cli_job"))
+            try:
+                resp_conflict = self._call_handler(raw)
+                self.assertIn("409 Conflict", resp_conflict)
+                self.assertIn("locked by another process", resp_conflict)
+            finally:
+                lock.release()
+        finally:
+            import shutil
+            shutil.rmtree(p_dir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

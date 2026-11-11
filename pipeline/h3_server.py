@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import queue
+import re
 import sys
 import threading
 import time
@@ -24,12 +25,31 @@ from pipeline.config import REPO_ROOT, get_output_dir, get_scratch_dir
 from pipeline.h3_context_ir import ContextIR, compile_context_ir, expand_with_local_llm
 from pipeline.h3_executor import H3DirectExecutor, NoopExecutor, PipelineExecutor
 from pipeline.h3_gdrive_sync import sync_upload
+from pipeline.h3_job_manager import JobManager, ShotLock
 from pipeline.h3_presets import get_system_memory_status
 from pipeline.h3_prompt_linter import LintInput, analyze_dynamic_tension, lint_prompt
 from pipeline.h3_staging_board import CameraTrack, Point2D, compile_camera_direction
 from pipeline.h3_storyboard_pipeline import run_chained_manifest
+from pipeline.h3_telemetry import (
+    EstimatedMetrics,
+    ExternalMetrics,
+    MeasuredMetrics,
+    SpecGroupKey,
+    TelemetrySnapshot,
+)
 
 LOGGER = logging.getLogger("h3_server")
+
+
+def validate_safe_project_id(project_id: str) -> Path:
+    """Validate project ID against regex ^[a-zA-Z0-9_-]{1,64}$ and verify path stays within output dir."""
+    if not isinstance(project_id, str) or not re.match(r"^[a-zA-Z0-9_-]{1,64}$", project_id):
+        raise ValueError("Invalid project_id format. Must match ^[a-zA-Z0-9_-]{1,64}$")
+    base_dir = get_output_dir().resolve()
+    target_path = (base_dir / project_id).resolve()
+    if base_dir != target_path and base_dir not in target_path.parents:
+        raise PermissionError("Path traversal detected outside allowed output directory")
+    return target_path
 
 
 @dataclass
@@ -175,6 +195,8 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._handle_health()
         elif url.path in ("/status", "/api/status"):
             self._handle_status()
+        elif url.path == "/api/workspace-sync":
+            self._handle_workspace_sync(url.query)
         elif url.path == "/api/render/events":
             self._handle_sse()
         elif url.path == "/api/templates":
@@ -195,7 +217,11 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": "Invalid JSON body"})
             return
 
-        if url.path == "/api/lint":
+        if url.path == "/api/workspace-sync":
+            self._handle_workspace_sync(url.query)
+        elif url.path == "/api/reroll-shot":
+            self._handle_reroll_shot(body or {})
+        elif url.path == "/api/lint":
             self._handle_lint(body or {})
         elif url.path == "/api/expand":
             self._handle_expand(body or {})
@@ -205,6 +231,127 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._handle_render_cancel()
         else:
             self._send_json(404, {"error": "Endpoint not found", "path": url.path})
+
+    @staticmethod
+    def _read_project_json(path: Path) -> dict[str, Any]:
+        """Safely read JSON file returning empty dict on failure."""
+        if not path.exists():
+            return {}
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+
+    @staticmethod
+    def _read_project_locks(locks_dir: Path) -> dict[str, Any]:
+        """Read active locks in project directory."""
+        res: dict[str, Any] = {}
+        if not locks_dir.exists():
+            return res
+        for lf in locks_dir.glob("shot_*.lock"):
+            try:
+                content = lf.read_text(encoding="utf-8").strip()
+                res[lf.stem] = json.loads(content) if content else {"locked": True}
+            except Exception:
+                res[lf.stem] = {"locked": True}
+        return res
+
+    def _handle_workspace_sync(self, query_string: str) -> None:
+        qs = parse_qs(query_string)
+        project_id = qs.get("project_id", [""])[0].strip()
+        if not project_id:
+            self._send_json(400, {"ok": False, "error": "Missing 'project_id' query parameter"})
+            return
+
+        try:
+            p_dir = validate_safe_project_id(project_id)
+        except (ValueError, PermissionError) as exc:
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+
+        manifest_data = self._read_project_json(p_dir / "manifest.json")
+        state_data = self._read_project_json(p_dir / "state.json")
+        shots_lock_status = self._read_project_locks(p_dir / ".locks")
+
+        snapshot = TelemetrySnapshot(
+            spec_key=SpecGroupKey(
+                gpu_model="Apple Silicon",
+                resolution="864x480",
+                frames=124,
+                mode=str(manifest_data.get("mode", "turbo")),
+            ),
+            measured=MeasuredMetrics(
+                completed_segments=len(state_data.get("completed_segments", [])),
+                total_segments=len(manifest_data.get("segments", [])),
+                current_segment_step=0,
+                current_segment_total_steps=10,
+                last_segment_seconds=0.0,
+            ),
+            estimated=EstimatedMetrics(
+                avg_segment_seconds=0.0,
+                remaining_minutes=0.0,
+                eta_status="idle",
+                eta_confidence="low",
+            ),
+            external=ExternalMetrics(
+                cu_balance=None,
+                cu_balance_status="local_metal",
+            ),
+        )
+
+        self._send_json(200, {
+            "ok": True,
+            "project_id": project_id,
+            "manifest_summary": {
+                "title": manifest_data.get("title", ""),
+                "segments_count": len(manifest_data.get("segments", [])),
+                "mode": manifest_data.get("mode", "turbo"),
+            },
+            "state": state_data,
+            "shot_locks": shots_lock_status,
+            "telemetry": snapshot.to_dict(),
+        })
+
+    def _handle_reroll_shot(self, body: dict[str, Any]) -> None:
+        project_id = str(body.get("project_id", "")).strip()
+        shot_index = body.get("shot_index")
+        idempotency_key = str(body.get("idempotency_key", "")).strip()
+
+        if not project_id or shot_index is None:
+            self._send_json(400, {"ok": False, "error": "Missing project_id or shot_index"})
+            return
+
+        try:
+            p_dir = validate_safe_project_id(project_id)
+        except (ValueError, PermissionError) as exc:
+            self._send_json(400, {"ok": False, "error": str(exc)})
+            return
+
+        idx = int(shot_index)
+        lock = ShotLock(p_dir, shot_index=idx)
+        if not lock.acquire(job_id=idempotency_key or "web_reroll"):
+            info = lock.get_lock_info() or {}
+            self._send_json(409, {
+                "ok": False,
+                "error": f"Shot {idx} is currently locked by another process (PID: {info.get('pid')})",
+                "lock_info": info,
+            })
+            return
+
+        try:
+            job_mgr = JobManager(p_dir)
+            job = job_mgr.create_job(
+                shot_index=idx,
+                idempotency_key=idempotency_key,
+                metadata={"source": "api_reroll_shot", "requested_at": time.time()},
+            )
+            self._send_json(200, {
+                "ok": True,
+                "message": f"Shot {idx} reroll initiated",
+                "job": job.to_dict(),
+            })
+        finally:
+            lock.release()
 
     def _handle_health(self) -> None:
         self._send_json(200, {"ok": True, "service": "h3-studio-daemon"})
