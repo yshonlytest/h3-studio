@@ -1,113 +1,33 @@
 # STATE.md — 專案狀態索引與 3.8 Flash 單向微批次清單
 
-> 守則見 [AGENTS.md](../../AGENTS.md)、規範見 [docs/STANDARDS.md](../STANDARDS.md)。**3.8 Flash 嚴禁自行發散架構，僅依序執行下方 M1~M7，每步跑完驗證指令才打勾。全部完成後交由 Argon 最終驗收。**
+> 守則見 [AGENTS.md](../../AGENTS.md)、規範見 [docs/STANDARDS.md](../STANDARDS.md)、細項步驟見 [V2_EXECUTION_PLAN.md](V2_EXECUTION_PLAN.md)。
+> **⚡ 3.8 Flash 鐵律：每完成 1 個子步驟（如 `F0-PRE` 或 `F1-1`），必須在同一個回合用 `edit_file` 同步把本檔（`STATE.md`）與 `V2_EXECUTION_PLAN.md` 對應的 `[ ]` 改為 `[x]`，並通過下方驗證指令；禁止跳步、禁止追加長篇敘事（本檔嚴禁超過 50 行）。**
 
-## 1. 四大核心問題與架構收斂定案（Argon 裁決，3.8 勿改）
-- **資產與路徑四層隔離（解決問題 3 & 4）**：
-  1. `examples/`（Git 追蹤，開源範本）：僅放 JSON Manifest 與輕量錨定圖（`<2MB`）。
-  2. `film-chain/public/assets/demo/`（Git 追蹤，Cloudflare 線上靜態展示）：只放已驗證完稿的展示影片與素材（九宮格專屬 `detective_*`、潛空間專屬 `ink_sorcerer_*`）。
-  3. `outputs/storyboard_runs/`（`.gitignore`，本機算圖正式產出）：所有 CLI / Daemon 產出的 `.mp4`、`.h3.log`、`.state.json` 唯一落點。**廢除 `MiniMax-H3-h3c-ComfyUI/ComfyUI/output` 舊 fallback**。
-  4. `scratch/`（`.gitignore`，純暫存）：僅供執行期中繼檔（`.h3ctx`、臨時 manifest），禁止存放成品影片。
-- **接力範式與重錨定修正（解決問題 1 & 2）**：
-  - 區分兩種範式：`latent_chain`（PR #76 `--motion-context` 一鏡到底，僅第 1 段用首幀/九宮格 Panel 1，第 2~5 段禁設 `anchor_reset: true` 覆蓋 `first_frame`，改以 Prompt 外貌錨定詞防漂移）與 `grid_keyframes`（3×3 九宮格 Panel 1~9 首尾幀轉場）。
-- **工具鏈打通（解決問題 1 & 2）**：
-  - `h3_server.py` 補齊 `POST /api/expand`（調用 `h3_context_ir.expand_with_local_llm` + `h3_staging_board`）與 `POST /api/character-sheet`（調用 `h3_character_sheet.py`）。
-  - `film-chain/public/index.html` 匯出 `window.exportChainedManifest()`（供 `h3ServeBridge.js:165` 讀取當前分鏡與範式，不再掉回寫死假資料），並在 Step 1/2 加入「接力範式切換」與「本機 LLM 擴寫」選項。
+## 1. 已完成階段（M1~M7, U1~U4, C1~C7, D1~D4, E1~E6, F0）
+- 資產四層隔離、雙範式、本地環境中樞 HUD、2×3 雙軸閘道、F0 實驗報告（[F0_AUDIO_AND_ALIGNMENT_REPORT.md](F0_AUDIO_AND_ALIGNMENT_REPORT.md)）已驗收。
 
-## 2. 3.8 Flash 單向執行微批次清單（不得交錯、禁止啟動真機 GPU 算圖）
-- [x] **M1（清理工作區垃圾與收斂 `config.py` 路徑）**：
-  - 刪除 `scratch/` 下所有殘留 `.mp4`、`.png`、`output_25s/`、`*.json`（保留 `gdrive_folder_cache.json`）及 `outputs/noop_test.state.json`。
-  - 修改 `pipeline/config.py:94-109` `get_output_dir()`：移除 `cand_legacy` (`MiniMax-H3-h3c-ComfyUI/ComfyUI/output`) fallback，固定回傳 `REPO_ROOT / "outputs"`（支援 `H3_OUTPUT_DIR` 覆寫）。
-  - 驗證：`python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/config.py`
-- [x] **M2（修正雙範本 Part 4 跳針與補齊九宮格/外貌鎖定欄位）**：
-  - 修改 `examples/storyboards/xianxia_aerial_duel_25s.json` 與 `cyberpunk_detective_25s.json`：移除第 4 段 `"anchor_reset": true` 與 `"first_frame"`，改為 `"chain_mode": "motion_context"`，並在 Part 4 Prompt 開頭補上連貫前綴與明確服裝五官描述。
-  - 驗證：`python3 -m unittest tests/test_prompt_linter_and_manifests.py`
-- [x] **M3（CLI 接入 `ContextIR`、`expand_with_local_llm` 與 `StagingBoard`）**：
-  - 修改 `pipeline/h3_storyboard_pipeline.py`：當 segment 含 `"context_ir"` dict（及可選 `"camera_track"`）時，自動調用 `compile_camera_direction` 與 `compile_context_ir`（若帶 `--expand-llm` 則調用 `expand_with_local_llm`）生成 `seg["prompt"]`。
-  - 新增單元測試驗證 manifest 內 `context_ir` 自動編譯為合規 Prompt。
-  - 驗證：`python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/`
-- [x] **M4（`h3_server.py` 新增 `/api/expand` 與 `/api/templates` 端點）**：
-  - 修改 `pipeline/h3_server.py:170-220`：新增 `GET /api/templates`（回傳 `examples/storyboards/*.json` 清單與內容）與 `POST /api/expand`（接收 5D Context-IR + 運鏡座標，回傳編譯/擴寫後 Prompt 與 Linter 分數）。
-  - 在 `tests/test_h3_server.py` 新增對應測試。
-  - 驗證：`python3 -m unittest tests/test_h3_server.py && .venv/bin/ruff check pipeline/h3_server.py tests/test_h3_server.py`
-- [x] **M5（修復 `h3ServeBridge.js` 假資料斷路，實作 `window.exportChainedManifest`）**：
-  - 於 `film-chain/public/index.html`（Step 2 `syncSegmentsFromDOM` 附近，約 `L3352-3375`）實作並掛載 `window.exportChainedManifest()`，將當前 `currentPlan`、畫布設定、各段 `chain_mode` 與首幀轉為標準 Manifest 結構；刪除 `h3ServeBridge.js:173-192` 的 1 段式寫死 fallback，改為無分鏡時提示先於步驟一/二載入分鏡。
-  - 驗證：`cd film-chain && npm test`
-- [x] **M6（Web UI 補齊「潛空間 vs 九宮格範式開關」、「本機 Context-IR 擴寫」與「實測範本載入」）**：
-  - 於 `film-chain/public/index.html` Step 1 (`L1040-1065`)：`promptProviderSelect` 新增 `<option value="local-llm">🖥️ 本機 Context-IR / Local LLM (免 API Key)</option>`；新增「接力範式 (`chainParadigmSelect`)」下拉選單（`latent_chain` 一鏡到底 vs `grid_keyframes` 九宮格轉場），選 `latent_chain` 時批次將 Part 2~N 設為 `motion_context` 並摺疊九宮格切片列。
-  - 新增「載入實測 25s 範本（墨繪靈境潛空間 / 賽博偵探九宮格）」按鈕。
-  - 驗證：`npm test --prefix film-chain`（52/52 passed）
-- [x] **M7（全套自動化測試與 Lint 總閘門，等待 Argon 驗收）**：
-  - 執行：`python3 -m unittest discover -s tests && .venv/bin/ruff check . && npm test --prefix film-chain`
-  - 狀態：39 Python 單元測試全數通過、Ruff 零警報、53 前端單元測試全數通過。未執行真機 GPU 算圖。
-- [x] **U1–U4（獨立程式碼審視報告 P0/P1/P2 全數落地）**：
-  - **P0 #1（雙軌模式防覆蓋）**：`onChainParadigmChange(true)` 偵測步驟二自訂段落並彈窗詢問是否覆寫，步驟二頂部新增「批次設為潛空間 / 批次設為九宮格」按鈕。
-  - **P0 #5 & #6（步驟一與步驟三等待回饋與預期管理）**：步驟一加入三階段動態進度列與按鈕狀態、移除強制 `scrollIntoView` 滾動突襲；步驟三本地面板加入「引擎自動偵測狀態 + 預估總時長」與 `#localPipelineGrid` 分段進度卡，並修復 ComfyUI `/history` 多段影片完整收集。
-  - **P1 #2（鏈式時間軸視覺化與隱藏無意義 Panel 選單）**：步驟二頂部新增 `#chainTimelineBar` 視覺化接力鏈，潛空間模式下自動隱藏 `Panel 1~9` 選單並改顯示「🔗 承接 Part N 潛空間尾幀」標籤。
-  - **P1 #3 & #4（5D 雙向非破壞性同步 + 2D 運鏡板升級）**：修改任一 5D 欄位時僅局部替換對應 `[Scene]` / `[Camera]` / `Timeline:` / `[Look]` / `Audio:` 段落，並提供「↩️ 復原上一版 Prompt」按鈕；2D 運鏡板畫布放大至 `280×160`、熱點半徑 `24px` 含 Hover 光圈。
-  - **P2（術語收合、觸控目標放大、手機 Tooltip 彈窗與 Toast 統一）**：首屏 Colab/本機卡技術細節收合進 `<details>`，`.info-tip` 點擊統一開啟說明視窗，消除阻斷式 `alert()`。
-- [x] **C1（本地環境中樞整合：狀態核心 ＋ 移除 UI hack）**：
-  - `film-chain/public/h3ServeBridge.js`：新增 `window.H3LocalEnv` 狀態核心（單一輪詢器，含 `daemon` / `engine` / `hardware.availableGiB` / `job` 狀態、`getState()` / `checkNow()` / `startRender()` / `subscribe()` 公開 API），SSE 事件與 `/api/status` 輪詢皆改寫入狀態核心並通知訂閱者。
-  - `film-chain/public/index.html`：移除 `executeLocalComfyStep()` 內模擬點擊 `#h3-hud-render-btn` 的 hack，改呼叫 `H3LocalEnv.startRender()`；`checkComfyConnection()` 的 8080 檢查改由狀態核心提供，消除重複輪詢。
-  - 驗證：`node --check` 兩檔語法通過；`npm test --prefix film-chain` 53/53 passed。
-- [x] **C2＋C3（HUD 併版升級為「本地環境中樞」與環境就緒精靈）**：
-  - `film-chain/public/h3ServeBridge.js`：HUD 更名「本地環境中樞」，`checkDaemonStatus()` 依狀態切換兩種視圖：**離線** → 環境就緒精靈（四步 checklist：clone → `./setup.sh` Doctor → HF 下載權重 → 啟動 `h3_server`，各步附一鍵複製指令與「重新檢測」按鈕）；**在線** → 引擎／RAM 徽章＋渲染／張力檢查按鈕＋進度列。
-  - HUD「開始本機渲染」改呼叫 `window.h3StudioStartLocalRender()`（index.html 暴露的統一入口，內含 Metal → ComfyUI 自動備援），無該入口時才 fallback 至 `H3LocalEnv.startRender()`。
-- [x] **C4（資訊歸位：刪除步驟一對齊卡、步驟三改為純訂閱者）**：
-  - 刪除 `#step1AgentPromptBox` 與 `copyAgentPrompt()`（環境引導職責移交中樞精靈），`selectRoute` 引用同步清理。
-  - 步驟三本地面板的 `#localDetectedEngineBadge` 改為訂閱 `H3LocalEnv` 狀態即時更新（含可用 RAM），不再自行輪詢；面板文案指引使用者至中樞。
-  - 驗證：`node --check` 通過；前端測試 53/53 passed。
-- [x] **C5（HUD 收納與注意力設計：預設縮小＋切路線發光提醒）**：
-  - `film-chain/public/h3ServeBridge.js`：HUD 預設縮小（標題列可點擊展開），注入 `h3HudGlow` 環繞發光 CSS；新增 `H3LocalEnv.pingAttention()`——離線判定或使用者切到路線 3 時吸附注意力，點開即自動解除。
-  - `film-chain/public/index.html`：`selectRoute('local')` 時呼叫 `window.H3LocalEnv.pingAttention()`。
-  - 修 Bug：離線判定完成時不再自動發光（效果只有在 `selectRoute('local')` 時觸發），避免開頁即閃爍。
-- [x] **C6（流程導正：Agent 必須帶使用者開網頁產出自己的影片，禁止偷跑範例）**：
-  - 中樞精靈新增「🤖 複製引導 Prompt 交給 AI Agent」按鈕（`AGENT_ONBOARDING_PROMPT`）：四步架設指令＋環境就緒後引導開啟 `https://film-chain.onlytest.dev/`、選路線 3、修改使用者自己的故事提示詞走完步驟一~四；明文禁止未經同意執行 `examples/storyboards/` 示範（賽博偵探／仙俠），驗收標準為「自訂故事本機渲染成功」。
-  - 步驟三指引卡補警示：Agent 代架環境時勿讓其直接跑範例 storyboard 浪費算力與點數。
-  - 驗證：`node --check` 兩檔語法通過；前端測試 53/53 passed。
-- [x] **C7（Colab 路線導正：遠端沙盒 403 教訓落地為 guardrails）**：
-  - `film-chain/skills/minimax-h3-colab/SKILL.md` 新增「Cost & consent guardrails」：禁止未經同意跑 `examples/storyboards/*.json` 示範（燒 Compute Units）、manifest 必須來自使用者自有分鏡（網頁匯出的 `colab_manifest_*.json`）、開跑前回報預估成本、宿主環境代理禁 WebSocket 升級（握手 403 "WebSocket upgrades are not allowed"）時勿繞過——改為完成準備後把最終 `runner.py chain` 指令連成本交回使用者在無限制本機終端執行、結束前 `colab stop` 釋放閒置 session。
-  - `film-chain/public/index.html`：靜態版與動態版 Colab Agent Prompt（`updateColabPromptText`）補分鏡來源鐵律（僅限使用者自有 manifest）＋403 沙盒降級指引＋開跑前點數同意。
-  - 背景：遠端虛擬機實測 Colab CLI REST（new/sessions/stop）正常、OAuth 與 CU 餘額 395.63 正常，但 `agy-plugin-proxy` 封鎖 `wss://*.colab.dev` 的 WebSocket 升級，`colab exec` 於沙盒內不可用，屬環境限制非工具錯誤。
-  - 驗證：`node --check` 通過；前端測試 53/53 passed。
-- [x] **D1~D4（無 API Key 雙斷點打通：Agent 訂閱代寫分鏡＋九宮格代產）**：
-  - **D1**：步驟一「劇本模型」新增 `agent-llm`「🤖 Agent 訂閱代寫（免 API Key）」並設為預設；選它執行時不打任何 API，輸出「Agent 任務包」（導演系統提示詞全文＋使用者故事＋交付規則）至可複製文字區，重新規劃情境（`replanCurrentSegmentsViaAI`）沿用同任務包並自動複製。
-  - **D2**：新增 `agentStoryboardImportDialog` 貼上匯入窗（支援整份 plan 或 `{segments:[...]}`、容錯剝 code fence）＋`normalizeAgentPlan()` 最小驗證（prompt 非空／end_panel 1~9／chain_mode 白名單）＋`window.H3StudioApplyPlan(plan,{mode:'replace'|'append'})` 注入入口（append 對應「➕ 新增一段」的 Agent 版）；匯入可帶 `grid_image_dataurl` 直接灌九宮格。
-  - **D3**：`renderPlanUI()` 有 `grid_image_prompt` 時在步驟二九宮格區顯示 Agent 代產提示＋生圖提示複製框（`copyGridImagePrompt`）：Agent 用自身訂閱生圖能力產 3×3 PNG（無文字浮水印）→「📁 更換九宮格圖」上傳。
-  - **D4**：Colab Agent Prompt（靜態＋動態）補鐵律：使用者無劇本/生圖 Key 時由 Agent 訂閱額度代產（任務包／`H3StudioApplyPlan`／自行生九宮格上傳），不得因缺 Key 改跑示範分鏡。
-  - 驗證：`node --check` 通過；前端測試 53/53 passed。
-- [x] **E1~E4（本地 H3.c 管線優化與「路線四：教學長片工作流」升級）**：
-  - **E1（Task 1：清理舊 Skill 並建立開源版 `h3c-local-film-chain`）**：停用誤導性雲端 Skill（將 `~/.gemini/config/skills/minimax-h3-colab-skill` 與 `film-chain/skills/minimax-h3-colab` 標記為 `.disabled`）；於 `.agents/skills/h3c-local-film-chain` 與 `film-chain/skills/h3c-local-film-chain` 建立通用本地執行規範（環境自動探測 `H3_ENGINE_BIN` / `H3_MODEL_DIR`、長文本知識點大綱拆解 16~22 字/鏡、嚴禁外部 TTS/倍速破壞原生音軌、限定局部重抽 `--only-shots`）。
-  - **E2（Task 2：升級 `storyboard.json` Schema）**：擴充支援 `project_mode: "edu_explainer"`, `auto_duration: true`, `global_profile`（語種、聲學特徵、講者視覺錨點、BGM）與 `shots` / `segments`。向下相容既有 Routes 1~3（未啟用時維持預設 124 幀 5.1 秒）；實作 `shot_type` 三模式（`presenter_focus`, `presenter_chart` 視覺鎖定防漂移, `pure_b_roll` 聲學標籤強化）。
-  - **E3（Task 3：升級後端 `h3_storyboard_pipeline.py` 與 `h3_edu_profile.py`）**：
-    - 相對路徑與 `sys.path.insert(0, str(PROJECT_ROOT))`，實作 `resolve_checkpoint_dir()` 自動相容 `FL2VA/` 子目錄。
-    - 實作 `calculate_optimal_frames()`：CJK ($T = N/4.0 + 0.8$)、拼音 ($T = W/2.5 + 0.8$)，對齊合法幀數 Bucket `[93, 124, 155, 186]`；超長（>26 字）拋出 `ValueError("Shot X 台詞過長...")` 攔截。
-    - 建立 `configs/pronunciation_lexicon.json` 跨語種校正字典，在送入 `<d>` 標籤前自動替換多音詞與方言偏誤詞。
-    - CLI 新增 `--manifest`, `--only-shots 3,8,15`, `--merge-only`, `--output-dir` 參數，支援單鏡局部重抽與無縫重新合成。
-    - 驗證：49 個 Python 單元測試全數通過（含新增 `tests/test_edu_workflow.py` 6 項深度測試）、Ruff 零警報。
-  - **E4（Task 4：`index.html` 新增【路線四：知識文檔轉教學長片 (Doc-to-Edu Studio)】）**：
-    - 新增路線四切換頁籤（`routeCardEdu`）與自適應網格排版，不影響既有三條路線。
-    - Step 1 新增文檔載入與大綱確認區（支援 Markdown/TXT/PDF 提示 minerU、大綱防漏 Checklist、預計分鏡數與總時長估算）。
-    - 新增 Global Profile 設定面板（語種、男/女/少年學者講者視覺錨點、旁白聲學特徵、BGM 風格、自動動態幀數開關）。
-    - 智慧分鏡卡片：即時計算台詞字數、動態對齊合法幀數標籤（93f/124f/155f/186f）、超過 26 字即時亮紅燈框線並提供「✂️ 一鍵拆分為兩鏡」按鈕、`shot_type` 模式切換與單鏡「🔄 局部重抽」指令一鍵複製。
-    - Step 3 新增教學長片專屬導出與執行面板，支援匯出標準 `edu_storyboard_manifest.json` 與複製 CLI 執行指令。
-    - 驗證：53 個前端測試全數通過、JavaScript 語法檢查通過。
-- [x] **E5（架構修復與升級：頂層雙軸解耦 專案模式 vs 算力路線 ＋ 模式 B 雙途徑文件解析引導）**：
-  - **頂層解耦**：移除混入算力卡片的「路線 4」，重構為頂層 **「專案模式（Project Mode）」** 卡片二選一（模式 A：自由提示詞短影片 vs 模式 B：知識文檔轉教學長片），並恢復乾淨的三大算力路線（路線 1：Colab、路線 2：商用 API、路線 3：本機 Metal）。
-  - **模式 B 文件解析雙途徑指引**：
-    - 途徑一：終端 AI Agent 兩階段對話代讀 Prompt（一鍵複製，嚴格要求 Agent 先確認回覆並向使用者索取下一句文件路徑/內容，待使用者提供後才執行無漏結構化 Markdown 拆解）。
-    - 途徑二：MinerU (Magic-PDF) 深度解析與前置依賴檢查安裝指引（提供 Agent 自動探測與安裝 Prompt、具備 macOS Homebrew 存在性檢查與 Linux apt-get 探測的本機自適應 Bash 腳本，以及 Colab 雲端安裝代碼，附一鍵複製按鈕）。
-  - **步驟二～五全流程連動**：
-    - 模式 B 下解除 9 格束縛，隱藏九宮格預覽與 Panel 選擇器；
-    - 即時動態時間軸：依各分鏡真實幀數（93f/124f/155f/186f，即 3.8s~7.7s）累計各鏡區間（`⏱️ 0 - 6.4s`, `⏱️ 6.4 - 11.5s`）與總時長（如 `共 24 段，總長 2 分 18 秒`）；
-    - 步驟三依當前所選路線（Colab/API/Local）切換對應長片任務包與本機 H3 原生 C 引擎局部重抽；
-    - 步驟五對齊教學字幕導出（修復動態時長累積 `baseSec` 與分段真實秒數 `segDurationSec`，根除 SRT/VTT 時間戳飄移）。
-  - **驗證**：49 Python 測試通過、53 JS 測試通過、Ruff 零警告、HTML 腳本語法檢驗 OK。
-- [x] **E6（範本親民化、日式動畫風格統一與步驟二教學介面徹底解耦）**：
-  - **範本文檔替換**：將原本地專屬銀行經濟利潤範本全數替換為通用科普「正確洗手五步驟與七字口訣」（濕搓沖捧擦 / 內外夾弓大立腕），4 個結構化章節覆蓋病原防護、五大步驟、七字深層清潔與關鍵時機；大綱與分鏡產生器據此自動匹配黑板教學與動作關鍵詞判定 `presenter_chart` 鏡頭。
-  - **風格術語全面去吉卜力化**：全面改用日式動畫風格（`Japanese anime aesthetic` / `日式動畫風`），移除全專案所有 `Studio Ghibli` / `吉卜力` 字樣，BGM 預設為 `soft acoustic piano background music, warm Japanese anime soundtrack`。
-  - **步驟二（Storyboard Deck）教學長片介面徹底解耦**：
-    - `chainTimelineBar` 在模式 B 下動態依各卡片 `frames` 累計即時秒數（如 `0-6.5s`、`6.5-11.7s`），標籤顯示鏡頭類型（`🎤 講者`、`📊 圖表`、`🌄 空鏡`）與幀數，箭頭切換為 `──🎓 連貫教學──▶`。
-    - 工具列適配：模式 B 隱藏「🖼️ 批次設為九宮格」，按鈕改為「🔗 批次設為連貫接力」與「➕ 新增教學分鏡 (+自適應秒數)」，清單標題為「🎓 教學長片分鏡清單」。
-    - 分鏡卡片模式與下拉選單：隱藏九宮格挑選器與接力切換下拉框，改顯示紫色「🎓 教學連貫分鏡」標籤；新增分鏡時預設帶入教學長片日式動畫風 Prompt、`presenter_chart` 與自適應幀數。
-  - **驗證**：49 Python 測試全過、53 JS 測試全過、Ruff 零警告、HTML JS 語法通過。
+## 2. V2 微批次進度表（每步完成後必須同步將 `[ ]` 改為 `[x]` 並執行獨立 `git commit`）
+- [x] `F0-1` H3 `256×160` 代理畫布物理耗時與聲紋實測（127.2s，快 13.9 倍）
+- [x] `F0-2` H3 代理音軌 vs 獨立 TTS 量化對比（相似度 0.971 vs 0.303）
+- [x] `F0-3` 中文 Character-Level 時間戳與 VAD 能量包絡對齊實測
+- [x] `F0-BRANCH` 建立並切換至開發分支 `feat/v2-architecture-upgrade`
+- [ ] `F0-PRE` 修復既有環境斷點（對齊 `resolve_checkpoint_dir` 與統一測試執行器）
+- [ ] `F1-1` 於 `pipeline/h3_state.py` 實作環境指紋與五節點 `ShotArtifactHashes`
+- [ ] `F1-2` 實作快取失效判定器 `evaluate_shot_invalidation` 與 8 情境測試
+- [ ] `F1-3` 將分層 Hash 接入 `pipeline/h3_storyboard_pipeline.py`
+- [ ] `F2-1` 建立受控三層發音正規化器 `pipeline/h3_phonetic_normalizer.py`
+- [ ] `F2-2` 接入 `pipeline/h3_edu_profile.py` 雙軌欄位並維持舊版相容
+- [ ] `F3-A1` CJK 字體 `getmask` 實測載入驗證與動態畫布排版
+- [ ] `F3-A2` 中文 Character-Level 時間戳與兩階段語音對齊引擎
+- [ ] `F3-B` 音視訊時長差 `apad` 安全檢查與 `mov_text` 軟/硬字幕封裝
+- [ ] `F4-1` 建立數據可信度分級之 `pipeline/h3_telemetry.py`
+- [ ] `F4-2` 收編通用化五態 `pipeline/h3_colab_watchdog.py`（含 `STALLED` 偵測）
+- [ ] `F5-1` 實作 `pipeline/h3_cli.py`：Manifest 驗證、表格編譯與語意切片 `digest`
+- [ ] `F5-2` 實作 `resolve-anchor` 四級防呆梯、`render-slide` 與更新 `SKILL.md`
+- [ ] `F6-A1` 抽離 `index.html` 內嵌 CSS 與靜態長篇 Prompt（100% 保留閘道 DOM）
+- [ ] `F6-A2` 漸進抽離 Step 5 音軌字幕控制器與新增 `dom_integrity.test.js`
+- [ ] `F7-A1` 實作 `pipeline/h3_job_manager.py`：Job Lifecycle、`ShotLock`、Journal Commit 與異常恢復
+- [ ] `F7-A2` 於 `pipeline/h3_server.py` 接入安全沙盒 API：`/api/workspace-sync` 與 `/api/reroll-shot`
+- [ ] `F7-B` 實作 `workspaceSync.js` 串接步驟一～五閘道與鎖定狀態 UI
+- [ ] `F8-1` 實作極速代理音訊重抽器 `h3_audio_reroller.py` 與 8 步跨批次快取失效整合測試
+- [ ] `F9-1` 於 `h3_edu_profile.py` 與 `h3_cli.py` 新增獨立 `colab_12s` 雙圖高吞吐規格
