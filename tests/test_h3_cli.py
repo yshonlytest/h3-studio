@@ -146,6 +146,30 @@ Final closing thoughts.
             self.assertTrue(path.is_file())
             self.assertEqual(level, 3)
 
+    def test_build_manifest_colab_12s_long_dialogue(self) -> None:
+        """Verify building manifest with colab_12s track allows long dialogue (>26 chars)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            tbl = tmp / "table_long.md"
+            tbl.write_text(
+                "| shot_id | dialogue | visual_hint |\n"
+                "| --- | --- | --- |\n"
+                "| 1 | 今天我們將深入探討高吞吐量神經網路架構，以及潛空間在時空維度上的連續性表現。 | 架構圖 |\n",
+                encoding="utf-8",
+            )
+            out_m = tmp / "manifest_12s.json"
+            opts = BuildManifestOptions(
+                table_path=tbl,
+                output_path=out_m,
+                track="colab_12s",
+            )
+            res = build_manifest_from_table(opts)
+            self.assertIsInstance(res, dict)
+            self.assertTrue(out_m.is_file())
+            data = json.loads(out_m.read_text(encoding="utf-8"))
+            self.assertEqual(data["mode"], "colab_12s")
+            self.assertIn(data["segments"][0]["frames"], (241, 289))
+
 
 if __name__ == "__main__":
     unittest.main()

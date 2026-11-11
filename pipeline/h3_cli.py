@@ -173,7 +173,12 @@ def build_manifest_from_table(opts: BuildManifestOptions) -> dict[str, Any]:
 
         # Compute optimal frames if dialogue exists
         if diag_res.spoken_dialogue:
-            seg_dict["frames"] = calculate_optimal_frames(diag_res.spoken_dialogue, opts.language_code, shot_id)
+            seg_dict["frames"] = calculate_optimal_frames(
+                diag_res.spoken_dialogue,
+                opts.language_code,
+                shot_id,
+                execution_track=opts.track,
+            )
         else:
             seg_dict["frames"] = default_frames
 
