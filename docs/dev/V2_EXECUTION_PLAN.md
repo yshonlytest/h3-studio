@@ -85,7 +85,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_artifact_cache_graph.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_state.py tests/test_artifact_cache_graph.py && grep -q "\- \[x\] \`F1-2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F1-2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F1-3` **將分層 Hash 接入 `pipeline/h3_storyboard_pipeline.py`**
+- [x] `F1-3` **將分層 Hash 接入 `pipeline/h3_storyboard_pipeline.py`**
   - **程式碼檔案**：`pipeline/h3_storyboard_pipeline.py`（切片讀取 `L825-990`）
   - **修改內容**：
     1. 在 `state.completed_segments[str_idx]` 中儲存 `"artifact_hashes": asdict(shot_hashes)`。

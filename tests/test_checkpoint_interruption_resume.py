@@ -101,6 +101,7 @@ class TestCheckpointInterruptionResume(unittest.TestCase):
                 self.assertIn("1", updated_state["completed_segments"])
                 self.assertIn("2", updated_state["completed_segments"])
                 self.assertIn("3", updated_state["completed_segments"])
+                self.assertIn("artifact_hashes", updated_state["completed_segments"]["3"])
                 self.assertEqual(updated_state["merged_video"], str(merged_video))
 
 
