@@ -507,8 +507,6 @@
         <div id="slicedPanelsContainer" class="sliced-panels-bar"></div>
       </div>
 
-      <div id="expandedStoryBox" style="font-size: 0.84rem; color: #cbd5e1; background: rgba(99,102,241,0.1); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; display: none;"></div>
-
       <!-- 2. 功能按鈕及時長統計與 Prompt 控制放在一起 -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px; padding:10px 14px; background:#0b101b; border:1px solid #1f2b3e; border-radius:10px;">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -3491,11 +3489,6 @@ ${desc}${extra}
       currentPlan = plan;
       updateDurationBadge();
       syncDialogueItemsFromPlan();
-
-      const expBox = document.getElementById("expandedStoryBox");
-      expBox.style.display = "block";
-      expBox.innerHTML = `<div><strong>💡 秒數評估說明：</strong>${plan.reasoning_zh || ""}</div>` +
-        (plan.expanded_story_zh ? `<div style="margin-top:6px; color:#93c5fd;"><strong>📖 完整分鏡大綱：</strong>${plan.expanded_story_zh}</div>` : "");
 
       const container = document.getElementById("segmentsContainer");
       container.innerHTML = "";
