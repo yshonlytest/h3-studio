@@ -263,7 +263,7 @@ flowchart LR
 
 ## 階段 F7：後端 `JobManager`、`ShotLock`、異常恢復與前端即時媒合
 
-- [ ] `F7-A1` **實作 `pipeline/h3_job_manager.py`：Job Lifecycle、`ShotLock`、Journal Commit 與異常恢復**
+- [x] `F7-A1` **實作 `pipeline/h3_job_manager.py`：Job Lifecycle、`ShotLock`、Journal Commit 與異常恢復**
   - **程式碼檔案**：新增 `pipeline/h3_job_manager.py`、新增 `tests/test_job_manager_and_locks.py`
   - **修改內容**：
     1. 定義 Job 狀態：`PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED`，支援 `job_id` 與 `idempotency_key` 去重。
