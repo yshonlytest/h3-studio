@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -20,6 +21,9 @@ class TestAudioRerollIntegration(unittest.TestCase):
     """Verify 8-step end-to-end cache invalidation and audio replacement behavior."""
 
     def setUp(self) -> None:
+        if not shutil.which("ffmpeg"):
+            self.skipTest("ffmpeg binary not found in PATH")
+
         self.tmp_dir = tempfile.TemporaryDirectory()
         self.work_dir = Path(self.tmp_dir.name)
         self.env = EnvironmentFingerprints(
