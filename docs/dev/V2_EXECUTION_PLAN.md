@@ -185,7 +185,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_telemetry_and_watchdog.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_telemetry.py tests/test_telemetry_and_watchdog.py && grep -q "\- \[x\] \`F4-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F4-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F4-2` **收編通用化五態 `pipeline/h3_colab_watchdog.py`（含 `STALLED` 偵測）**
+- [x] `F4-2` **收編通用化五態 `pipeline/h3_colab_watchdog.py`（含 `STALLED` 偵測）**
   - **程式碼檔案**：新增 `pipeline/h3_colab_watchdog.py`、擴充 `tests/test_telemetry_and_watchdog.py`
   - **修改內容**：
     1. 定義五態常數：`RUNNING`, `STALLED`, `RECOVERING`, `COMPLETED`, `FAILED`。

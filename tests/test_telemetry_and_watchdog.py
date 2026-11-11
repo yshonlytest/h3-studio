@@ -7,6 +7,17 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from pipeline.h3_colab_watchdog import (
+    COMPLETED,
+    FAILED,
+    RECOVERING,
+    RUNNING,
+    STALLED,
+    WatchdogProbeContext,
+    build_watchdog_parser,
+    evaluate_watchdog_health,
+    is_gpu_capacity_503,
+)
 from pipeline.h3_telemetry import (
     EstimatedMetrics,
     ExternalMetrics,
@@ -79,6 +90,40 @@ class TestTelemetryAndWatchdog(unittest.TestCase):
             self.assertEqual(loaded.measured.completed_segments, 1)
             self.assertEqual(loaded.estimated.remaining_minutes, 6.7)
             self.assertEqual(loaded.external.cu_balance, 10.5)
+
+    def test_watchdog_five_states_evaluation(self) -> None:
+        # Completed
+        p_done = WatchdogProbeContext(proc_alive=True, session_alive=True, progress_updated_ago_sec=5.0, max_stall_sec=300.0, completed_count=10, total_count=10)
+        self.assertEqual(evaluate_watchdog_health(p_done), COMPLETED)
+
+        # Running normally
+        p_run = WatchdogProbeContext(proc_alive=True, session_alive=True, progress_updated_ago_sec=30.0, max_stall_sec=300.0, completed_count=1, total_count=10)
+        self.assertEqual(evaluate_watchdog_health(p_run), RUNNING)
+
+        # Stalled: proc is alive but progress is silent > max_stall_sec
+        p_stall = WatchdogProbeContext(proc_alive=True, session_alive=True, progress_updated_ago_sec=350.0, max_stall_sec=300.0, completed_count=1, total_count=10)
+        self.assertEqual(evaluate_watchdog_health(p_stall), STALLED)
+
+        # Failed
+        p_fail = WatchdogProbeContext(proc_alive=False, session_alive=False, progress_updated_ago_sec=0.0, max_stall_sec=300.0, completed_count=1, total_count=10)
+        self.assertEqual(evaluate_watchdog_health(p_fail), FAILED)
+
+        # Recovering
+        p_rec = WatchdogProbeContext(proc_alive=False, session_alive=True, progress_updated_ago_sec=0.0, max_stall_sec=300.0, completed_count=1, total_count=10, is_recovering=True)
+        self.assertEqual(evaluate_watchdog_health(p_rec), RECOVERING)
+
+    def test_gpu_capacity_503_detection(self) -> None:
+        err_quota = "Error: Google API responded with 503: RESOURCE_EXHAUSTED. No accelerator available."
+        self.assertTrue(is_gpu_capacity_503(err_quota))
+
+        err_other = "Error: FileNotFoundError: segment_1.png does not exist"
+        self.assertFalse(is_gpu_capacity_503(err_other))
+
+    def test_watchdog_cli_parser(self) -> None:
+        parser = build_watchdog_parser()
+        args = parser.parse_args(["--gpu", "A100", "--min-cu", "50.0"])
+        self.assertEqual(args.gpu, "A100")
+        self.assertEqual(args.min_cu, 50.0)
 
 
 if __name__ == "__main__":
