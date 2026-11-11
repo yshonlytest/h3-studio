@@ -202,7 +202,7 @@ flowchart LR
 
 ## 階段 F5：確定性 Agent 唯一主入口 `pipeline/h3_cli.py` 與四級防呆 Skill
 
-- [ ] `F5-1` **實作 `pipeline/h3_cli.py`：Manifest 驗證、表格編譯與語意切片 `digest`**
+- [x] `F5-1` **實作 `pipeline/h3_cli.py`：Manifest 驗證、表格編譯與語意切片 `digest`**
   - **程式碼檔案**：新增 `pipeline/h3_cli.py`、新增 `tests/test_h3_cli.py`
   - **修改內容**：
     1. 子指令 `validate-manifest --manifest <path>`：檢查雙軌欄位、幀數合法性、錨點圖存在性與五節點 Hash 狀態。

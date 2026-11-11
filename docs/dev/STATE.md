@@ -22,7 +22,7 @@
 - [x] `F3-B` 音視訊時長差 `apad` 安全檢查與 `mov_text` 軟/硬字幕封裝
 - [x] `F4-1` 建立數據可信度分級之 `pipeline/h3_telemetry.py`
 - [x] `F4-2` 收編通用化五態 `pipeline/h3_colab_watchdog.py`（含 `STALLED` 偵測）
-- [ ] `F5-1` 實作 `pipeline/h3_cli.py`：Manifest 驗證、表格編譯與語意切片 `digest`
+- [x] `F5-1` 實作 `pipeline/h3_cli.py`：Manifest 驗證、表格編譯與語意切片 `digest`
 - [ ] `F5-2` 實作 `resolve-anchor` 四級防呆梯、`render-slide` 與更新 `SKILL.md`
 - [ ] `F6-A1` 抽離 `index.html` 內嵌 CSS 與靜態長篇 Prompt（100% 保留閘道 DOM）
 - [ ] `F6-A2` 漸進抽離 Step 5 音軌字幕控制器與新增 `dom_integrity.test.js`
