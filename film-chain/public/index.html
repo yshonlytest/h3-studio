@@ -4288,11 +4288,13 @@ ${desc}${extra}
     }
 
     async function rerollShotAudio(shotIdx) {
+      const seg = (typeof currentPlan !== "undefined" && currentPlan?.segments) ? currentPlan.segments[shotIdx - 1] : null;
+      const studioText = (typeof currentDialogueItems !== "undefined" && currentDialogueItems[shotIdx - 1]) ? currentDialogueItems[shotIdx - 1].text : "";
       const cards = document.querySelectorAll("#segmentsContainer .segment-card");
       const card = cards[shotIdx - 1];
       const dialInput = card ? card.querySelector(".seg-dialogue-input") : null;
       const spokenInput = card ? card.querySelector(".seg-spoken-dialogue-input") : null;
-      const spokenText = (spokenInput && spokenInput.value.trim()) || (dialInput && dialInput.value.trim()) || "";
+      const spokenText = (spokenInput && spokenInput.value.trim()) || (dialInput && dialInput.value.trim()) || studioText || (seg && (seg.spoken_dialogue || seg.dialogue)) || "";
 
       showToast(`🎙️ 正以 256x160 代理畫布極速重抽 Shot ${shotIdx} 32kHz 音訊...`);
       try {
@@ -4320,11 +4322,13 @@ ${desc}${extra}
     }
 
     async function replaceShotSpeechOnly(shotIdx) {
+      const seg = (typeof currentPlan !== "undefined" && currentPlan?.segments) ? currentPlan.segments[shotIdx - 1] : null;
+      const studioText = (typeof currentDialogueItems !== "undefined" && currentDialogueItems[shotIdx - 1]) ? currentDialogueItems[shotIdx - 1].text : "";
       const cards = document.querySelectorAll("#segmentsContainer .segment-card");
       const card = cards[shotIdx - 1];
       const dialInput = card ? card.querySelector(".seg-dialogue-input") : null;
       const spokenInput = card ? card.querySelector(".seg-spoken-dialogue-input") : null;
-      const textToSpeak = (spokenInput && spokenInput.value.trim()) || (dialInput && dialInput.value.trim()) || "";
+      const textToSpeak = (spokenInput && spokenInput.value.trim()) || (dialInput && dialInput.value.trim()) || studioText || (seg && (seg.spoken_dialogue || seg.dialogue)) || "";
 
       if (!textToSpeak) {
         showToast(`⚠️ Shot ${shotIdx} 尚未輸入台詞文字！`);
@@ -4373,6 +4377,9 @@ ${desc}${extra}
         await rerollShotAudio(shotIdx);
       }
     }
+
+    window.rerollShotAudio = rerollShotAudio;
+    window.replaceShotSpeechOnly = replaceShotSpeechOnly;
 
     async function openPronunciationLexiconModal() {
       const modal = document.getElementById("lexiconModal");
@@ -5952,12 +5959,18 @@ ${desc}${extra}
                 <input type="number" id="reroll-seed-${idx}" value="${20260931 + idx}" style="width:105px; padding:4px 6px; font-size:0.75rem; background:#070d1a; border:1px solid #1e293b; color:#cbd5e1; border-radius:4px;" />
                 <button type="button" class="btn" style="padding:3px 8px; font-size:0.72rem;" onclick="randomizeRerollSeed(${idx})">🎲 換種子</button>
               </div>
-              <div style="display:flex; gap:8px;">
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn" style="padding:6px 12px; font-size:0.78rem; background:rgba(56,189,248,0.2); border-color:#38bdf8; color:#7dd3fc; font-weight:700;" onclick="rerollShotAudio(${idx + 1})" title="調用 H3 代理畫布極速重抽 32kHz 音軌，保留原片講者聲紋與背景音樂，無損換入原片">
+                  🎙️ 代理重抽音軌 (保留聲紋)
+                </button>
+                <button type="button" class="btn" style="padding:6px 12px; font-size:0.78rem; background:rgba(16,185,129,0.2); border-color:#10b981; color:#6ee7b7; font-weight:700;" onclick="replaceShotSpeechOnly(${idx + 1})" title="完全不跑影片算圖，直接以 TTS 清晰語音 1 秒無損抽換原影片音軌（0 GPU 算力負擔）">
+                  ⚡ 純語音替換 (TTS)
+                </button>
                 <button type="button" class="btn" style="padding:6px 14px; font-size:0.8rem; background:linear-gradient(135deg, #0284c7, #0369a1); border-color:#38bdf8; color:#fff; font-weight:700; box-shadow:0 2px 8px rgba(2,132,199,0.3);" onclick="triggerRerollExecution(${idx}, 'single')">
-                  ⚡ 僅重抽此段 (5s 快速替換)
+                  ⚡ 畫面+音訊全段重抽
                 </button>
                 <button type="button" class="btn" style="padding:6px 14px; font-size:0.8rem; background:linear-gradient(135deg, #7c3aed, #6d28d9); border-color:#a855f7; color:#fff; font-weight:700; box-shadow:0 2px 8px rgba(124,58,237,0.3);" onclick="triggerRerollExecution(${idx}, 'cascade')">
-                  🔗 自此段起連鎖重跑 (極致無縫)
+                  🔗 連鎖重跑 (極致無縫)
                 </button>
               </div>
             </div>

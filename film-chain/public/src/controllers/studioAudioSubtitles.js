@@ -86,15 +86,18 @@
                 <span class="time-pill">⏱️ ${segSecStart} - ${segSecEnd}s</span>
                 <span style="font-size:0.8rem; font-weight:600; color:#e2e8f0;">${escapeHtml(item.partTitle || ('Part ' + (idx + 1)))}</span>
               </div>
-              <div style="display:flex; align-items:center; gap:6px;">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 <span style="font-size:0.74rem; color:#94a3b8;">起音時間：鏡段第</span>
                 <input type="number" min="0" max="4.5" step="0.5" value="${item.startOffsetSec}" style="width:62px; padding:3px 6px; font-size:0.76rem; background:#0f172a; border:1px solid #334155; border-radius:4px; color:#cbd5e1;" onchange="updateDialogueOffset(${idx}, this.value)" />
                 <span style="font-size:0.74rem; color:#94a3b8;">秒</span>
                 <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.12);" onclick="previewSingleDialogue(${idx})">
                   🔊 試聽發音
                 </button>
-                <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.12);" onclick="applySingleDialogueToVideo(${idx})" title="將試聽的語音直接換入該鏡影片音軌（無損換軌）">
-                  🔄 換入此段音軌
+                <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.12);" onclick="applySingleDialogueToVideo(${idx})" title="將試聽的 TTS 語音無損抽換進該鏡影片音軌（0 GPU 算力消耗）">
+                  ⚡ 換入 TTS 語音
+                </button>
+                <button type="button" class="btn" style="padding:3px 10px; font-size:0.74rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.12);" onclick="window.rerollShotAudio ? window.rerollShotAudio(${idx + 1}) : rerollShotAudio(${idx + 1})" title="調用 H3 代理畫布極速重抽 32kHz 音軌，保留原片講者聲紋與背景音樂">
+                  🎙️ 代理重抽音軌
                 </button>
               </div>
             </div>
