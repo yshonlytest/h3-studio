@@ -302,7 +302,7 @@ flowchart LR
 
 ## 階段 F8：單段語音重抽落地（依 F0 實測報告裁決技術路徑）
 
-- [ ] `F8-1` **實作極速代理音訊重抽器 `h3_audio_reroller.py` 與 8 步跨批次快取失效整合測試**
+- [x] `F8-1` **實作極速代理音訊重抽器 `h3_audio_reroller.py` 與 8 步跨批次快取失效整合測試**
   - **程式碼檔案**：新增 `pipeline/h3_audio_reroller.py`、修改 `pipeline/h3_storyboard_pipeline.py`、新增 `tests/test_audio_reroll_integration.py`
   - **修改內容**：
     1. **採用 F0 實測勝出之「路徑 A：免改 `h3.c` 原生 `256×160 --token-reduction` 極速代理音軌重抽 (`--reroll-audio-fast`)」**：
