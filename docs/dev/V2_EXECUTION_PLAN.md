@@ -128,7 +128,7 @@ flowchart LR
 
 ## 階段 F3：零漂移 CJK 字幕系統、中文字符級時間軸與軟硬封裝
 
-- [ ] `F3-A1` **CJK 字體 `getmask` 實測載入驗證與動態畫布排版**
+- [x] `F3-A1` **CJK 字體 `getmask` 實測載入驗證與動態畫布排版**
   - **程式碼檔案**：`pipeline/h3_subtitles.py`（讀取 `L1-119`）
   - **修改內容**：
     1. 新增 `resolve_verified_cjk_font(font_size: int) -> tuple[ImageFont.FreeTypeFont | ImageFont.ImageFont, str]`：依序探測 `H3_SUBTITLE_FONT`、`PingFang.ttc`、`STHeiti Medium.ttc`、`Arial Unicode.ttf`、`NotoSansCJK-Regular.ttc`；載入後強制執行 `mask = font.getmask("測試中文")` 確認 `mask.size[0] > 0`，回傳字體物件與字體檔指紋 `font_id`。
