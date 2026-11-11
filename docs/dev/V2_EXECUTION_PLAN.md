@@ -246,7 +246,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `npm test --prefix film-chain && node --check film-chain/public/src/prompts/agentPrompts.js && grep -q "\- \[x\] \`F6-A1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F6-A1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F6-A2` **漸進抽離 Step 5 音軌字幕控制器與新增 `dom_integrity.test.js`**
+- [x] `F6-A2` **漸進抽離 Step 5 音軌字幕控制器與新增 `dom_integrity.test.js`**
   - **程式碼檔案**：新增 `film-chain/public/src/controllers/studioAudioSubtitles.js`、修改 `film-chain/public/index.html`、`film-chain/package.json`、新增 `film-chain/tests/dom_integrity.test.js`
   - **修改內容**：
     1. 僅抽離低耦合的 Step 5 音軌/字幕相關函式（`L6400-6969`）至 `src/controllers/studioAudioSubtitles.js`，以傳統 `<script src="src/controllers/studioAudioSubtitles.js"></script>` 載入，確保所有頂層函式留在全域作用域。

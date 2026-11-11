@@ -25,7 +25,7 @@
 - [x] `F5-1` 實作 `pipeline/h3_cli.py`：Manifest 驗證、表格編譯與語意切片 `digest`
 - [x] `F5-2` 實作 `resolve-anchor` 四級防呆梯、`render-slide` 與更新 `SKILL.md`
 - [x] `F6-A1` 抽離 `index.html` 內嵌 CSS 與靜態長篇 Prompt（100% 保留閘道 DOM）
-- [ ] `F6-A2` 漸進抽離 Step 5 音軌字幕控制器與新增 `dom_integrity.test.js`
+- [x] `F6-A2` 漸進抽離 Step 5 音軌字幕控制器與新增 `dom_integrity.test.js`
 - [ ] `F7-A1` 實作 `pipeline/h3_job_manager.py`：Job Lifecycle、`ShotLock`、Journal Commit 與異常恢復
 - [ ] `F7-A2` 於 `pipeline/h3_server.py` 接入安全沙盒 API：`/api/workspace-sync` 與 `/api/reroll-shot`
 - [ ] `F7-B` 實作 `workspaceSync.js` 串接步驟一～五閘道與鎖定狀態 UI
