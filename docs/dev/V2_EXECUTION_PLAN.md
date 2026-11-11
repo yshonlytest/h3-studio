@@ -70,7 +70,7 @@ flowchart LR
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_state.py && grep -q "\- \[x\] \`F1-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F1-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
 
-- [ ] `F1-2` **實作快取失效判定器 `evaluate_shot_invalidation` 與 8 情境測試**
+- [x] `F1-2` **實作快取失效判定器 `evaluate_shot_invalidation` 與 8 情境測試**
   - **程式碼檔案**：`pipeline/h3_state.py`、新增 `tests/test_artifact_cache_graph.py`
   - **修改內容**：
     1. 新增 `@dataclass(frozen=True) class ShotInvalidationPlan`：含布林欄位 `rerun_video: bool`, `rerun_audio: bool`, `rerun_mux: bool`, `rerun_subtitle: bool`, `rerun_final: bool`。

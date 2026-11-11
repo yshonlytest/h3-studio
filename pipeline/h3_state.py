@@ -299,3 +299,65 @@ def compute_shot_artifact_hashes(
         subtitle_hash=sub_hash,
         final_hash=final_hash,
     )
+
+
+@dataclass(frozen=True)
+class ShotInvalidationPlan:
+    """Detailed plan indicating which DAG pipeline stages need rerunning."""
+    rerun_video: bool
+    rerun_audio: bool
+    rerun_mux: bool
+    rerun_subtitle: bool
+    rerun_final: bool
+
+    @property
+    def has_any_rerun(self) -> bool:
+        return any((self.rerun_video, self.rerun_audio, self.rerun_mux, self.rerun_subtitle, self.rerun_final))
+
+
+@dataclass(frozen=True)
+class InvalidationContext:
+    """Encapsulation for invalidation check parameters."""
+    prev_hashes: ShotArtifactHashes | None
+    curr_hashes: ShotArtifactHashes
+    upstream_video_changed: bool = False
+    uses_motion_context: bool = False
+
+
+def evaluate_shot_invalidation(
+    prev_or_ctx: ShotArtifactHashes | None | InvalidationContext,
+    curr_hashes: ShotArtifactHashes | None = None,
+    *args: Any,
+    **kwargs: Any,
+) -> ShotInvalidationPlan:
+    """Evaluate fine-grained invalidation for a storyboard shot DAG."""
+    if isinstance(prev_or_ctx, InvalidationContext):
+        prev = prev_or_ctx.prev_hashes
+        curr = prev_or_ctx.curr_hashes
+        upstream_changed = prev_or_ctx.upstream_video_changed
+        motion_ctx = prev_or_ctx.uses_motion_context
+    else:
+        prev = prev_or_ctx
+        curr = curr_hashes
+        upstream_changed = bool(args[0] if len(args) > 0 else kwargs.get("upstream_video_changed", False))
+        motion_ctx = bool(args[1] if len(args) > 1 else kwargs.get("uses_motion_context", False))
+
+    if prev is None or curr is None:
+        return ShotInvalidationPlan(
+            rerun_video=True, rerun_audio=True, rerun_mux=True, rerun_subtitle=True, rerun_final=True
+        )
+
+    rerun_v = (prev.visual_hash != curr.visual_hash) or (upstream_changed and motion_ctx)
+    rerun_a = prev.audio_hash != curr.audio_hash
+    rerun_m = rerun_v or rerun_a or (prev.mux_hash != curr.mux_hash)
+    rerun_s = rerun_a or (prev.subtitle_hash != curr.subtitle_hash)
+    rerun_f = rerun_m or rerun_s or (prev.final_hash != curr.final_hash)
+
+    return ShotInvalidationPlan(
+        rerun_video=rerun_v,
+        rerun_audio=rerun_a,
+        rerun_mux=rerun_m,
+        rerun_subtitle=rerun_s,
+        rerun_final=rerun_f,
+    )
+
