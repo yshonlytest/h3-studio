@@ -1,133 +1,165 @@
 {
-  "title": "H3 Storyboard Studio 完整工作流全解析 (140秒極速創作指南) / H3 Storyboard Studio Complete Workflow Guide (140s)",
-  "description": "12-segment comprehensive collegiate educational explainer storyboard demonstrating H3 Storyboard Studio complete end-to-end workflow: 5D Context-IR expansion, 3x3 multi-camera grid directing, latent motion context handoff, 10% micro-compute audio reroll, Step 3 Colab A100 dispatch, and Step 4 smart ducking with zero-drift subtitles.",
+  "title": "H3 Storyboard Studio 完整工作流全解析 (105秒實測指南) / H3 Storyboard Studio Complete Workflow Guide (105s)",
+  "description": "大學生期末報告實戰教學：構想擴寫、3x3九宮格多機位調度、潛空間無損接力防跳針、微量算力重抽真聲音軌、三大算力路線（Mac原生Metal/商用雲端API/低成本Colab）、後期自動音樂避讓與精確字幕直出。",
   "project_mode": "edu_explainer",
   "auto_duration": true,
-  "execution_track": "colab_12s",
-  "mode": "turbo",
-  "width": 1376,
-  "height": 768,
-  "frames": 289,
-  "steps": 6,
-  "layers": 50,
+  "execution_track": "colab_quality",
+  "mode": "base",
+  "width": 864,
+  "height": 480,
+  "frames": 186,
+  "steps": 20,
+  "layers": "50",
   "reuse": 0,
-  "seed": 20261111,
-  "output_prefix": "storyboard_runs/h3_studio_tutorial_140s",
-  "anchor_ref_image": "examples/assets/instructor_suit_ghibli.png",
+  "seed": 20261112,
+  "output_prefix": "tutorial",
+  "anchor_ref_image": "film-chain/public/assets/demo/tutorial_student_ref.png",
   "global_profile": {
     "language_code": "zh-TW",
-    "acoustic_anchor": "gentle_mentor",
+    "acoustic_anchor": "youthful_student_mandarin",
     "bgm_ducking_db": -18.0
   },
   "segments": [
     {
       "segment": 1,
-      "title": "Part 1 (0-12s): 深夜期末死線與靈感爆發 / The Midnight Deadline & Spark of Inspiration",
+      "title": "Part 1 (0-6.4s): 深夜期末死線與靈感啟發 / Midnight Deadline & Inspiration",
       "shot_type": "presenter_focus",
       "chain_mode": "first_frame",
-      "first_frame": "examples/assets/instructor_suit_ghibli.png",
-      "display_dialogue": "期末作業截止只剩幾小時，腦中空有滿滿熱血畫面卻擠不出分鏡？別怕，交給 H3 把想像變電影！",
-      "spoken_dialogue": "期末作業截止只剩幾小時，腦中空有滿滿熱血畫面卻擠不出分鏡？別怕，交給 H3 把想像變電影！",
-      "prompt": "[Scene] Cozy college dormitory room late at night, glowing laptop screen illuminates tired college student Xiao Ming surrounded by textbooks and instant noodles. [Camera] Slow cinematic dolly-in pushing toward Xiao Ming in medium shot. Timeline: 0-6.0s: Xiao Ming steps up, rubs his weary eyes, and reaches for his notebook at the midnight deadline. 6.0-12.0s: He leans forward with a sudden spark of inspiration and taps his keyboard decisively. [Look] Warm Studio Ghibli cel-animation style, soft golden desk lamp ambient glow, delicate painted textures. Audio: Distant ticking clock, quiet room ambience, keyboard clicks, <d>[Chinese] 期末作業截止只剩幾小時，腦中空有滿滿熱血畫面卻擠不出分鏡？別怕，交給 H3 把想像變電影！</d>."
+      "first_frame": "film-chain/public/assets/demo/tutorial_student_ref.png",
+      "frames": 155,
+      "display_dialogue": "期末報告截止只剩幾小時，腦中空有畫面卻擠不出分鏡？別慌，交給 H3 幫你把想法快速具象化。",
+      "spoken_dialogue": "期末報告截止只剩幾小時，腦中空有畫面卻擠不出分鏡？別慌，交給 H3 幫你把想法快速具象化。",
+      "prompt": "[Scene] Cozy college dormitory room late at night, glowing laptop screen illuminates tired college student Xiao Ming wearing a heather-gray hoodie and white over-ear headphones around neck. [Camera] Slow cinematic dolly-in pushing toward Xiao Ming in medium shot. Timeline: 0-3.0s: Xiao Ming leans over his desk looking at his laptop, rubbing weary eyes. 3.0-6.4s: He sits up with a sudden idea and smiles, tapping his keyboard decisively. [Look] Warm Studio Ghibli cel-animation hand-drawn style, soft golden desk lamp ambient glow, delicate textures. Audio: <d>[Chinese] 期末報告截止只剩幾小時，腦中空有畫面卻擠不出分鏡？別慌，交給 H3 幫你把想法快速具象化。</d>."
     },
     {
       "segment": 2,
-      "title": "Part 2 (12-24s): 步驟一：輸入想像與 AI 擴寫 / Step 1: Inputting Vision & AI Prompt Expansion",
+      "title": "Part 2 (6.4-12.8s): 步驟一：簡短構想五維擴寫 / Step 1: Prompt Expansion",
       "shot_type": "presenter_chart",
       "chain_mode": "motion_context",
-      "display_dialogue": "步驟一打上一句想像，AI 就自動擴寫成五維提示詞，排好台詞節奏。",
-      "spoken_dialogue": "步驟一打上一句想像，AI 就自動擴寫成五維提示詞，排好台詞節奏。",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Cozy dormitory desk with glowing laptop screen, neat translucent UI cards. [Camera] Slow steady tracking shot framing Xiao Ming at work. Timeline: 0-2.0s: Xiao Ming calmly finishes typing his prompt. 2.0-10.0s: Clean holographic UI cards unfold smoothly while clear voiceover speaks. 10.0-12.0s: Xiao Ming nods as cards lock into place. [Look] Studio Ghibli cel-animation style, warm ambient light, crisp lines. Audio: [Acoustic: Dry studio narration, close microphone, zero room reverb, crisp centered voiceover], subtle keyboard clicks, quiet room ambience, <d>[Chinese] 步驟一打上一句想像，AI 就自動擴寫成五維提示詞，排好台詞節奏。</d>."
+      "frames": 155,
+      "display_dialogue": "步驟一輸入一句日常構想，系統會自動擴寫成五維提示詞，幫你把鏡頭運動與畫面元素整理清楚。",
+      "spoken_dialogue": "步驟一輸入一句日常構想，系統會自動擴寫成五維提示詞，幫你把鏡頭運動與畫面元素整理清楚。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Cozy dormitory desk with glowing laptop screen, neat translucent floating UI cards displaying Scene, Camera, Action, Look, Audio. [Camera] Slow steady tracking shot framing Xiao Ming at work. Timeline: 0-3.0s: Xiao Ming finishes typing a brief sentence into the input box. 3.0-6.4s: Clean holographic UI cards unfold smoothly while clear voiceover speaks. [Look] Studio Ghibli cel-animation style, warm ambient light, crisp line art. Audio: <d>[Chinese] 步驟一輸入一句日常構想，系統會自動擴寫成五維提示詞，幫你把鏡頭運動與畫面元素整理清楚。</d>."
     },
     {
       "segment": 3,
-      "title": "Part 3 (24-36s): 步驟二：九宮格電影機位調度 / Step 2: 3x3 Grid Multi-Camera Directing",
+      "title": "Part 3 (12.8-20.5s): 步驟二：九宮格多機位調度 / Step 2: 3x3 Grid Multi-Camera",
       "shot_type": "presenter_chart",
       "chain_mode": "motion_context",
-      "display_dialogue": "告別呆板的一鏡到底，切換九宮格機位，遠景特寫自由穿梭，拉滿電影張力！",
-      "spoken_dialogue": "告別呆板的一鏡到底，切換九宮格機位，遠景特寫自由穿梭，拉滿電影張力！",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] The laptop display expands into an illuminated 3x3 multi-camera grid matrix. [Camera] Dynamic push-in zooming toward the nine synchronized viewports on screen. Timeline: 0-6.0s: Xiao Ming steps forward and reaches toward the 3x3 storyboard canvas, pivoting between wide shots, over-the-shoulder angles, and close-ups. 6.0-12.0s: The viewports pulse with life, switching perspectives like a veteran director's monitor wall. [Look] Sharp anime UI overlays, warm studio lighting, cinematic contrast. Audio: [Voiceover: Dry studio narration, close microphone, zero room reverb, standard neutral Mandarin], subtle camera shutter click, <d>[Chinese] 告別呆板的一鏡到底，切換九宮格機位，遠景特寫自由穿梭，拉滿電影張力！</d>."
+      "frames": 186,
+      "display_dialogue": "步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。",
+      "spoken_dialogue": "步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] The laptop display expands into an interactive 3x3 grid storyboard panel, displaying nine distinct cinematic camera angles of the same scene. [Camera] Dynamic horizontal pan across the nine panels. Timeline: 0-3.5s: Xiao Ming gestures towards the multi-camera grid, showing establishing shots and medium close-ups. 3.5-7.7s: Different angles illuminate in rhythm, highlighting seamless spatial continuity. [Look] Cel-shaded anime aesthetic, vibrant interface colors, warm lighting. Audio: <d>[Chinese] 步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。</d>."
     },
     {
       "segment": 4,
-      "title": "Part 4 (36-48s): 告別單調呆板的平鋪直敘 / Breaking Monotony with Grid Directing",
-      "shot_type": "presenter_focus",
+      "title": "Part 4 (20.5-28.2s): 潛空間慣性無損延續 / Step 2B: Latent Space Continuity",
+      "shot_type": "presenter_chart",
       "chain_mode": "motion_context",
-      "display_dialogue": "九宮格就像請了九個攝影師幫你掌鏡，同一個人物在不同視角間無縫穿梭，徹底告別作業廉價感！",
-      "spoken_dialogue": "九宮格就像請了九個攝影師幫你掌鏡，同一個人物在不同視角間無縫穿梭，徹底告別作業廉價感！",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Virtual movie set projected from the laptop, showing animated characters in high fantasy attire. [Camera] Rapid cinematic whip-pan transitioning into a sweeping arc shot around the fantasy character. Timeline: 0-6.0s: Nine virtual camera lenses pivot simultaneously around the protagonist, capturing dynamic action poses. 6.0-12.0s: Xiao Ming smiles excitedly, adjusting slider handles as cinematic angles seamlessly interlock. [Look] Epic filmic composition, Ghibli watercolor environment with sharp heroic character contours. Audio: Cinematic whoosh, orchestral brass swell, <d>[Chinese] 九宮格就像請了九個攝影師幫你掌鏡，同一個人物在不同視角間無縫穿梭，徹底告別作業廉價感！</d>."
+      "frames": 186,
+      "display_dialogue": "很多工具常忽略鏡頭銜接的跳針問題。我們花時間把潛空間接力做進去，讓上一鏡的動能自然延續。",
+      "spoken_dialogue": "很多工具常忽略鏡頭銜接的跳針問題。我們花時間把潛空間接力做進去，讓上一鏡的動能自然延續。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Visualization of video latent space handoff, glowing energetic streamlines connecting the end of clip A to the start of clip B. [Camera] Smooth dolly-forward traveling along the illuminated latent trajectory. Timeline: 0-3.5s: Xiao Ming explains as two video clips dock together smoothly without any visible seams or flickering. 3.5-7.7s: Velocity vectors and lighting gradients flow across the boundary continuously. [Look] Sleek anime sci-fi motion graphics seamlessly blended with warm Ghibli dorm backdrop. Audio: <d>[Chinese] 很多工具常忽略鏡頭銜接的跳針問題。我們花時間把潛空間接力做進去，讓上一鏡的動能自然延續。</d>."
     },
     {
       "segment": 5,
-      "title": "Part 5 (48-60s): 潛空間無損接力的奧秘 / Latent Space Motion Context Handoff",
-      "shot_type": "presenter_chart",
+      "title": "Part 5 (28.2-35.9s): 物理慣性鎖定特徵防走樣 / Momentum Locking & Anti-Drift",
+      "shot_type": "presenter_focus",
       "chain_mode": "motion_context",
-      "display_dialogue": "但多段影片最怕第十四秒跳針變形！H3 獨家潛空間接力技術，能完整保留上一鏡的動能、風速與光影！",
-      "spoken_dialogue": "但多段影片最怕第十四秒跳針變形！H3 獨家潛空間接力技術，能完整保留上一鏡的動能、風速與光影！",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Visualization of video latent space, luminous energy streams connecting adjacent clip containers. [Camera] Slow cinematic tilt-up tracking along the glowing golden latent trajectory. Timeline: 0-6.0s: Two video segments collide in virtual space; instead of glitching, a smooth motion vector stream binds them. 6.0-12.0s: Xiao Ming reaches out to inspect the continuous flow of wind speed and lighting vectors across the boundary. [Look] Luminous particle physics, ethereal cyan and amber light traces, clean anime styling. Audio: Resonant harmonic drone, gentle electronic pulse, <d>[Chinese] 但多段影片最怕第十四秒跳針變形！H3 獨家潛空間接力技術，能完整保留上一鏡的動能、風速與光影！</d>."
+      "frames": 186,
+      "display_dialogue": "不管是人物奔跑的物理慣性還是光影明暗，接力運算能鎖定特徵，讓角色和畫面不輕易變形。",
+      "spoken_dialogue": "不管是人物奔跑的物理慣性還是光影明暗，接力運算能鎖定特徵，讓角色和畫面不輕易變形。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] A dynamic storyboard sequence plays inside Xiao Ming's screen, showing an animated runner in a rainstorm maintaining stride and coat flutter across cuts. [Camera] Tracking shot following the animated runner's inertia, then pulling back to Xiao Ming nodding approvingly. Timeline: 0-4.0s: The runner's motion momentum carries perfectly across scene cuts without anatomical distortion. 4.0-7.7s: Xiao Ming watches the playback with confidence. [Look] High-frame-rate action animation physics, rich atmospheric rain streaks, cohesive palette. Audio: <d>[Chinese] 不管是人物奔跑的物理慣性還是光影明暗，接力運算能鎖定特徵，讓角色和畫面不輕易變形。</d>."
     },
     {
       "segment": 6,
-      "title": "Part 6 (60-72s): 物理慣性與光影無縫延續 / Anti-Drift Physics and Continuous Momentum",
-      "shot_type": "presenter_focus",
+      "title": "Part 6 (35.9-43.6s): 情感真聲拒絕生硬念稿 / Expressive Emotional Voice",
+      "shot_type": "presenter_chart",
       "chain_mode": "motion_context",
-      "display_dialogue": "不管是狂風中的衣角還是奔跑慣性，接力算法都能鎖住動能，讓角色絕不走樣。",
-      "spoken_dialogue": "不管是狂風中的衣角還是奔跑慣性，接力算法都能鎖住動能，讓角色絕不走樣。",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Storyboard sample clip playing: a detective sprints through a neon rain-swept cyberpunk street. [Camera] Low-angle tracking shot rushing alongside the running detective. Timeline: 0-6.0s: The detective sprints across wet asphalt, raincoat flapping in the stormy wind with realistic inertia. 6.0-12.0s: As the clip crosses segment boundaries, his facial contours and water reflections remain rock solid and pristine. [Look] Neo-noir cyberpunk neon reflection, sharp cel-shaded motion, zero flickering or morphing. Audio: [Voiceover: Prominent foreground non-diegetic narrator, crisp dry close-mic, standard Mandarin], [Background: Ducked soft distant rain, muffled footsteps], <d>[Chinese] 不管是狂風中的衣角還是奔跑慣性，接力算法都能鎖住動能，讓角色絕不走樣。</d>."
+      "frames": 186,
+      "display_dialogue": "一般的語音合成往往死板得像念稿。H3 著重生成帶有呼吸節奏的情感聲音，讓對白更自然。",
+      "spoken_dialogue": "一般的語音合成往往死板得像念稿。H3 著重生成帶有呼吸節奏的情感聲音，讓對白更自然。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Audio waveform visualization floating beside Xiao Ming's desk, demonstrating subtle breathing dynamics and vocal cadence curves. [Camera] Gentle arc shot circling Xiao Ming listening intently through his white headphones. Timeline: 0-3.5s: Vocal audio waves glow with warm golden harmonic bands. 3.5-7.7s: Xiao Ming smiles and taps his headphones to appreciate the organic delivery. [Look] Expressive studio acoustics representation, warm anime character animation. Audio: <d>[Chinese] 一般的語音合成往往死板得像念稿。H3 著重生成帶有呼吸節奏的情感聲音，讓對白更自然。</d>."
     },
     {
       "segment": 7,
-      "title": "Part 7 (72-84s): 聲音的靈魂與拒絕死板 TTS / The Soul of Voice vs Rigid Synthetic TTS",
+      "title": "Part 7 (43.6-51.3s): 一成微量算力抽屜重抽 / 10% Compute Audio Reroll",
       "shot_type": "presenter_chart",
       "chain_mode": "motion_context",
-      "display_dialogue": "普通 AI 影片配音總是毫無靈魂像機器人念稿，H3 拒絕死板合成音，堅持生成有呼吸感的情感真聲！",
-      "spoken_dialogue": "普通 AI 影片配音總是毫無靈魂像機器人念稿，H3 拒絕死板合成音，堅持生成有呼吸感的情感真聲！",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Audio waveform analysis room inside the studio software, dual spectral displays side-by-side. [Camera] Close-up panning from a jagged artificial TTS wave to a rich, warm natural acoustic spectrogram. Timeline: 0-6.0s: Xiao Ming gestures critically at a flat robotic waveform that abruptly shatters and bursts apart. 6.0-12.0s: A lush, warm vocal soundwave glows with organic life, pulsating with micro-breaths and vocal warmth. [Look] High-tech acoustic studio ambiance, warm golden soundwave glow. Audio: Robotic stutter dissipating into rich human vocal resonance, <d>[Chinese] 普通 AI 影片配音總是毫無靈魂像機器人念稿，H3 拒絕死板合成音，堅持生成有呼吸感的情感真聲！</d>."
+      "frames": 186,
+      "display_dialogue": "要是對某句話語氣不滿意，拉開抽屜單獨重抽音訊只要消耗一成算力，不用整部影片重跑。",
+      "spoken_dialogue": "要是對某句話語氣不滿意，拉開抽屜單獨重抽音訊只要消耗一成算力，不用整部影片重跑。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Xiao Ming slides open the audio drawer on the interface, revealing individual shot audio reroll controls and pitch inspection meters. [Camera] Medium close-up on Xiao Ming's hands operating the lightweight proxy audio canvas. Timeline: 0-3.5s: He clicks the single-shot reroll button, triggering a rapid 10% micro-compute waveform pass. 3.5-7.7s: A refreshed audio track instantly replaces the shot audio without touching video frames. [Look] Tactile UI interaction, crisp typography, responsive animations. Audio: <d>[Chinese] 要是對某句話語氣不滿意，拉開抽屜單獨重抽音訊只要消耗一成算力，不用整部影片重跑。</d>."
     },
     {
       "segment": 8,
-      "title": "Part 8 (84-96s): 一成微量算力重抽音軌 / 10% Micro-Compute Audio Reroll Drawer",
+      "title": "Part 8 (51.3-59.0s): 步驟三：三大算力路線總覽 / Step 3: Compute Dispatch Overview",
       "shot_type": "presenter_chart",
       "chain_mode": "motion_context",
-      "display_dialogue": "如果你對語氣不滿意，拉開抽屜重抽音訊只要消耗一成微量算力，用低清畫布重算，不用重跑全片！",
-      "spoken_dialogue": "如果你對語氣不滿意，拉開抽屜重抽音訊只要消耗一成微量算力，用低清畫布重算，不用重跑全片！",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Xiao Ming slides open the sleek Audio Reroll side drawer on the right edge of the screen. [Camera] Smooth push-in focusing on the lightweight proxy canvas toggle and seed slider. Timeline: 0-6.0s: Xiao Ming draws open the drawer interface and adjusts the acoustic emotion slider. 6.0-12.0s: A compact 256x160 proxy canvas flashes briefly, instantly regenerating a vivid 32kHz voice track in seconds. [Look] Polished modern UI design, swift responsive animation, clean green efficiency gauge. Audio: Drawer sliding click, quick digital processing chime, <d>[Chinese] 如果你對語氣不滿意，拉開抽屜重抽音訊只要消耗一成微量算力，用低清畫布重算，不用重跑全片！</d>."
+      "frames": 186,
+      "display_dialogue": "來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。",
+      "spoken_dialogue": "來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Step 3 dispatch deck lights up on screen, presenting three distinct glowing route cards: Local Mac Native, SaaS Cloud API, and Low-Cost Cloud Compute. [Camera] Slow wide tracking shot displaying the three pathways. Timeline: 0-3.5s: Xiao Ming gestures across the three options, showing flexible compute tiers. 3.5-7.7s: Each route card glows with distinct cyan, emerald, and purple highlights. [Look] Clean technical diagrams, futuristic yet approachable UI aesthetic. Audio: <d>[Chinese] 來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。</d>."
     },
     {
       "segment": 9,
-      "title": "Part 9 (96-108s): 步驟三：雲端算力方案選擇 / Step 3: Dispatching to Colab Cloud Compute",
-      "shot_type": "presenter_chart",
+      "title": "Part 9 (59.0-66.7s): 路線一：Apple Silicon 原生加速 / Route 1: Apple Silicon Native",
+      "shot_type": "presenter_focus",
       "chain_mode": "motion_context",
-      "display_dialogue": "步驟三渲染環節，只要輕薄筆電就能一鍵直連雲端算力，開始高速運算。",
-      "spoken_dialogue": "步驟三渲染環節，只要輕薄筆電就能一鍵直連雲端算力，開始高速運算。",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Dispatch modal popping up on screen showing Local GPU and Google Colab cloud execution tiers. [Camera] Eye-level medium shot tracking Xiao Ming's confident expression. Timeline: 0-6.0s: Xiao Ming glances at his slim student laptop, then steps forward and points happily at the Cloud Colab option. 6.0-12.0s: He clicks the connect badge, establishing an encrypted bridge to remote high-performance cloud clusters. [Look] High-tech network visualization, golden connection beams linking laptop to cloud nodes. Audio: [Voiceover: Dry studio close-mic narration, zero room reverb, prominent centered voice, standard neutral Mandarin], [Background: Quiet low server hum, soft click], <d>[Chinese] 步驟三渲染環節，只要輕薄筆電就能一鍵直連雲端算力，開始高速運算。</d>."
+      "frames": 186,
+      "display_dialogue": "第一條是 Mac 專屬路線。多數開源專案對蘋果電腦支援有限，這裡特別原生優化，沒網路也能順暢跑。",
+      "spoken_dialogue": "第一條是 Mac 專屬路線。多數開源專案對蘋果電腦支援有限，這裡特別原生優化，沒網路也能順暢跑。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] An elegant Apple Silicon chip icon shines on the screen with an offline local progress bar processing smoothly. [Camera] Push-in medium shot on Xiao Ming beside his MacBook, gesturing proudly to the fully disconnected offline badge. Timeline: 0-3.5s: The local Metal GPU engine ticks steadily, using unified memory efficiently. 3.5-7.7s: Xiao Ming shows complete privacy and zero external dependency. [Look] Crisp metallic accents, warm room lighting, sleek Apple hardware integration. Audio: <d>[Chinese] 第一條是 Mac 專屬路線。多數開源專案對蘋果電腦支援有限，這裡特別原生優化，沒網路也能順暢跑。</d>."
     },
     {
       "segment": 10,
-      "title": "Part 10 (108-120s): 幸運排到 A100 二十分鐘搞定 / Snagging A100 & 20-Min Render Sprint",
-      "shot_type": "presenter_focus",
+      "title": "Part 10 (66.7-74.4s): 路線二：商用雲端極速直連 / Route 2: SaaS Commercial API",
+      "shot_type": "presenter_chart",
       "chain_mode": "motion_context",
-      "display_dialogue": "幸運排到頂級雲端顯卡，二十分鐘就把整套高畫質分鏡全部算得漂漂亮亮！",
-      "spoken_dialogue": "幸運排到頂級雲端顯卡，二十分鐘就把整套高畫質分鏡全部算得漂漂亮亮！",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Cloud dashboard displaying allocated NVIDIA A100 Tensor Core GPU with high throughput dials. [Camera] Dynamic speed ramp zooming into the fast-advancing multi-shot progress bar. Timeline: 0-6.0s: The A100 node accelerates into high gear as compute clusters charge forward; twelve video render tiles rush in parallel. 6.0-12.0s: In just twenty minutes, all twelve intricate multi-layer storyboards finish without a hitch. [Look] Dazzling speed graphics, sleek server rack reflections, crisp completion badges. Audio: [Voiceover: Dry studio close-mic narration, zero room reverb, crisp centered vocal, clear standard Mandarin], [Background: Quiet smooth ambient hum], <d>[Chinese] 幸運排到頂級雲端顯卡，二十分鐘就把整套高畫質分鏡全部算得漂漂亮亮！</d>."
+      "frames": 186,
+      "display_dialogue": "第二條是商用雲端直連。填入密鑰就能呼叫高效能雲端主機，多個分鏡同時並行，幾分鐘內搞定。",
+      "spoken_dialogue": "第二條是商用雲端直連。填入密鑰就能呼叫高效能雲端主機，多個分鏡同時並行，幾分鐘內搞定。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] High-speed commercial cloud API dashboard, twelve video render tiles processing simultaneously in parallel streams. [Camera] Horizontal tracking shot sweeping past rapidly advancing progress indicators. Timeline: 0-3.5s: API keys connect securely as cloud cluster nodes fire up in parallel. 3.5-7.7s: All segment clips complete within minutes, flashing bright checkmarks. [Look] High-speed modern web dashboard, emerald green completion status badges. Audio: <d>[Chinese] 第二條是商用雲端直連。填入密鑰就能呼叫高效能雲端主機，多個分鏡同時並行，幾分鐘內搞定。</d>."
     },
     {
       "segment": 11,
-      "title": "Part 11 (120-132s): 步驟四：自動避讓與零漂移字幕 / Step 4: Smart Audio Ducking & Zero-Drift Subtitles",
+      "title": "Part 11 (74.4-82.1s): 路線三：善用贈送算力低成本排程 / Route 3: Low-Cost Cloud Scheduling",
       "shot_type": "presenter_chart",
       "chain_mode": "motion_context",
-      "display_dialogue": "最後步驟四後期不用再開剪輯軟體，智慧避讓會自動降低背景音樂，搭配零漂移字幕，對齊精確到幀！",
-      "spoken_dialogue": "最後步驟四後期不用再開剪輯軟體，智慧避讓會自動降低背景音樂，搭配零漂移字幕，對齊精確到幀！",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Master timeline inspection deck in Step 4, audio ducking envelopes and subtitle tracks displayed. [Camera] Horizontal tracking shot sliding across the synchronized master audio and subtitle lanes. Timeline: 0-6.0s: Xiao Ming steps over to inspect the master track, as the background music waveform automatically dips by 18dB whenever speech begins. 6.0-12.0s: Clean yellow subtitles unfold frame-by-frame with zero temporal drift onto the high-definition preview video. [Look] Professional digital audio workstation look, vibrant waveforms, crisp typography. Audio: BGM gracefully ducking down under voice, crystal clear vocal delivery, <d>[Chinese] 最後步驟四後期不用再開剪輯軟體，智慧避讓會自動降低背景音樂，搭配零漂移字幕，對齊精確到幀！</d>."
+      "frames": 186,
+      "display_dialogue": "第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。",
+      "spoken_dialogue": "第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Cloud GPU scheduling terminal showing GPU quota metrics and automatic fallback mechanism from A100 to L4. [Camera] Speed-ramp shot zooming into the robust watchdog and session resilience deck. Timeline: 0-3.5s: Xiao Ming dispatches jobs utilizing bundled subscription compute units. 3.5-7.7s: The pipeline automatically recovers and continues render seamlessly if a node restarts. [Look] Deep indigo terminal theme, glowing telemetry telemetry counters. Audio: <d>[Chinese] 第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。</d>."
     },
     {
       "segment": 12,
-      "title": "Part 12 (132-144.5s): 一鍵匯出與期末 A+ 完勝 / One-Click Export & Crushing Finals with A+",
+      "title": "Part 12 (82.1-89.8s): 步驟四：自動音樂避讓與精確字幕 / Step 4: Audio Ducking & Subtitles",
+      "shot_type": "presenter_chart",
+      "chain_mode": "motion_context",
+      "frames": 186,
+      "display_dialogue": "最後步驟四不用再開剪輯軟體，系統會自動在人聲處壓低背景音樂，並生成精確對齊的字幕。",
+      "spoken_dialogue": "最後步驟四不用再開剪輯軟體，系統會自動在人聲處壓低背景音樂，並生成精確對齊的字幕。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Post-production timeline deck in Step 4, audio ducking volume envelope dipping automatically under vocal spikes. [Camera] Horizontal slider shot tracking along the master timeline where synchronized yellow subtitles appear in perfect lockstep. Timeline: 0-3.5s: BGM waveform gracefully dips by 18dB whenever narration begins. 3.5-7.7s: Sharp yellow subtitles render cleanly frame-by-frame on screen. [Look] Professional digital audio workstation look, vibrant waveforms, crisp typography. Audio: <d>[Chinese] 最後步驟四不用再開剪輯軟體，系統會自動在人聲處壓低背景音樂，並生成精確對齊的字幕。</d>."
+    },
+    {
+      "segment": 13,
+      "title": "Part 13 (89.8-97.5s): 一鍵匯出與開源模型價值 / One-Click Export & Open Source",
       "shot_type": "presenter_focus",
       "chain_mode": "motion_context",
-      "display_dialogue": "點擊一鍵匯出打包交卷，從創意發想到好萊塢級成片一氣呵成！這個期末作業，全班最高分就是你了！",
-      "spoken_dialogue": "點擊一鍵匯出打包交卷，從創意發想到好萊塢級成片一氣呵成！這個期末作業，全班最高分就是你了！",
-      "prompt": "Create a cinematic instructional film continuing seamlessly from the previous segment. [Scene] Dawn breaks outside the dorm window, golden sunlight pours over Xiao Ming's proud desk as his video plays. [Camera] Glorious cinematic pull-back revealing the finished masterpiece playing smoothly on screen. Timeline: 0-6.0s: Xiao Ming strikes a celebratory victory pose and steps forward to click the glowing blue One-Click Export button. 6.0-12.0s: A glowing red A+ grade appears on his digital submission portal as birds chirp in morning light. [Look] Uplifting sunrise warmth, classic Ghibli emotional euphoria, golden rim lighting. Audio: Inspiring orchestral crescendo, morning songbirds, triumphant school bell, <d>[Chinese] 點擊一鍵匯出打包交卷，從創意發想到好萊塢級成片一氣呵成！這個期末作業，全班最高分就是你了！</d>."
+      "frames": 186,
+      "display_dialogue": "MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用。點擊一鍵匯出，快速打包成片。",
+      "spoken_dialogue": "MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用。點擊一鍵匯出，快速打包成片。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Xiao Ming at his desk clicks the glowing Export button as the final master cut assembles smoothly. [Camera] Medium close-up on Xiao Ming smiling with satisfaction, the finished multi-shot video previewing flawlessly in the player. Timeline: 0-3.5s: Xiao Ming triggers the export command with a confident click. 3.5-7.7s: The completed video file packages cleanly onto his desktop folder. [Look] Heartwarming anime atmosphere, soft golden screen reflection, clean desktop workspace. Audio: <d>[Chinese] MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用。點擊一鍵匯出，快速打包成片。</d>."
+    },
+    {
+      "segment": 14,
+      "title": "Part 14 (97.5-105.2s): 終章天亮順利交卷 / Daybreak & Successful Submission",
+      "shot_type": "presenter_focus",
+      "chain_mode": "motion_context",
+      "frames": 186,
+      "display_dialogue": "不知不覺天已經亮了，通宵趕完的期末報告順利搞定交卷！現在就打開 H3 試試看吧。",
+      "spoken_dialogue": "不知不覺天已經亮了，通宵趕完的期末報告順利搞定交卷！現在就打開 H3 試試看吧。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Dawn breaks outside the dormitory window, fresh morning sunlight pours across Xiao Ming's desk as the course assignment submission shows complete. [Camera] Glorious slow pull-back revealing Xiao Ming stretching comfortably with a drink, smiling and waving to the audience. Timeline: 0-3.5s: Morning light floods the room, digital submission portal shows Success upload badge. 3.5-7.7s: Xiao Ming smiles warmly and gives a cheerful sign-off gesture. [Look] Uplifting sunrise warmth, classic Ghibli emotional release, golden rim lighting. Audio: <d>[Chinese] 不知不覺天已經亮了，通宵趕完的期末報告順利搞定交卷！現在就打開 H3 試試看吧。</d>."
     }
   ]
 }

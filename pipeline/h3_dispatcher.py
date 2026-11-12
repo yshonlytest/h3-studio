@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -65,10 +66,15 @@ def verify_readonly_usage_cmd(cmd: list[str]) -> bool:
 
 def query_colab_usage_safely() -> float | None:
     """Safely query Colab compute unit balance without allocating runtimes."""
-    cmd = ["colab", "usage", "--json"]
+    cmd = ["colab", "usage"]
     try:
         verify_readonly_usage_cmd(cmd)
         proc = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        # 0.7.4 text output: "Current balance: 347.90 compute units"
+        m = re.search(r"Current balance:\s*([0-9.]+)", proc.stdout)
+        if m:
+            return float(m.group(1))
+        # fallback JSON check if upgraded
         data = json.loads(proc.stdout)
         return float(data.get("compute_units", data.get("balance", 0.0)))
     except Exception as e:
