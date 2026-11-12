@@ -66,9 +66,6 @@
         <button type="button" class="btn" onclick="loadGoldenTemplate('ink_sorcerer')" style="padding:6px 10px; font-size:0.78rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.14);" title="載入 25 秒水墨奇幻潛空間專屬範本與實測成片">
           🖌️ 墨繪靈境 (潛空間)
         </button>
-        <button type="button" class="btn" onclick="loadGoldenTemplate('handwashing_edu')" style="padding:6px 10px; font-size:0.78rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.14); font-weight:600;" title="載入洗手五步驟與七字口訣科普教學長片範本">
-          🧼 洗手教學 (長影片)
-        </button>
         <button type="button" class="btn" onclick="openPronunciationLexiconModal()" style="padding:6px 10px; font-size:0.78rem; border-color:#f59e0b; color:#fde68a; background:rgba(245,158,11,0.14);" title="檢視與管理發音字典、破音字唯一字詞替換與全片體檢">
           🔤 發音詞庫
         </button>
@@ -248,8 +245,8 @@
             <button type="button" class="btn" onclick="document.getElementById('eduDocFileInput').click()" style="padding:6px 12px; font-size:0.8rem; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe; min-height:34px;">
               📄 上傳文檔 (.md/.txt/.pdf)
             </button>
-            <button type="button" class="btn" onclick="loadSampleEduDoc()" style="padding:6px 12px; font-size:0.8rem; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe; min-height:34px;">
-              💡 載入正確洗手教學範本文檔 (科普解說)
+            <button type="button" class="btn" onclick="loadSampleEduDoc()" style="padding:6px 12px; font-size:0.8rem; background:rgba(245,158,11,0.22); border-color:#f59e0b; color:#fde68a; font-weight:700; min-height:34px;">
+              💡 載入 H3 Studio 工作流教學文檔 (140s 實測指南)
             </button>
           </div>
         </div>
@@ -424,7 +421,6 @@
                 <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:rgba(245,158,11,0.22); border-color:#f59e0b; color:#fde68a; font-weight:700;" onclick="loadGoldenTemplate('tutorial_140s')">🎓 H3 教學 (140s 實測)</button>
                 <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:#1e293b;" onclick="loadGoldenTemplate('detective')">🕵️ 賽博偵探 (九宮格)</button>
                 <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:#1e293b;" onclick="loadGoldenTemplate('ink_sorcerer')">🖌️ 墨繪靈境 (潛空間)</button>
-                <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe;" onclick="loadGoldenTemplate('handwashing_edu')">🧼 洗手教學 (長影片)</button>
               </div>
             </div>
           </div>
@@ -1408,10 +1404,10 @@
       }
 
       if (autoSwitch && !isRestoringProject) {
-        if (isEdu && currentActiveProjectId !== "fc_handwashing_edu_demo" && currentActiveProjectId !== "fc_tutorial_140s_demo") {
-          loadGoldenTemplate("handwashing_edu");
+        if (isEdu && currentActiveProjectId !== "fc_tutorial_140s_demo" && currentActiveProjectId !== "fc_handwashing_edu_demo") {
+          loadGoldenTemplate("tutorial_140s");
           return;
-        } else if (isCreative && (currentActiveProjectId === "fc_handwashing_edu_demo" || currentActiveProjectId === "fc_tutorial_140s_demo")) {
+        } else if (isCreative && (currentActiveProjectId === "fc_tutorial_140s_demo" || currentActiveProjectId === "fc_handwashing_edu_demo")) {
           loadGoldenTemplate("detective");
           return;
         }
@@ -3904,7 +3900,7 @@ ${desc}${extra}
         <div class="seg-audio-controls-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0 8px 0; padding:8px 10px; background:rgba(15,23,42,0.65); border:1px solid #1e3a5f; border-radius:6px;">
           <div style="flex:1; min-width:240px; display:flex; align-items:center; gap:6px;">
             <span style="font-size:0.8rem; color:#38bdf8; font-weight:600; white-space:nowrap;">台詞：</span>
-            <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（如：真正的經濟利潤、正確洗手五步驟...）" style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
+            <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（如：期末作業截止只剩幾小時、步驟一打上一句想像...）" style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
           </div>
           <button type="button" class="btn" onclick="rerollShotAudio(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;" title="調用 H3 代理畫布重抽 32kHz 音訊，保留原片聲紋與背景音樂">
             重抽音軌
@@ -4298,38 +4294,46 @@ ${desc}${extra}
     }
 
     function loadSampleEduDoc() {
-      const sample = `# 第一章：病從口入與肉眼看不見的細菌
-病從口入，我們的手每天都會接觸成千上萬的肉眼看不見的細菌與病毒。
-如果沒有正確清潔，很容易在進食或揉眼睛時把病原體帶入體內。
-因此，落實正確洗手是守護全家人健康最有效、成本最低的防疫第一線。
+      const sample = `# 第一章：深夜期末死線與靈感爆發
+期末作業截止只剩幾小時，腦中空有滿滿熱血畫面卻擠不出分鏡？別怕，交給 H3 把想像變電影！
 
-# 第二章：洗手五步驟——濕搓沖捧擦
-正確洗手的第一步是掌握「濕、搓、沖、捧、擦」五大流程：
-第一步「濕」，先在水龍頭下把雙手徹底淋濕；
-第二步「搓」，抹上洗手乳或肥皂，起泡後至少搓揉二十秒；
-第三步「沖」，用乾淨流動清水將泡沫徹底洗淨；
-第四步「捧」，捧水將水龍頭開關沖洗乾淨，避免關水時二次污染；
-第五步「擦」，使用乾淨紙巾或手帕將雙手完全擦乾。
+# 第二章：步驟一：輸入想像與 AI 擴寫
+步驟一打上一句想像，AI 就自動擴寫成五維提示詞，排好台詞節奏。
 
-# 第三章：七字口訣深層清潔——內外夾弓大立腕
-在「搓」的二十秒關鍵時間內，必須精準執行「內、外、夾、弓、大、立、腕」七字口訣：
-「內」，掌心對掌心相互揉搓；
-「外」，手心搓手背，左右交替清潔；
-「夾」，雙手十指交叉搓揉指縫；
-「弓」，手指微彎弓起，指背摩擦對側手掌；
-「大」，清洗大拇指與虎口旋轉揉搓；
-「立」，指尖立起在掌心旋轉，清潔指甲縫污垢；
-「腕」，最後別忘記搓洗手腕至關節處。
+# 第三章：步驟二：九宮格電影機位調度
+告別呆板的一鏡到底，切換九宮格機位，遠景特寫自由穿梭，拉滿電影張力！
 
-# 第四章：關鍵時機與洗手迷思破解
-許多人以為隨便沖水幾秒鐘就算洗手，這反而提供細菌滋生溫床。
-吃飯前、如廁後、擤鼻涕後以及抱小孩前，都是洗手關鍵時機。
-記住：洗手時間必須唱完兩次生日快樂歌，才能真正洗淨病菌，健康安心！`;
+# 第四章：告別單調呆板的平鋪直敘
+九宮格就像請了九個攝影師幫你掌鏡，同一個人物在不同視角間無縫穿梭，徹底告別作業廉價感！
+
+# 第五章：潛空間無損接力的奧秘
+但多段影片最怕第十四秒跳針變形！H3 獨家潛空間接力技術，能完整保留上一鏡的動能、風速與光影！
+
+# 第六章：物理慣性與光影無縫延續
+不管是狂風中的衣角還是奔跑慣性，接力算法都能鎖住動能，讓角色絕不走樣。
+
+# 第七章：聲音的靈魂與拒絕死板 TTS
+普通 AI 影片配音總是毫無靈魂像機器人念稿，H3 拒絕死板合成音，堅持生成有呼吸感的情感真聲！
+
+# 第八章：一成微量算力重抽音軌
+如果你對語氣不滿意，拉開抽屜重抽音訊只要消耗一成微量算力，用低清畫布重算，不用重跑全片！
+
+# 第九章：步驟三：雲端算力方案選擇
+步驟三渲染環節，只要輕薄筆電就能一鍵直連雲端算力，開始高速運算。
+
+# 第十章：幸運排到 A100 二十分鐘搞定
+幸運排到頂級雲端顯卡，二十分鐘就把整套高畫質分鏡全部算得漂漂亮亮！
+
+# 第十一章：步驟四：自動避讓與零漂移字幕
+最後步驟四後期不用再開剪輯軟體，智慧避讓會自動降低背景音樂，搭配零漂移字幕，對齊精確到幀！
+
+# 第十二章：一鍵匯出與期末 A+ 完勝
+點擊一鍵匯出打包交卷，從創意發想到好萊塢級成片一氣呵成！這個期末作業，全班最高分就是你了！`;
       const input = document.getElementById("eduDocInput");
       if (input) input.value = sample;
-      showToast("💡 已載入正確洗手教學文檔並同步套用分鏡");
+      showToast("💡 已載入 H3 Studio 工作流教學文檔並同步套用 140s 分鏡");
       extractEduOutlines();
-      loadGoldenTemplate("handwashing_edu");
+      loadGoldenTemplate("tutorial_140s");
     }
 
     function onEduSpeakerPresetChange(sel) {
