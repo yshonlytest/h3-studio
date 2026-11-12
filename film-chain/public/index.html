@@ -6796,38 +6796,42 @@ ${desc}${extra}
         }
 
         // 2. 檢查本機 IndexedDB 是否已有保存的專案
+        const isLegacyProject = (p) => !p || (
+          p.id === "fc_shisa_demo" ||
+          p.id === "fc_handwashing_edu_demo" ||
+          (p.name && (p.name.includes("風獅爺") || p.name.includes("洗手"))) ||
+          (p.refImageDataUrl && (p.refImageDataUrl.includes("shisa") || p.refImageDataUrl.includes("handwashing"))) ||
+          (p.chineseDesc && (p.chineseDesc.includes("風獅爺") || p.chineseDesc.includes("洗手")))
+        );
+
         const lastId = await H3ProjectStore.getLastActiveProjectId();
         if (lastId) {
           const savedProj = await H3ProjectStore.getProject(lastId);
-          const isLegacyShisa = savedProj && (
-            savedProj.id === "fc_shisa_demo" ||
-            (savedProj.name && savedProj.name.includes("風獅爺")) ||
-            (savedProj.refImageDataUrl && savedProj.refImageDataUrl.includes("shisa")) ||
-            (savedProj.chineseDesc && savedProj.chineseDesc.includes("風獅爺"))
-          );
-          if (savedProj && !isLegacyShisa) {
+          if (savedProj && !isLegacyProject(savedProj)) {
             await applyProjectStateToUI(savedProj);
             return;
           }
-          if (isLegacyShisa) {
+          if (savedProj && isLegacyProject(savedProj)) {
             await H3ProjectStore.deleteProject(savedProj.id);
           }
         }
 
         const allProjects = await H3ProjectStore.listProjects();
-        const validProjects = allProjects.filter(p => !(
-          p.id === "fc_shisa_demo" ||
-          (p.name && p.name.includes("風獅爺")) ||
-          (p.refImageDataUrl && p.refImageDataUrl.includes("shisa")) ||
-          (p.chineseDesc && p.chineseDesc.includes("風獅爺"))
-        ));
+        // 清理所有過期或洗手舊專案
+        for (const p of allProjects) {
+          if (isLegacyProject(p)) {
+            await H3ProjectStore.deleteProject(p.id);
+          }
+        }
+
+        const validProjects = (await H3ProjectStore.listProjects()).filter(p => !isLegacyProject(p));
         if (validProjects.length > 0) {
           await applyProjectStateToUI(validProjects[0]);
           return;
         }
 
-        // 3. 首次開啟或舊版升級：初始化預設賽博偵探 25s 專案並存入 IndexedDB
-        const initialDemo = createDefaultDemoProjectObject();
+        // 3. 首次開啟或舊版升級：初始化預設 H3 教學 140s 示範專案並存入 IndexedDB
+        const initialDemo = createGoldenProjectObject("tutorial_140s");
         await H3ProjectStore.saveProject(initialDemo);
         await H3ProjectStore.setLastActiveProjectId(initialDemo.id);
         await applyProjectStateToUI(initialDemo);
