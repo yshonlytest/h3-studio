@@ -48,8 +48,8 @@
       "chain_mode": "motion_context",
       "frames": 186,
       "display_dialogue": "步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。",
-      "spoken_dialogue": "步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。",
-      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] The laptop display expands into an interactive 3x3 grid storyboard panel, displaying nine distinct cinematic camera angles of the same scene. [Camera] Dynamic horizontal pan across the nine panels. Timeline: 0-3.5s: Xiao Ming gestures towards the multi-camera grid, showing establishing shots and medium close-ups. 3.5-7.7s: Different angles illuminate in rhythm, highlighting seamless spatial continuity. [Look] Cel-shaded anime aesthetic, vibrant interface colors, warm lighting. Audio: <d>[Chinese] 步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。</d>."
+      "spoken_dialogue": "步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由吊度，豐富影片層次。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] The laptop display expands into an interactive 3x3 grid storyboard panel, displaying nine distinct cinematic camera angles of the same scene. [Camera] Dynamic horizontal pan across the nine panels. Timeline: 0-3.5s: Xiao Ming gestures towards the multi-camera grid, showing establishing shots and medium close-ups. 3.5-7.7s: Different angles illuminate in rhythm, highlighting seamless spatial continuity. [Look] Cel-shaded anime aesthetic, vibrant interface colors, warm lighting. Audio: <d>[Chinese] 步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由吊度，豐富影片層次。</d>."
     },
     {
       "segment": 4,
@@ -98,8 +98,8 @@
       "chain_mode": "motion_context",
       "frames": 186,
       "display_dialogue": "來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。",
-      "spoken_dialogue": "來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。",
-      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Step 3 dispatch deck lights up on screen, presenting three distinct glowing route cards: Local Mac Native, SaaS Cloud API, and Low-Cost Cloud Compute. [Camera] Slow wide tracking shot displaying the three pathways. Timeline: 0-3.5s: Xiao Ming gestures across the three options, showing flexible compute tiers. 3.5-7.7s: Each route card glows with distinct cyan, emerald, and purple highlights. [Look] Clean technical diagrams, futuristic yet approachable UI aesthetic. Audio: <d>[Chinese] 來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。</d>."
+      "spoken_dialogue": "來到步驟三算力吊度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Step 3 dispatch deck lights up on screen, presenting three distinct glowing route cards: Local Mac Native, SaaS Cloud API, and Low-Cost Cloud Compute. [Camera] Slow wide tracking shot displaying the three pathways. Timeline: 0-3.5s: Xiao Ming gestures across the three options, showing flexible compute tiers. 3.5-7.7s: Each route card glows with distinct cyan, emerald, and purple highlights. [Look] Clean technical diagrams, futuristic yet approachable UI aesthetic. Audio: <d>[Chinese] 來到步驟三算力吊度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。</d>."
     },
     {
       "segment": 9,
@@ -128,8 +128,8 @@
       "chain_mode": "motion_context",
       "frames": 186,
       "display_dialogue": "第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。",
-      "spoken_dialogue": "第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。",
-      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Cloud GPU scheduling terminal showing GPU quota metrics and automatic fallback mechanism from A100 to L4. [Camera] Speed-ramp shot zooming into the robust watchdog and session resilience deck. Timeline: 0-3.5s: Xiao Ming dispatches jobs utilizing bundled subscription compute units. 3.5-7.7s: The pipeline automatically recovers and continues render seamlessly if a node restarts. [Look] Deep indigo terminal theme, glowing telemetry telemetry counters. Audio: <d>[Chinese] 第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。</d>."
+      "spoken_dialogue": "第三條是善用訂閱贈送的雲端算力，用很低成本就能吊用頂級顯示卡，遇到忙碌還會自動降級保底。",
+      "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Cloud GPU scheduling terminal showing GPU quota metrics and automatic fallback mechanism from A100 to L4. [Camera] Speed-ramp shot zooming into the robust watchdog and session resilience deck. Timeline: 0-3.5s: Xiao Ming dispatches jobs utilizing bundled subscription compute units. 3.5-7.7s: The pipeline automatically recovers and continues render seamlessly if a node restarts. [Look] Deep indigo terminal theme, glowing telemetry telemetry counters. Audio: <d>[Chinese] 第三條是善用訂閱贈送的雲端算力，用很低成本就能吊用頂級顯示卡，遇到忙碌還會自動降級保底。</d>."
     },
     {
       "segment": 12,

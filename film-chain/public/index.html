@@ -3337,8 +3337,8 @@ ${desc}${extra}
                         "chain_mode": "motion_context",
                         "frames": 186,
                         "display_dialogue": "步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。",
-                        "spoken_dialogue": "步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。",
-                        "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] The laptop display expands into an interactive 3x3 grid storyboard panel, displaying nine distinct cinematic camera angles of the same scene. [Camera] Dynamic horizontal pan across the nine panels. Timeline: 0-3.5s: Xiao Ming gestures towards the multi-camera grid, showing establishing shots and medium close-ups. 3.5-7.7s: Different angles illuminate in rhythm, highlighting seamless spatial continuity. [Look] Cel-shaded anime aesthetic, vibrant interface colors, warm lighting. Audio: <d>[Chinese] 步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由調度，豐富影片層次。</d>."
+                        "spoken_dialogue": "步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由吊度，豐富影片層次。",
+                        "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] The laptop display expands into an interactive 3x3 grid storyboard panel, displaying nine distinct cinematic camera angles of the same scene. [Camera] Dynamic horizontal pan across the nine panels. Timeline: 0-3.5s: Xiao Ming gestures towards the multi-camera grid, showing establishing shots and medium close-ups. 3.5-7.7s: Different angles illuminate in rhythm, highlighting seamless spatial continuity. [Look] Cel-shaded anime aesthetic, vibrant interface colors, warm lighting. Audio: <d>[Chinese] 步驟二打破單調的一鏡到底，切換九宮格機位，遠景、中景與特寫自由吊度，豐富影片層次。</d>."
                 },
                 {
                         "segment": 4,
@@ -3387,8 +3387,8 @@ ${desc}${extra}
                         "chain_mode": "motion_context",
                         "frames": 186,
                         "display_dialogue": "來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。",
-                        "spoken_dialogue": "來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。",
-                        "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Step 3 dispatch deck lights up on screen, presenting three distinct glowing route cards: Local Mac Native, SaaS Cloud API, and Low-Cost Cloud Compute. [Camera] Slow wide tracking shot displaying the three pathways. Timeline: 0-3.5s: Xiao Ming gestures across the three options, showing flexible compute tiers. 3.5-7.7s: Each route card glows with distinct cyan, emerald, and purple highlights. [Look] Clean technical diagrams, futuristic yet approachable UI aesthetic. Audio: <d>[Chinese] 來到步驟三算力調度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。</d>."
+                        "spoken_dialogue": "來到步驟三算力吊度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。",
+                        "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Step 3 dispatch deck lights up on screen, presenting three distinct glowing route cards: Local Mac Native, SaaS Cloud API, and Low-Cost Cloud Compute. [Camera] Slow wide tracking shot displaying the three pathways. Timeline: 0-3.5s: Xiao Ming gestures across the three options, showing flexible compute tiers. 3.5-7.7s: Each route card glows with distinct cyan, emerald, and purple highlights. [Look] Clean technical diagrams, futuristic yet approachable UI aesthetic. Audio: <d>[Chinese] 來到步驟三算力吊度，系統設計了三條不同路線，依照手邊設備與預算自由搭配。</d>."
                 },
                 {
                         "segment": 9,
@@ -3417,8 +3417,8 @@ ${desc}${extra}
                         "chain_mode": "motion_context",
                         "frames": 186,
                         "display_dialogue": "第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。",
-                        "spoken_dialogue": "第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。",
-                        "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Cloud GPU scheduling terminal showing GPU quota metrics and automatic fallback mechanism from A100 to L4. [Camera] Speed-ramp shot zooming into the robust watchdog and session resilience deck. Timeline: 0-3.5s: Xiao Ming dispatches jobs utilizing bundled subscription compute units. 3.5-7.7s: The pipeline automatically recovers and continues render seamlessly if a node restarts. [Look] Deep indigo terminal theme, glowing telemetry telemetry counters. Audio: <d>[Chinese] 第三條是善用訂閱贈送的雲端算力，用很低成本就能調用頂級顯示卡，遇到忙碌還會自動降級保底。</d>."
+                        "spoken_dialogue": "第三條是善用訂閱贈送的雲端算力，用很低成本就能吊用頂級顯示卡，遇到忙碌還會自動降級保底。",
+                        "prompt": "Create a cinematic instructional anime film continuing seamlessly from the previous segment. [Scene] Cloud GPU scheduling terminal showing GPU quota metrics and automatic fallback mechanism from A100 to L4. [Camera] Speed-ramp shot zooming into the robust watchdog and session resilience deck. Timeline: 0-3.5s: Xiao Ming dispatches jobs utilizing bundled subscription compute units. 3.5-7.7s: The pipeline automatically recovers and continues render seamlessly if a node restarts. [Look] Deep indigo terminal theme, glowing telemetry telemetry counters. Audio: <d>[Chinese] 第三條是善用訂閱贈送的雲端算力，用很低成本就能吊用頂級顯示卡，遇到忙碌還會自動降級保底。</d>."
                 },
                 {
                         "segment": 12,
@@ -4578,13 +4578,14 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
       const card = inputEl.closest(".segment-card");
       if (!card) return;
       const text = inputEl.value.trim();
+      const spokenText = typeof applyPhoneticSubstitutions === "function" ? applyPhoneticSubstitutions(text) : text;
 
       const promptEl = card.querySelector(".seg-prompt-input");
       if (promptEl) {
         if (/<d>.*?<\/d>/s.test(promptEl.value)) {
-          promptEl.value = promptEl.value.replace(/<d>(?:\[\w+\])?\s*.*?<\/d>/s, `<d>[Chinese] ${text}</d>`);
+          promptEl.value = promptEl.value.replace(/<d>(?:\[\w+\])?\s*.*?<\/d>/s, `<d>[Chinese] ${spokenText}</d>`);
         } else {
-          promptEl.value = `${promptEl.value.trim()} Audio: <d>[Chinese] ${text}</d>.`;
+          promptEl.value = `${promptEl.value.trim()} Audio: <d>[Chinese] ${spokenText}</d>.`;
         }
       }
 
@@ -4602,11 +4603,33 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
         "作業成本": "作葉成本",
         "大立腕": "大立萬",
         "立腕": "立萬",
+        "調用": "吊用",
+        "調度": "吊度",
+        "算力調度": "算力吊度",
+        "多機位調度": "多機位吊度",
+        "自由調度": "自由吊度",
+        "調配": "吊配",
+        "調動": "吊動",
+        "調派": "吊派",
         "資本權重": "資本全重",
         "資金調撥": "資金條撥",
         "會計系統": "快計系統"
       }
     };
+
+    function applyPhoneticSubstitutions(text, lang = "zh-TW") {
+      if (!text || typeof text !== "string") return "";
+      const dict = activeLexiconData[lang] || activeLexiconData["zh-TW"] || {};
+      let result = text;
+      const sortedKeys = Object.keys(dict).sort((a, b) => b.length - a.length);
+      for (const word of sortedKeys) {
+        if (result.includes(word)) {
+          result = result.split(word).join(dict[word]);
+        }
+      }
+      return result;
+    }
+    window.applyPhoneticSubstitutions = applyPhoneticSubstitutions;
 
     function renderPhoneticHintBadge(text) {
       if (!text) return `<span style="color:#64748b;">(無台詞)</span>`;
@@ -5075,7 +5098,9 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
         shots: isEdu ? segs.map((s, idx) => ({
           shot_id: idx + 1,
           shot_type: s.shot_type || "presenter_chart",
-          dialogue: s.dialogue || "",
+          dialogue: s.dialogue || s.display_dialogue || "",
+          display_dialogue: s.display_dialogue || s.dialogue || "",
+          spoken_dialogue: typeof applyPhoneticSubstitutions === "function" ? applyPhoneticSubstitutions(s.spoken_dialogue || s.dialogue || "") : (s.spoken_dialogue || s.dialogue || ""),
           frames: s.frames || 124,
           first_frame: idx === 0 ? (s.first_frame || refImg) : undefined,
           visual_prompt: s.prompt || "",
@@ -5085,7 +5110,9 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
           segment: idx + 1,
           shot_id: idx + 1,
           shot_type: s.shot_type || "presenter_chart",
-          dialogue: s.dialogue || "",
+          dialogue: s.dialogue || s.display_dialogue || "",
+          display_dialogue: s.display_dialogue || s.dialogue || "",
+          spoken_dialogue: typeof applyPhoneticSubstitutions === "function" ? applyPhoneticSubstitutions(s.spoken_dialogue || s.dialogue || "") : (s.spoken_dialogue || s.dialogue || ""),
           frames: s.frames || 124,
           title: s.title || `Part ${idx + 1}`,
           chain_mode: s.chain_mode || (idx === 0 ? "first_frame" : "motion_context"),
@@ -6457,8 +6484,8 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
         // 4. Dialogue & BGM settings
         if (Array.isArray(proj.dialogueItems) && proj.dialogueItems.length > 0) {
           currentDialogueItems = JSON.parse(JSON.stringify(proj.dialogueItems));
-          renderDialogueTrackList();
         }
+        syncDialogueItemsFromPlan();
         const bgmSelect = document.getElementById("bgmStyleSelect");
         if (bgmSelect && proj.bgmStyle) bgmSelect.value = proj.bgmStyle;
         const bgmSlider = document.getElementById("bgmVolumeSlider");

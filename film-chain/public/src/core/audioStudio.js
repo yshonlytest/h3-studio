@@ -104,8 +104,9 @@
       const partIdx = typeof item.partIndex === 'number' ? item.partIndex : idx;
       const baseSec = typeof item.baseSec === 'number' ? item.baseSec : partIdx * SEGMENT_DURATION;
       const segDur = typeof item.segDurationSec === 'number' ? item.segDurationSec : SEGMENT_DURATION;
-      const offset = typeof item.startOffsetSec === 'number' ? item.startOffsetSec : 1.5;
-      const dur = typeof item.durationSec === 'number' ? item.durationSec : Math.max(1.0, Math.min(2.5, segDur - 0.5));
+      const offset = typeof item.startOffsetSec === 'number' ? item.startOffsetSec : 0.5;
+      const defaultDur = Math.max(2.0, Math.min(segDur - offset - 0.2, (item.text.length / 3.6) + 0.6));
+      const dur = typeof item.durationSec === 'number' ? item.durationSec : defaultDur;
 
       const startSec = baseSec + offset;
       const endSec = Math.min(baseSec + segDur, startSec + dur);
@@ -127,8 +128,9 @@
       const partIdx = typeof item.partIndex === 'number' ? item.partIndex : idx;
       const baseSec = typeof item.baseSec === 'number' ? item.baseSec : partIdx * SEGMENT_DURATION;
       const segDur = typeof item.segDurationSec === 'number' ? item.segDurationSec : SEGMENT_DURATION;
-      const offset = typeof item.startOffsetSec === 'number' ? item.startOffsetSec : 1.5;
-      const dur = typeof item.durationSec === 'number' ? item.durationSec : Math.max(1.0, Math.min(2.5, segDur - 0.5));
+      const offset = typeof item.startOffsetSec === 'number' ? item.startOffsetSec : 0.5;
+      const defaultDur = Math.max(2.0, Math.min(segDur - offset - 0.2, (item.text.length / 3.6) + 0.6));
+      const dur = typeof item.durationSec === 'number' ? item.durationSec : defaultDur;
 
       const startSec = baseSec + offset;
       const endSec = Math.min(baseSec + segDur, startSec + dur);
@@ -141,18 +143,20 @@
 
   /**
    * 計算 Audio Ducking（對白閃避）時間區間
-   * @param {Array<{ partIndex: number, startOffsetSec?: number, durationSec?: number }>} dialogues
+   * @param {Array<{ partIndex: number, startOffsetSec?: number, durationSec?: number, baseSec?: number, segDurationSec?: number }>} dialogues
    * @returns {Array<{ start: number, end: number }>}
    */
   function calculateDuckingRanges(dialogues = []) {
     return dialogues
       .filter(d => d && d.text && d.text.trim())
       .map(d => {
-        const base = (d.partIndex || 0) * SEGMENT_DURATION;
-        const offset = typeof d.startOffsetSec === 'number' ? d.startOffsetSec : 1.5;
-        const dur = typeof d.durationSec === 'number' ? d.durationSec : 2.5;
+        const base = typeof d.baseSec === 'number' ? d.baseSec : (d.partIndex || 0) * SEGMENT_DURATION;
+        const segDur = typeof d.segDurationSec === 'number' ? d.segDurationSec : SEGMENT_DURATION;
+        const offset = typeof d.startOffsetSec === 'number' ? d.startOffsetSec : 0.5;
+        const defaultDur = Math.max(2.0, Math.min(segDur - offset - 0.2, (d.text.length / 3.6) + 0.6));
+        const dur = typeof d.durationSec === 'number' ? d.durationSec : defaultDur;
         const start = Math.max(0, base + offset - 0.2); // 說話前 0.2s 開始漸降
-        const end = base + offset + dur + 0.3;          // 說話後 0.3s 恢復
+        const end = Math.min(base + segDur, base + offset + dur + 0.3);          // 說話後 0.3s 恢復
         return { start, end };
       });
   }

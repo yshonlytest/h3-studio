@@ -45,16 +45,25 @@
           ? H3AudioStudio.extractDialogueInfo(seg.prompt || "", idx)
           : { text: "", startOffsetSec: 1.5, durationSec: 2.5 };
 
+        const dialogueText = seg.display_dialogue || seg.dialogue || extracted.text || "";
         const existing = currentDialogueItems[idx];
+        const text = existing && existing.userEdited ? existing.text : dialogueText;
+
+        const charCount = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\w]/g) || []).length;
+        const naturalDur = isEdu && charCount > 0
+          ? Math.max(2.0, Math.min(segDur - 0.5, Math.round(((charCount / 3.6) + 0.6) * 10) / 10))
+          : extracted.durationSec;
+        const naturalOffset = isEdu ? 0.5 : extracted.startOffsetSec;
+
         newItems.push({
           partIndex: idx,
           partTitle: seg.title || `Part ${idx + 1}`,
           role: "角色",
-          text: existing && existing.userEdited ? existing.text : (extracted.text || ""),
+          text: text,
           baseSec: baseSec,
           segDurationSec: segDur,
-          startOffsetSec: existing && existing.userEdited ? existing.startOffsetSec : extracted.startOffsetSec,
-          durationSec: existing && existing.userEdited ? existing.durationSec : extracted.durationSec,
+          startOffsetSec: existing && existing.userEdited ? existing.startOffsetSec : naturalOffset,
+          durationSec: existing && existing.userEdited ? existing.durationSec : naturalDur,
           userEdited: existing ? existing.userEdited : false,
           audioBlobUrl: existing ? existing.audioBlobUrl : null
         });
@@ -277,9 +286,12 @@
       for (let i = 0; i < currentDialogueItems.length; i++) {
         const item = currentDialogueItems[i];
         if (!item || !item.text || !item.text.trim()) continue;
-        const base = (item.partIndex || i) * 5;
-        const start = base + (item.startOffsetSec || 1.5);
-        const end = Math.min((base + 5), start + (item.durationSec || 2.5));
+        const base = typeof item.baseSec === "number" ? item.baseSec : (item.partIndex || i) * 5.0;
+        const segDur = typeof item.segDurationSec === "number" ? item.segDurationSec : 5.0;
+        const offset = typeof item.startOffsetSec === "number" ? item.startOffsetSec : 0.5;
+        const dur = typeof item.durationSec === "number" ? item.durationSec : Math.max(2.0, segDur - offset - 0.2);
+        const start = base + offset;
+        const end = Math.min(base + segDur, start + dur);
         if (timeSec >= start && timeSec <= end) {
           activeText = item.text.trim();
           break;
@@ -324,7 +336,7 @@
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const sampleRate = audioCtx.sampleRate;
-        const totalDurationSec = Math.max(5, currentDialogueItems.length * 5);
+        const totalDurationSec = currentDialogueItems.reduce((acc, it) => acc + (typeof it.segDurationSec === "number" ? it.segDurationSec : 5.0), 0) || Math.max(5, currentDialogueItems.length * 5);
 
         // 1. 取得或合成襯樂
         const bgmStyle = document.getElementById("bgmStyleSelect")?.value || "fantasy";
