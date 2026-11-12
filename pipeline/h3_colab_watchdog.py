@@ -16,10 +16,15 @@ RECOVERING = "RECOVERING"
 COMPLETED = "COMPLETED"
 FAILED = "FAILED"
 
+PHASE_SESSION_INIT = "SESSION_INIT"
+PHASE_GPU_INFERENCE = "GPU_INFERENCE"
+PHASE_ARTIFACT_DOWNLOAD = "ARTIFACT_DOWNLOAD"
+PHASE_HEARTBEAT_LOST = "HEARTBEAT_LOST"
+
 
 @dataclass(frozen=True)
 class WatchdogProbeContext:
-    """Inputs for evaluating active runner health across five dimensions."""
+    """Inputs for evaluating active runner health across phases."""
     proc_alive: bool
     session_alive: bool
     progress_updated_ago_sec: float
@@ -27,6 +32,11 @@ class WatchdogProbeContext:
     completed_count: int = 0
     total_count: int = 0
     is_recovering: bool = False
+    phase: str = PHASE_GPU_INFERENCE
+    ws_quiet_sec: float = 0.0
+    ws_quiet_tolerance_sec: float = 240.0
+    remote_kernel_busy: bool = True
+
 
 
 @dataclass(frozen=True)
@@ -65,11 +75,36 @@ def evaluate_watchdog_health(
     if not probe.proc_alive or not probe.session_alive:
         return RECOVERING if probe.is_recovering else FAILED
 
+    # Tolerate quiet websocket stdout during intensive GPU inference cell execution
+    if probe.phase == PHASE_GPU_INFERENCE and probe.remote_kernel_busy:
+        if probe.ws_quiet_sec <= probe.ws_quiet_tolerance_sec and probe.progress_updated_ago_sec <= probe.max_stall_sec:
+            return RUNNING
+
     # Even if process and session are alive, lack of recent output indicates a stall
     if probe.progress_updated_ago_sec > probe.max_stall_sec:
         return STALLED
 
     return RUNNING
+
+
+def terminate_monitored_process(proc: Any, grace_sec: float = 5.0) -> bool:
+    """Safely terminate monitored subprocess via SIGTERM with SIGKILL escalation."""
+    if proc is None or proc.poll() is not None:
+        return True
+    try:
+        proc.terminate()
+        proc.wait(timeout=grace_sec)
+        return True
+    except Exception:
+        LOGGER.warning("SIGTERM failed or timed out, escalating to SIGKILL")
+        try:
+            proc.kill()
+            proc.wait(timeout=grace_sec)
+            return True
+        except Exception as e:
+            LOGGER.error("Failed to terminate process %s: %s", getattr(proc, 'pid', '?'), e)
+            return False
+
 
 
 def is_gpu_capacity_503(stderr_text: str) -> bool:

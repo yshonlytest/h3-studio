@@ -112,6 +112,27 @@ class TestTelemetryAndWatchdog(unittest.TestCase):
         p_rec = WatchdogProbeContext(proc_alive=False, session_alive=True, progress_updated_ago_sec=0.0, max_stall_sec=300.0, completed_count=1, total_count=10, is_recovering=True)
         self.assertEqual(evaluate_watchdog_health(p_rec), RECOVERING)
 
+        # WebSocket quiet tolerance during intensive GPU inference
+        from pipeline.h3_colab_watchdog import (
+            PHASE_GPU_INFERENCE,
+            terminate_monitored_process,
+        )
+        p_quiet = WatchdogProbeContext(
+            proc_alive=True,
+            session_alive=True,
+            progress_updated_ago_sec=200.0,
+            max_stall_sec=360.0,
+            phase=PHASE_GPU_INFERENCE,
+            ws_quiet_sec=180.0,
+            ws_quiet_tolerance_sec=240.0,
+            remote_kernel_busy=True,
+        )
+        self.assertEqual(evaluate_watchdog_health(p_quiet), RUNNING)
+
+        # Terminate dead process helper returns True
+        self.assertTrue(terminate_monitored_process(None))
+
+
     def test_gpu_capacity_503_detection(self) -> None:
         err_quota = "Error: Google API responded with 503: RESOURCE_EXHAUSTED. No accelerator available."
         self.assertTrue(is_gpu_capacity_503(err_quota))

@@ -1,0 +1,197 @@
+{
+  "title": "銀行經濟利潤 (EP 03 費用分攤篇) / Banking Economic Profit Episode 3 (Studio Ghibli 150s Chained)",
+  "description": "Complete 30-segment (150s) continuous Ghibli-style educational film faithful to Report 3: Operating Costs, User-Pays Principle, Stopwatch Paradox, Cost Drivers, Scale Economics, and Overhead Dilution.",
+  "mode": "turbo",
+  "width": 864,
+  "height": 480,
+  "frames": 124,
+  "steps": 6,
+  "layers": 50,
+  "reuse": 0,
+  "seed": 20261110,
+  "output_prefix": "storyboard_runs/ghibli_ep03_full_150s",
+  "anchor_ref_image": "examples/assets/instructor_suit_ghibli.png",
+  "segments": [
+    {
+      "segment": 1,
+      "title": "Part 1 (0-5s): 晨光開場與概念複習 / Sunlit Morning Atrium & Recap",
+      "chain_mode": "first_frame",
+      "prompt": "[Scene] Charming vintage European-style bank atrium in Studio Ghibli cel-animation style, warm morning sunlight streaming through tall arched windows, potted ferns and brass teller lamps glowing gently. [Camera] Slow cinematic dolly-in starting from wide medium-shot, pushing closer to the young consultant. Timeline: 0-2.5s: Friendly young Taiwanese consultant in navy blue suit steps into the golden light, carrying a brown leather ledger notebook under arm. 2.5-5.0s: Turns warmly toward camera with an intelligent smile, gesturing invitingly. [Look] Studio Ghibli watercolor cel-animation aesthetic, soft hand-painted gouache background, gentle floating dust particles in warm golden hour light. Audio: Faint distant brass clock ticking, rustling ledger paper, peaceful morning ambience, <d>[Chinese] 上期探討了資金面，本期焦點轉向不可忽視的作業成本！</d>.",
+      "first_frame": "examples/assets/instructor_suit_ghibli.png"
+    },
+    {
+      "segment": 2,
+      "title": "Part 2 (5-10s): 作業成本的基本定義 / Operating Costs Definition",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Same warm sunlit vintage bank hall, rich dark oak furniture. [Camera] Smooth rightward tracking pan rotating slightly around the consultant as he steps toward a carved wooden desk. Timeline: 0-2.5s: Consultant walks smoothly to the desk, placing his ledger down and resting one hand on the desk surface. 2.5-5.0s: Points gently toward an illuminated chart on the wall showing bank buildings and office facilities, eyes alight with enthusiasm. [Look] Studio Ghibli animation look, rich polished wood grain reflections, warm brass metallic sheen. Audio: Crisp footsteps on parquet wooden floor, soft cloth movement, <d>[Chinese] 銀行為了正常營運，必須支付人事、設備與行舍等各項費用。</d>."
+    },
+    {
+      "segment": 3,
+      "title": "Part 3 (10-15s): 前台收益與全行成本 / Frontline Income vs Total Overhead",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Beside the vintage wooden desk, warm golden sunbeams. [Camera] Medium close-up with gentle low-angle tilt emphasizing clarity and authority. Timeline: 0-2.0s: Consultant taps the desk thoughtfully, then gestures toward a scale balance. 2.0-5.0s: The scale balances frontline branch earnings against total headquarters operational costs. [Look] Hand-painted animation effects, glowing watercolor chalk texture, whimsical Studio Ghibli magical sparkle. Audio: Soft crystalline chime, warm acoustic cello tone, <d>[Chinese] 前台在賺取收益時，全行的後勤營運成本也必須一併考量！</d>."
+    },
+    {
+      "segment": 4,
+      "title": "Part 4 (15-20s): 看得見的直接營運成本 / Visible Direct Branch Expenses",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] At the wooden consultation counter, surrounded by vintage account books. [Camera] Slow cinematic truck left shot keeping the consultant centered. Timeline: 0-2.5s: Consultant gestures toward the bustling counter where tellers work diligently. 2.5-5.0s: Highlights monthly rent vouchers and ledger receipts with golden watercolor outline. [Look] Warm parchment paper texture, soft golden lamp reflections on brass fittings. Audio: Page turning sound, quiet indoor atmospheric hum, <d>[Chinese] 行員薪水、營業廳租金與辦公設備，是看得見的直接成本。</d>."
+    },
+    {
+      "segment": 5,
+      "title": "Part 5 (20-25s): 看不見的龐大後台冰山 / Hidden Headquarters Support Iceberg",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Behind the teller counter, revealing an artistic watercolor illustration of a grand server vault and compliance desk. [Camera] Gentle upward crane shot revealing massive background infrastructure. Timeline: 0-2.5s: Consultant gestures toward an illustrated iceberg showing bank software and IT servers beneath the surface. 2.5-5.0s: Glowing data lines pulse gently, representing continuous security monitoring. [Look] Magical realism animation cel look, glowing soft gold and cyan particle trails. Audio: Low resonant electronic hum, soft wind chime, <d>[Chinese] 但資訊系統建置、資安防護與後台業管，更是龐大的營運支出！</d>."
+    },
+    {
+      "segment": 6,
+      "title": "Part 6 (25-30s): 誰該負擔這筆龐大費用？ / Who Bears These Costs?",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Vintage bank loan consultation cubicle, warm afternoon lighting. [Camera] Medium shot with a slight conversational tilt, matching a lively Q&A cadence. Timeline: 0-2.5s: Consultant adopts a curious, inquisitive posture, looking thoughtfully at the cost report. 2.5-5.0s: Leans forward with a questioning expression, inviting the audience to think. [Look] Expressive Ghibli character facial acting, soft natural shadows under collar. Audio: Gentle acoustic guitar strum, soft paper shuffling, <d>[Chinese] 有這麼多營運費用，每項產品到底該如何合理分攤呢？</d>."
+    },
+    {
+      "segment": 7,
+      "title": "Part 7 (30-35s): 使用者付費核心原則 / User-Pays Core Principle",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant stands before the illuminated chalkboard displaying ep03_slide_ghibli. [Camera] Frontal medium shot anchoring presenter face and chalkboard title. Timeline: 0-2.5s: Consultant turns to the chalkboard, resting a wooden pointer beside '使用者付費原則'. 2.5-5.0s: Turns back to audience, smiling with confidence and clarity. [Look] Clear chalkboard chalk textures, warm amber studio rim lighting on navy suit. Audio: Wooden pointer tapping chalkboard softly, warm uplifting brass note, <d>[Chinese] 費用分攤的核心精神，就是大家耳熟能詳的使用者付費原則！</d>."
+    },
+    {
+      "segment": 8,
+      "title": "Part 8 (35-40s): 專責存匯行員的薪資分攤 / Dedicated Teller Direct Attribution",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] At the chalkboard, pointing to the dedicated teller counter illustration on the left. [Camera] Medium shot tracking smoothly from presenter to the left counter diagram. Timeline: 0-2.5s: Consultant points smoothly to the teller icon labeled '專責行員'. 2.5-5.0s: A golden line draws directly from teller salary to deposit product box. [Look] Chalkboard animation lines, charming Ghibli hand-drawn flow lines. Audio: Chalk drawing sound, pleasant marimba rhythm, <d>[Chinese] 例如存匯專責行員的薪資，自然直接歸屬到存款業務承擔。</d>."
+    },
+    {
+      "segment": 9,
+      "title": "Part 9 (40-45s): 業務規章與業管人員分攤 / Regulation & Management Allocation",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Beside the chalkboard, consultant pointing to management regulations manual. [Camera] Medium close-up maintaining visual anchor of the consultant's side profile. Timeline: 0-2.5s: Consultant holds an open regulation manual with delicate watercolor illustrations. 2.5-5.0s: Nods in affirmation, explaining how policy-making costs follow product lines. [Look] Crisp paper details, warm sunlight reflecting off eyeglasses. Audio: Gentle paper rustle, cello pizzicato, <d>[Chinese] 訂定存款規章與作業流程的業管人員，費用也由存款承擔。</d>."
+    },
+    {
+      "segment": 10,
+      "title": "Part 10 (45-50s): 共享資源分攤的思考轉折 / The Shift to Shared Resources",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant steps to center stage, looking thoughtfully toward the audience. [Camera] Slow cinematic pull-back widening the frame to show multi-department architecture. Timeline: 0-2.5s: Consultant closes the manual, pausing thoughtfully. 2.5-5.0s: Raises hands gently to indicate wide shared operational support across all banking branches. [Look] Subtle atmospheric depth of field, warm hall acoustics. Audio: Introspective piano chords, gentle ambient room tone, <d>[Chinese] 專責人員容易直接歸屬，但如果是全行共享的資源呢？</d>."
+    },
+    {
+      "segment": 11,
+      "title": "Part 11 (50-55s): 全行性共享服務的挑戰 / Shared Systems and Security Overhead",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Chalkboard showing central IT, accounting ledger, and cyber protection shield. [Camera] Medium shot keeping presenter beside the diagram. Timeline: 0-2.5s: Consultant gestures toward three glowing icons: Core Accounting, Firewall, and Appraisal. 2.5-5.0s: Network lines radiate outward to loans, deposits, trade finance, and wealth management. [Look] Rich hand-drawn diagram aesthetics, soft watercolor glow. Audio: Soft metallic chime, rhythmic clockwork pulse, <d>[Chinese] 全行會計系統、資安防護與考核，同時支援非常多項產品。</d>."
+    },
+    {
+      "segment": 12,
+      "title": "Part 12 (55-60s): 為了追求極致精確，按碼錶計時？ / Measuring Every Minute with a Stopwatch?",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant holding a vintage brass stopwatch, looking whimsically at camera. [Camera] Close-up on consultant and the whimsical ticking stopwatch. Timeline: 0-2.5s: Consultant holds up a ticking antique brass stopwatch with a gentle curious grin. 2.5-5.0s: Shakes head slightly, highlighting the comical impracticality of stopwatch timing. [Look] Reflective polished brass timepiece, delicate Ghibli pocket watch ticking mechanism. Audio: Lively ticking of a mechanical stopwatch, whimsical bassoon note, <d>[Chinese] 難道客人臨櫃詢問，我們每項業務都要按碼錶計時嗎？</d>."
+    },
+    {
+      "segment": 13,
+      "title": "Part 13 (60-65s): 碼錶計時的實務盲點 / The Stopwatch Practical Paradox",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Watercolor comic illustration of an engaging two-hour customer branch consultation. [Camera] Medium shot panning from the clock showing 2 hours to a single deposit slip. Timeline: 0-2.5s: Consultant narrates warmly, showing the clock hands spinning forward 2 hours. 2.5-5.0s: Smiles wryly as the customer happily walks away having only deposited five hundred dollars. [Look] Warm expressive character animation, lighthearted humorous banking moment. Audio: Quick ticking sweep sound, soft stamp thud on deposit slip, <d>[Chinese] 客戶花兩小時諮詢放款與理財，最後卻只辦理了一筆存款！</d>."
+    },
+    {
+      "segment": 14,
+      "title": "Part 14 (65-70s): 費用歸屬的爭議困境 / The Allocation Dilemma",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant back at the desk, weighing two ledger slips on the wooden desk. [Camera] Medium close-up maintaining instructor eye contact. Timeline: 0-2.5s: Consultant places the loan inquiry ticket next to the deposit slip. 2.5-5.0s: Looks up earnestly: if loans had zero revenue this visit, is it fair for deposits to pay all? [Look] Realistic paper and wood textures, soft amber desk lamp glow. Audio: Soft wooden tap, thoughtful violin phrase, <d>[Chinese] 放款諮詢花了大量時間，若沒有成交，費用該由存款承擔嗎？</d>."
+    },
+    {
+      "segment": 15,
+      "title": "Part 15 (70-75s): 跨月份追溯的荒謬情境 / The Monthly Reversal Absurdity",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant flips a vintage wall calendar from October to November. [Camera] Medium tracking shot showing calendar flipping, then returning to presenter. Timeline: 0-2.5s: A hand-drawn calendar page flips dynamically in the breeze. 2.5-5.0s: Consultant smiles knowingly: retroactively reversing monthly expenses causes bureaucratic chaos. [Look] Dynamic paper flip animation, crisp calendar typeface. Audio: Brisk page flutter sound, light pizzicato, <d>[Chinese] 下個月客戶再來辦貸款，難道要把上個月的費用跨月迴轉？</d>."
+    },
+    {
+      "segment": 16,
+      "title": "Part 16 (75-80s): 精確度與實用性間的取捨 / Balance Precision with Practicality",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant stands beside the chalkboard, resting hand on the balanced scales. [Camera] Frontal medium shot anchoring presenter with chalk board. Timeline: 0-2.5s: Consultant taps the chalkboard banner: '在精確度與實用性間取得平衡'. 2.5-5.0s: Demonstrates how over-precision creates unnecessary administrative burden. [Look] Warm chalk textures, steady composed presenter expression. Audio: Resonant wooden strike, calm confident cello line, <d>[Chinese] 費用分攤需考量實務，在精確度與實用性之間進行理性取捨。</d>."
+    },
+    {
+      "segment": 17,
+      "title": "Part 17 (80-85s): 訂定合理的時間耗用與複雜度權重 / Setting Reasonable Complexity Weights",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Chalkboard showing a clean matrix table of product complexity tiers. [Camera] Medium pan from chalkboard matrix to the presenter. Timeline: 0-2.5s: Chalkboard displays standard transaction complexity multipliers: Fast Deposits (1x), Complex Mortgages (5x). 2.5-5.0s: Consultant explains empirical weighting. [Look] Clean chalk lettering in white and pale gold, antique classroom lighting. Audio: Chalk glide sound, uplifting clarinet note, <d>[Chinese] 因此實務上會依據經驗，設定合理的時間耗用與複雜度權重。</d>."
+    },
+    {
+      "segment": 18,
+      "title": "Part 18 (85-90s): 認識分攤動因 / Understanding Cost Drivers",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant highlights three floating watercolor badges: Transaction Volume, Account Counts, Balance Size. [Camera] Medium shot with dynamic graphic overlays. Timeline: 0-2.5s: Three badges illuminate with gentle watercolor glow. 2.5-5.0s: Consultant presents each badge clearly, defining them as objective cost drivers. [Look] Hand-painted badge artwork, glowing watercolor aura. Audio: Three distinct chime notes, warm brass harmony, <d>[Chinese] 交易筆數、帳戶數與平均餘額，就是變動的分攤動因！</d>."
+    },
+    {
+      "segment": 19,
+      "title": "Part 19 (90-95s): 多層次逐層分攤制度 / Multi-Tier Layered Allocation",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Chalkboard displays multi-tier waterfall diagram from HQ down to branches and products. [Camera] Slow cinematic crane down following the waterfall allocation steps. Timeline: 0-2.5s: Waterfall arrows flow smoothly from top tier HQ admin to support units, branch operations, and individual products. 2.5-5.0s: Consultant traces the flow. [Look] Fluid watercolor cascade animation, clear structured architecture. Audio: Flowing gentle water stream sound effect, lyrical acoustic guitar, <d>[Chinese] 將費用由直接到間接劃分層次，逐層客觀分攤到各項產品。</d>."
+    },
+    {
+      "segment": 20,
+      "title": "Part 20 (95-100s): 客觀透明的制度價值 / The Value of Objective Rules",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant standing tall before the completed allocation diagram. [Camera] Medium close-up showing confident professional satisfaction. Timeline: 0-2.5s: Consultant folds hands gently, looking proudly at the finished framework. 2.5-5.0s: Warmly addresses the camera: transparency prevents internal misunderstandings. [Look] Golden sunset lighting beginning to warm the banking atrium. Audio: Bright piano triad, calm and reassuring ambience, <d>[Chinese] 這套制度讓每項產品的真實營運負擔，都能客觀呈現。</d>."
+    },
+    {
+      "segment": 21,
+      "title": "Part 21 (100-105s): 實務挑戰一：規模經濟效益差異 / Challenge 1: Economies of Scale",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Split screen illustration comparing a bustling metropolis branch with a tranquil regional branch. [Camera] Smooth horizontal tracking shot across the two branch illustrations. Timeline: 0-2.5s: Left branch handles hundreds of transactions; right branch handles dozens. 2.5-5.0s: Consultant steps in between, introducing the scale economy puzzle. [Look] Detailed Ghibli town architecture, contrast between bustling city and quiet town. Audio: Bustling city street bustle on left, birds chirping on right, <d>[Chinese] 但在實務運作上，不同營業單位常面臨規模經濟的落差。</d>."
+    },
+    {
+      "segment": 22,
+      "title": "Part 22 (105-110s): 小分行單位費用率偏高 / Higher Unit Costs in Small Branches",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant examines two cost comparison cards with bar charts. [Camera] Close-up on the comparison cards held in consultant's hands. Timeline: 0-2.5s: Small branch bar shows higher unit cost due to fewer transactions. 2.5-5.0s: Consultant explains that fixed office overhead cannot be easily shrunk. [Look] Clear hand-drawn charts, subtle paper texture. Audio: Soft card shuffle, thoughtful cello note, <d>[Chinese] 規模較小的分行，平攤固定成本後，每筆費用率相對偏高。</d>."
+    },
+    {
+      "segment": 23,
+      "title": "Part 23 (110-115s): 挑戰二：低量業務的推動意願低下 / Challenge 2: Low-Volume Products",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] A consultation cubicle where a rare trade finance document sits neglected on desk. [Camera] Medium shot with moody dramatic shadow cast across the lonely document. Timeline: 0-2.5s: Consultant gestures sadly toward the low-volume product file. 2.5-5.0s: Explains how branches hesitate to take on new deals if it worsens their score. [Look] Dramatic chiaroscuro lighting, emotional character expression. Audio: Somber minor piano chord, quiet clock tick, <d>[Chinese] 承作量低的冷門業務，分攤費用後常呈現負貢獻而遭排斥。</d>."
+    },
+    {
+      "segment": 24,
+      "title": "Part 24 (115-120s): 挑戰三：最危險的惡性循環！ / Challenge 3: The Dangerous Death Spiral",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Chalkboard showing a downward spiral diagram where denominator shrinks. [Camera] Dynamic push-in toward the warning exclamation mark in red chalk. Timeline: 0-2.5s: The denominator (volume) drops, causing the unit cost fraction to spike upward. 2.5-5.0s: Consultant points out the danger of this vicious cycle. [Look] Red and orange chalk warning highlights, intense expressive lighting. Audio: Tense low cello tremolo, crisp warning bell, <d>[Chinese] 若業務縮減導致分母減少，單筆費用率反而會被動拉得更高！</d>."
+    },
+    {
+      "segment": 25,
+      "title": "Part 25 (120-125s): 減量非長久之計 / Curtailment Hurts the Whole Bank",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant stands firmly at center, shaking head with resolute conviction. [Camera] Steady medium close-up directly addressing front-line managers. Timeline: 0-2.5s: Consultant delivers the warning with sincere empathy and authority. 2.5-5.0s: Fixed costs remain unchanged, so retreating from business only hurts overall profitability. [Look] Warm determined facial acting, soft studio rim light. Audio: Deep resonant gong, resolute bass drum beat, <d>[Chinese] 單純逃避減量雖然能解短期之急，長遠對全行卻是不利的！</d>."
+    },
+    {
+      "segment": 26,
+      "title": "Part 26 (125-130s): 破解之道：擴大分母積極承作 / The Solution: Expand the Denominator",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Sunrise lighting breaks into the hall, dispelling all shadows. [Camera] Uplifting crane upward movement matching hopeful shift. Timeline: 0-2.5s: Consultant steps forward into brilliant golden light, gesturing enthusiastically. 2.5-5.0s: Green positive net margin checkmark shines brightly on chalkboard. [Look] Luminous golden hour sunlight, energetic anime character keyframe. Audio: Bright uplifting major chord on piano, fluttering strings, <d>[Chinese] 正確作法是：在資金淨收益為正的前提下，積極拓展業務！</d>."
+    },
+    {
+      "segment": 27,
+      "title": "Part 27 (130-135s): 業務量大增，稀釋固定成本 / Diluting Fixed Overhead by Volume",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Chalkboard animated fraction showing denominator growing large and unit cost dropping. [Camera] Medium pan tracking the falling cost curve. Timeline: 0-2.5s: As loan and deposit deals stack up like golden coins, the unit cost line drops smoothly to a low healthy baseline. 2.5-5.0s: Consultant points smilingly at the result. [Look] Satisfying animation motion curves, glowing amber coin counters. Audio: Pleasant cascade of chiming coins, lively allegro tempo, <d>[Chinese] 只要分母的業務量增加，每筆承擔的固定費用自然大幅降低。</d>."
+    },
+    {
+      "segment": 28,
+      "title": "Part 28 (135-140s): 全行業務正常化與規模效應 / Reaching Normalized Efficiency",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant stands proudly alongside a thriving, energetic branch team. [Camera] Wide cinematic tracking shot showing cheerful branch staff collaborating efficiently. Timeline: 0-2.5s: Tellers and loan officers work seamlessly together in the radiant bank lobby. 2.5-5.0s: Consultant joins them, celebrating harmonious cooperation. [Look] Classic heartwarming Studio Ghibli ensemble scene, rich ambient detail. Audio: Warm orchestral strings and woodwinds, lively bank background chatter, <d>[Chinese] 全行業務量一致提升後，固定成本被有效稀釋，費用率回歸健康。</d>."
+    },
+    {
+      "segment": 29,
+      "title": "Part 29 (140-145s): 經濟利潤專案的持續精進 / Ongoing Refinement of Cost Drivers",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Consultant at the conference table, holding the newly bound Project Action Plan. [Camera] Medium close-up with soft cinematic camera push. Timeline: 0-2.5s: Consultant touches the project blueprint, eyes shining with visionary dedication. 2.5-5.0s: Addresses the audience: we continually tune the model to support frontline growth. [Look] Warm golden lamplight, elegant leather binder with gold foil lettering. Audio: Inspiring acoustic guitar arpeggios, gentle flute melody, <d>[Chinese] 經濟利潤專案將持續精進分攤動因，兼顧真實表達與業務發展。</d>."
+    },
+    {
+      "segment": 30,
+      "title": "Part 30 (145-150s): 結語致謝與未來展望 / Finale & Next Episode Teaser",
+      "chain_mode": "motion_context",
+      "prompt": "Create a 5-second live-action cinematic film continuing seamlessly from the exact last frame, pose, camera angle, and lighting of the previous segment. [Scene] Grand panoramic view of the vintage bank facade at golden sunset, with consultant waving warmly from the marble steps. [Camera] Magnificent slow pull-back and crane up into the golden sunset sky. Timeline: 0-2.5s: Friendly young Taiwanese consultant in navy suit bows gracefully on marble steps, smiling warmly at camera. 2.5-5.0s: Waves farewell as golden light bathes the grand banking academy. Teaser title appears: '下期預告：預期損失與風險計提'. [Look] Epic Studio Ghibli finale aesthetic, painted clouds glowing in orange, violet, and gold, emotional cinematic grandeur. Audio: Grand soaring orchestral crescendo, triumphant brass, fading into gentle piano notes, <d>[Chinese] 客觀分攤費用，守護真實獲利！下期我們將深入探討預期損失！</d>."
+    }
+  ]
+}

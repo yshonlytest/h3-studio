@@ -22,3 +22,12 @@
 - `docs/dev/STATE.md` ≤ 50 行，覆寫更新、不追加敘事。
 - 已完成階段移入 `docs/archive/`；決策理由寫入 `docs/adr/`。
 - 文件中不寫會過期的數字（測試數、行數），改寫「如何查得」。
+
+## 算力調用、門禁與驗證規範 (F10)
+- **統一入口**：所有調度一律走 `python3 -m pipeline.h3_cli`（禁裸調內部腳本）。
+- **兩階段門禁 (Two-Phase Consent)**：
+  - Stage 1: `python3 -m pipeline.h3_cli plan` 唯讀試算，產出包含契約雜湊的 `consent_token`。
+  - Stage 2: `python3 -m pipeline.h3_cli run --confirm-token <TOKEN>`，Token 不符或竄改參數時拒絕執行。
+- **七態狀態機**：`SUBMITTED -> INFERENCE_COMPLETED -> ARTIFACT_DOWNLOADED -> ARTIFACT_VERIFIED`；異常狀態含 `STALLED`、`FAILED`、`CANCELLED`；失敗原因碼必須明確標示。
+- **四態產物驗證**：必須同時滿足最小檔案容量、`ffprobe` 視音訊串流完整性與非空 SHA-256 雜湊，方可標記為 `TASK_ARTIFACT_VERIFIED`。
+

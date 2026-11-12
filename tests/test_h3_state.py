@@ -136,6 +136,69 @@ class TestH3State(unittest.TestCase):
         self.assertEqual(fp.prompt_template_version, "v2.0")
         self.assertEqual(fp.ffmpeg_mux_signature, "c:v_copy_c:a_aac_192k")
 
+    def test_valid_lifecycle_transitions(self) -> None:
+        from pipeline.h3_state import (
+            FAILURE_INFERENCE,
+            TASK_ARTIFACT_DOWNLOADED,
+            TASK_ARTIFACT_VERIFIED,
+            TASK_FAILED,
+            TASK_INFERENCE_COMPLETED,
+            TASK_SUBMITTED,
+            StateTransitionRequest,
+            validate_task_transition,
+        )
+        rec = validate_task_transition(
+            StateTransitionRequest(TASK_SUBMITTED, TASK_INFERENCE_COMPLETED)
+        )
+        self.assertEqual(rec["to"], TASK_INFERENCE_COMPLETED)
+        rec2 = validate_task_transition(
+            StateTransitionRequest(TASK_INFERENCE_COMPLETED, TASK_ARTIFACT_DOWNLOADED)
+        )
+        self.assertEqual(rec2["to"], TASK_ARTIFACT_DOWNLOADED)
+        rec3 = validate_task_transition(
+            StateTransitionRequest(TASK_ARTIFACT_DOWNLOADED, TASK_ARTIFACT_VERIFIED)
+        )
+        self.assertEqual(rec3["to"], TASK_ARTIFACT_VERIFIED)
+        rec_fail = validate_task_transition(
+            StateTransitionRequest(TASK_SUBMITTED, TASK_FAILED, failure_stage=FAILURE_INFERENCE)
+        )
+        self.assertEqual(rec_fail["failure_stage"], FAILURE_INFERENCE)
+
+    def test_invalid_state_transition_raises(self) -> None:
+        from pipeline.h3_state import (
+            TASK_ARTIFACT_VERIFIED,
+            TASK_FAILED,
+            TASK_SUBMITTED,
+            InvalidStateTransitionError,
+            StateTransitionRequest,
+            validate_task_transition,
+        )
+        with self.assertRaises(InvalidStateTransitionError):
+            validate_task_transition(StateTransitionRequest(TASK_SUBMITTED, TASK_ARTIFACT_VERIFIED))
+        with self.assertRaises(InvalidStateTransitionError):
+            validate_task_transition(StateTransitionRequest(TASK_SUBMITTED, TASK_FAILED, failure_stage="INVALID_FAIL"))
+
+    def test_cross_session_status_summary(self) -> None:
+        from pipeline.h3_state import (
+            TASK_ARTIFACT_VERIFIED,
+            ChainState,
+            load_chain_status_summary,
+            save_chain_state,
+        )
+        p = Path(self.tmp_dir.name) / "status_test.json"
+        st = ChainState(
+            manifest_path="test.json",
+            output_prefix="out",
+            task_states={"shot_1": {"state": TASK_ARTIFACT_VERIFIED}},
+            consent_record={"token": "abc1234"},
+        )
+        save_chain_state(p, st)
+        summary = load_chain_status_summary(p)
+        self.assertTrue(summary["exists"])
+        self.assertEqual(summary["counts"].get(TASK_ARTIFACT_VERIFIED), 1)
+        self.assertTrue(summary["has_active_consent"])
+
+
 
 if __name__ == "__main__":
     unittest.main()

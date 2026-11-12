@@ -408,6 +408,21 @@
   }
 
   return {
+    normalizeRouteId(route) {
+      if (!route) return "local";
+      const r = String(route).toLowerCase().trim();
+      if (r === "cloud" || r === "saas_api" || r === "saas") return "saas_api";
+      if (r === "colab") return "colab";
+      return "local";
+    },
+    resolveSaasApiKey(storage, provider) {
+      if (!storage) return "";
+      const p = String(provider || "").toLowerCase();
+      if (p.includes("minimax")) {
+        return storage.getItem("h3_saas_minimax_key") || storage.getItem("h3_minimax_key") || storage.getItem("filmchain_minimax_key") || "";
+      }
+      return storage.getItem("h3_saas_fal_key") || storage.getItem("h3_fal_key") || "";
+    },
     FalClient,
     MiniMaxClient,
     extractLastFrameFromVideo,

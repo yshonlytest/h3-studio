@@ -13,7 +13,53 @@ from typing import Any
 
 LOGGER = logging.getLogger(__name__)
 
-STATE_SCHEMA_VERSION = 2
+STATE_SCHEMA_VERSION = 3
+
+TASK_SUBMITTED = "SUBMITTED"
+TASK_INFERENCE_COMPLETED = "INFERENCE_COMPLETED"
+TASK_ARTIFACT_DOWNLOADED = "ARTIFACT_DOWNLOADED"
+TASK_ARTIFACT_VERIFIED = "ARTIFACT_VERIFIED"
+TASK_STALLED = "STALLED"
+TASK_FAILED = "FAILED"
+TASK_CANCELLED = "CANCELLED"
+
+FAILURE_NONE = ""
+FAILURE_INFERENCE = "INFERENCE_FAILED"
+FAILURE_DOWNLOAD = "DOWNLOAD_FAILED"
+FAILURE_VERIFICATION = "VERIFICATION_FAILED"
+FAILURE_CONSENT = "CONSENT_REJECTED"
+
+VALID_FAILURE_STAGES: frozenset[str] = frozenset({
+    FAILURE_INFERENCE,
+    FAILURE_DOWNLOAD,
+    FAILURE_VERIFICATION,
+    FAILURE_CONSENT,
+})
+
+VALID_TASK_TRANSITIONS: dict[str, frozenset[str]] = {
+    TASK_SUBMITTED: frozenset({TASK_INFERENCE_COMPLETED, TASK_STALLED, TASK_FAILED, TASK_CANCELLED}),
+    TASK_INFERENCE_COMPLETED: frozenset({TASK_ARTIFACT_DOWNLOADED, TASK_STALLED, TASK_FAILED, TASK_CANCELLED}),
+    TASK_ARTIFACT_DOWNLOADED: frozenset({TASK_ARTIFACT_VERIFIED, TASK_FAILED, TASK_CANCELLED}),
+    TASK_STALLED: frozenset({TASK_SUBMITTED, TASK_FAILED, TASK_CANCELLED}),
+    TASK_ARTIFACT_VERIFIED: frozenset(),
+    TASK_FAILED: frozenset(),
+    TASK_CANCELLED: frozenset(),
+}
+
+
+class InvalidStateTransitionError(ValueError):
+    """Raised when an illegal lifecycle state transition is attempted."""
+    pass
+
+
+@dataclass(frozen=True)
+class StateTransitionRequest:
+    """Request to transition task state."""
+    current_state: str
+    target_state: str
+    failure_stage: str = FAILURE_NONE
+    reason: str = ""
+
 
 
 @dataclass(frozen=True)
@@ -80,6 +126,8 @@ class ChainState:
     completed_segments: dict[str, dict[str, Any]] = field(default_factory=dict)
     merged_video: str = ""
     updated_at: str = ""
+    task_states: dict[str, dict[str, Any]] = field(default_factory=dict)
+    consent_record: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -94,7 +142,60 @@ class ChainState:
             completed_segments=dict(data.get("completed_segments", {})),
             merged_video=str(data.get("merged_video", "")),
             updated_at=str(data.get("updated_at", "")),
+            task_states=dict(data.get("task_states", {})),
+            consent_record=dict(data.get("consent_record", {})),
         )
+
+
+def validate_task_transition(req: StateTransitionRequest) -> dict[str, str]:
+    """Validate task transition and return transition record."""
+    allowed = VALID_TASK_TRANSITIONS.get(req.current_state, frozenset())
+    if req.target_state not in allowed:
+        raise InvalidStateTransitionError(
+            f"Illegal transition: {req.current_state} -> {req.target_state}"
+        )
+    if req.target_state == TASK_FAILED and req.failure_stage not in VALID_FAILURE_STAGES:
+        raise InvalidStateTransitionError(
+            f"Failed state requires valid failure_stage, got '{req.failure_stage}'"
+        )
+    return {
+        "from": req.current_state,
+        "to": req.target_state,
+        "failure_stage": req.failure_stage,
+        "reason": req.reason,
+    }
+
+
+def save_chain_state(state_path: Path, state: ChainState) -> None:
+    """Atomically persist ChainState to JSON."""
+    state_path = Path(state_path)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = state_path.with_suffix(".tmp")
+    data = state.to_dict()
+    tmp_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp_path.replace(state_path)
+
+
+def load_chain_status_summary(state_path: Path) -> dict[str, Any]:
+    """Load persistent status summary across agent sessions."""
+    state_path = Path(state_path)
+    if not state_path.exists():
+        return {"schema_version": STATE_SCHEMA_VERSION, "exists": False, "counts": {}}
+    data = json.loads(state_path.read_text(encoding="utf-8"))
+    task_states = data.get("task_states", {})
+    counts: dict[str, int] = {}
+    for t_info in task_states.values():
+        st = t_info.get("state", "UNKNOWN")
+        counts[st] = counts.get(st, 0) + 1
+    return {
+        "schema_version": data.get("schema_version", 2),
+        "exists": True,
+        "counts": counts,
+        "tasks": task_states,
+        "has_active_consent": bool(data.get("consent_record")),
+        "merged_video": data.get("merged_video", ""),
+    }
+
 
 
 def compute_config_hash(manifest_dict: dict[str, Any]) -> str:

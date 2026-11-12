@@ -332,3 +332,23 @@ flowchart LR
     3. 清理 `scratch/f0_exp/` 內之大型臨時 `.mp4` / `.wav`，確保工作區乾淨。
   - **🔍 驗證與文件打勾斷言指令**：
     `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check . && npm test --prefix film-chain && grep -q "\- \[x\] \`F9-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F9-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+---
+
+## 階段 F10：算力調用、狀態持久化、教學範本落地與 Code Review
+
+- [x] `F10-PRE` **F0～F9 歷史無損歸檔與 F10 原子微批次清單掛載**
+  - **檔案**：`docs/dev/archive/V2_F0_F9_COMPLETED.md`、`docs/dev/STATE.md`、`docs/dev/V2_EXECUTION_PLAN.md`
+  - **內容**：完成歷史紀錄無損歸檔，重組微批次清單。
+
+- [x] `F10-1A` **於 `pipeline/h3_state.py` 實作七態狀態機、錯誤細分碼與跨 Session 持久化查詢**
+- [x] `F10-1B` **實作產物深度驗證器 `pipeline/h3_verifier.py`（ffprobe + SHA-256）**
+- [x] `F10-2A` **實作 Schema v2 角色感知轉接器 `pipeline/h3_manifest_adapter.py`**
+- [x] `F10-2B` **擴充 `pipeline/h3_colab_watchdog.py` 四階段感知與進程清理**
+- [x] `F10-3A` **實作兩階段授權門禁調度器 `pipeline/h3_dispatcher.py`**
+- [x] `F10-3B` **重構 `pipeline/h3_cli.py` 表驅動路由並接入算力調度子命令**
+- [x] `F10-4` **路線正名（saas_api）與前端雙向向下相容**
+- [x] `F10-5` **Skill Discovery 雙平台實證與專案 Skill 統一導向**
+- [x] `F10-6A` **H3 實測教學成片與完整分鏡範本全鏈路落地**
+- [x] `F10-6B` **規範落地與執行 `/code-review` 總驗收**
+

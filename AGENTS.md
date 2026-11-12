@@ -10,4 +10,9 @@
    - `film-chain/public/src/core/*.js` 子目錄在標準終端沙盒下會回報 `Operation not permitted`，因此對 `film-chain/` 下所有檔案請**一律使用原生 `read_file` 與 `edit_file` 工具讀寫**（`read_file` / `edit_file` 不受沙盒限制）。
    - 只有真正呼叫 `./h3` 進行 Metal GPU 算圖時，因 macOS Metal Shader 編譯需寫入 `/var/folders/.../com.apple.metalfe`，才設定 `BypassSandbox: true`。
 4. **Martin Fowler 量化紅線**：單一函式 $\le 50$ 行、縮排 $\le 3$ 層、參數 $> 3$ 個時必須封裝為 `@dataclass(frozen=True)`、禁止空的 `except: pass`。
+5. **算力調度、門禁與驗證鐵律**：
+   - 唯一合法 CLI 入口為 `python3 -m pipeline.h3_cli`（禁裸調腳本或手寫 JSON）。
+   - Colab GPU 執行必須經「`plan` (Dry Run) $\to$ 使用者確認 $\to$ `run --confirm-token`」兩階段門禁；嚴禁無授權降級或無限重試。
+   - 影片產物未通過 `verify` 達 `ARTIFACT_VERIFIED`（含 `ffprobe` 與 SHA-256）前，嚴禁宣稱完成。詳細規格見 `docs/STANDARDS.md`。
+
 

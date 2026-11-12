@@ -12,6 +12,13 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from pipeline.h3_dispatcher import (
+    DispatchExecuteRequest,
+    DispatchPlanRequest,
+    create_dispatch_plan,
+    execute_dispatched_run,
+    query_colab_usage_safely,
+)
 from pipeline.h3_edu_profile import (
     EXECUTION_TRACK_SPECS,
     GlobalProfile,
@@ -23,7 +30,9 @@ from pipeline.h3_state import (
     ShotHashContext,
     collect_environment_fingerprints,
     compute_shot_artifact_hashes,
+    load_chain_status_summary,
 )
+from pipeline.h3_verifier import verify_video_artifact
 
 LOGGER = logging.getLogger(__name__)
 
@@ -354,73 +363,183 @@ def semantic_digest_document(doc_path: Path | str, max_chars: int = 1000) -> lis
     return chunks
 
 
-def main(argv: list[str] | None = None) -> int:
-    """CLI dispatcher for validate-manifest, build-manifest, and digest."""
+def _handle_validate(args: argparse.Namespace) -> int:
+    res = validate_manifest(args.manifest)
+    if not res.is_valid:
+        for err in res.errors:
+            print(f"❌ Error: {err}", file=sys.stderr)
+        return 1
+    print(f"✅ Manifest valid ({res.total_segments} segments, {len(res.warnings)} warnings)")
+    return 0
+
+
+def _handle_build(args: argparse.Namespace) -> int:
+    opts = BuildManifestOptions(table_path=args.from_table, track=args.track, output_path=args.output)
+    data = build_manifest_from_table(opts)
+    print(f"✅ Compiled {len(data['segments'])} segments to {args.output or 'stdout'}")
+    return 0
+
+
+def _handle_digest(args: argparse.Namespace) -> int:
+    chunks = semantic_digest_document(args.input, args.max_chars)
+    print(f"✅ Split {args.input.name} into {len(chunks)} semantic chunks")
+    return 0
+
+
+def _handle_render_slide(args: argparse.Namespace) -> int:
+    bullets_tuple = tuple(b.strip() for b in args.bullets.replace("\n", ",").split(",") if b.strip())
+    s_opts = RenderSlideOptions(title=args.title, bullets=bullets_tuple, output_path=args.output, width=args.width, height=args.height)
+    render_slide_card(s_opts)
+    print(f"✅ Rendered slide card -> {args.output}")
+    return 0
+
+
+def _handle_resolve_anchor(args: argparse.Namespace) -> int:
+    a_opts = ResolveAnchorOptions(shot_id=args.shot, hint=args.hint, target_width=args.width, target_height=args.height, output_path=args.output)
+    path, level = resolve_anchor_ladder(a_opts)
+    print(f"✅ Resolved anchor for shot {args.shot} via Level {level} -> {path}")
+    return 0
+
+
+def _handle_usage(args: argparse.Namespace) -> int:
+    bal = query_colab_usage_safely()
+    print(json.dumps({"compute_units": bal, "status": "AVAILABLE" if bal is not None else "UNKNOWN"}))
+    return 0
+
+
+def _handle_plan(args: argparse.Namespace) -> int:
+    plan_req = DispatchPlanRequest(
+        manifest_path=args.manifest,
+        route=args.route,
+        gpu=args.gpu,
+        max_retries=args.max_retries,
+        allow_gpu_fallback=args.allow_fallback,
+        state_path=args.state_file,
+    )
+    plan = create_dispatch_plan(plan_req)
+    print(f"📋 Plan generated: Route={plan.route}, GPU={plan.gpu}, Jobs={plan.job_count}, EstCU={plan.estimated_cu}")
+    print(f"🔑 Consent Token: {plan.consent_token}")
+    return 0
+
+
+def _handle_run(args: argparse.Namespace) -> int:
+    if args.dry_run or not args.confirm_token:
+        print("⚠️ Direct run blocked. Running Stage 1 plan first (dry-run mode)...")
+        return _handle_plan(args)
+    p_req = DispatchPlanRequest(
+        manifest_path=args.manifest,
+        route=args.route,
+        gpu=args.gpu,
+        max_retries=args.max_retries,
+        allow_gpu_fallback=args.allow_fallback,
+        state_path=args.state_file,
+    )
+    exec_req = DispatchExecuteRequest(plan_req=p_req, confirm_token=args.confirm_token, output_dir=args.output_dir or Path("outputs"))
+    res = execute_dispatched_run(exec_req)
+    print(f"🚀 Execution authorized for {res['job_count']} jobs (token={res['token']})")
+    return 0
+
+
+def _handle_status(args: argparse.Namespace) -> int:
+    summary = load_chain_status_summary(args.state_file)
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    return 0
+
+
+def _handle_verify(args: argparse.Namespace) -> int:
+    res = verify_video_artifact(args.video)
+    status_icon = "✅" if res.is_verified else "❌"
+    print(f"{status_icon} Verification: state={res.task_state}, stage={res.failure_stage}, sha256={res.sha256[:12]}...")
+    return 0 if res.is_verified else 1
+
+
+def _register_subparsers_a(sub: argparse._SubParsersAction) -> None:
+    p1 = sub.add_parser("validate-manifest")
+    p1.add_argument("--manifest", type=Path, required=True)
+    p2 = sub.add_parser("build-manifest")
+    p2.add_argument("--from-table", type=Path, required=True)
+    p2.add_argument("--track", choices=["local_5s", "colab_12s"], default="local_5s")
+    p2.add_argument("--output", type=Path)
+    p3 = sub.add_parser("digest")
+    p3.add_argument("--input", type=Path, required=True)
+    p3.add_argument("--max-chars", type=int, default=1000)
+
+
+def _register_subparsers_b(sub: argparse._SubParsersAction) -> None:
+    p4 = sub.add_parser("render-slide")
+    p4.add_argument("--title", type=str, required=True)
+    p4.add_argument("--bullets", type=str, required=True)
+    p4.add_argument("--output", type=Path, required=True)
+    p4.add_argument("--width", type=int, default=864)
+    p4.add_argument("--height", type=int, default=480)
+    p5 = sub.add_parser("resolve-anchor")
+    p5.add_argument("--shot", type=str, required=True)
+    p5.add_argument("--hint", type=str, default="")
+    p5.add_argument("--output", type=Path)
+    p5.add_argument("--width", type=int, default=864)
+    p5.add_argument("--height", type=int, default=480)
+
+
+def _register_subparsers_c(sub: argparse._SubParsersAction) -> None:
+    sub.add_parser("usage")
+    p_plan = sub.add_parser("plan")
+    p_plan.add_argument("--manifest", type=Path, required=True)
+    p_plan.add_argument("--route", default="colab")
+    p_plan.add_argument("--gpu", default="L4")
+    p_plan.add_argument("--max-retries", type=int, default=1)
+    p_plan.add_argument("--allow-fallback", action="store_true")
+    p_plan.add_argument("--state-file", type=Path)
+
+    p_run = sub.add_parser("run")
+    p_run.add_argument("--manifest", type=Path, required=True)
+    p_run.add_argument("--route", default="colab")
+    p_run.add_argument("--gpu", default="L4")
+    p_run.add_argument("--max-retries", type=int, default=1)
+    p_run.add_argument("--allow-fallback", action="store_true")
+    p_run.add_argument("--confirm-token", type=str, default="")
+    p_run.add_argument("--dry-run", action="store_true")
+    p_run.add_argument("--output-dir", type=Path)
+    p_run.add_argument("--state-file", type=Path)
+
+    p_stat = sub.add_parser("status")
+    p_stat.add_argument("--state-file", type=Path, required=True)
+    p_ver = sub.add_parser("verify")
+    p_ver.add_argument("--video", type=Path, required=True)
+
+
+def build_cli_parser() -> argparse.ArgumentParser:
+    """Build modular CLI parser."""
     parser = argparse.ArgumentParser(description="H3 Unified Deterministic CLI Entrypoint")
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(dest="command", required=True)
+    _register_subparsers_a(sub)
+    _register_subparsers_b(sub)
+    _register_subparsers_c(sub)
+    return parser
 
-    val_p = subparsers.add_parser("validate-manifest", help="Validate manifest schema and DAG hashes")
-    val_p.add_argument("--manifest", type=Path, required=True, help="Path to manifest JSON")
 
-    build_p = subparsers.add_parser("build-manifest", help="Compile table into full manifest")
-    build_p.add_argument("--from-table", type=Path, required=True, help="Path to markdown or TSV table")
-    build_p.add_argument("--track", choices=["local_5s", "colab_12s"], default="local_5s", help="Preset track")
-    build_p.add_argument("--output", type=Path, help="Target JSON output path")
-
-    digest_p = subparsers.add_parser("digest", help="Chunk document by semantic headers and tables")
-    digest_p.add_argument("--input", type=Path, required=True, help="Path to input markdown document")
-    digest_p.add_argument("--max-chars", type=int, default=1000, help="Max chunk size")
-
-    slide_p = subparsers.add_parser("render-slide", help="Render clean slide graphic card")
-    slide_p.add_argument("--title", type=str, required=True, help="Slide title")
-    slide_p.add_argument("--bullets", type=str, required=True, help="Bullet points separated by commas or newlines")
-    slide_p.add_argument("--output", type=Path, required=True, help="Target PNG path")
-    slide_p.add_argument("--width", type=int, default=864, help="Width")
-    slide_p.add_argument("--height", type=int, default=480, help="Height")
-
-    anchor_p = subparsers.add_parser("resolve-anchor", help="Execute 4-level anchor ladder")
-    anchor_p.add_argument("--shot", type=str, required=True, help="Shot ID")
-    anchor_p.add_argument("--hint", type=str, default="", help="Path or text hint")
-    anchor_p.add_argument("--output", type=Path, help="Target anchor path")
-    anchor_p.add_argument("--width", type=int, default=864, help="Target width")
-    anchor_p.add_argument("--height", type=int, default=480, help="Target height")
-
+def main(argv: list[str] | None = None) -> int:
+    """CLI dispatcher for all modular commands."""
+    parser = build_cli_parser()
     args = parser.parse_args(argv)
 
-    if args.command == "validate-manifest":
-        res = validate_manifest(args.manifest)
-        if not res.is_valid:
-            for err in res.errors:
-                print(f"❌ Error: {err}", file=sys.stderr)
-            return 1
-        print(f"✅ Manifest valid ({res.total_segments} segments, {len(res.warnings)} warnings)")
-        return 0
+    handlers = {
+        "validate-manifest": _handle_validate,
+        "build-manifest": _handle_build,
+        "digest": _handle_digest,
+        "render-slide": _handle_render_slide,
+        "resolve-anchor": _handle_resolve_anchor,
+        "usage": _handle_usage,
+        "plan": _handle_plan,
+        "run": _handle_run,
+        "status": _handle_status,
+        "verify": _handle_verify,
+    }
+    handler = handlers.get(args.command)
+    if not handler:
+        parser.print_help()
+        return 1
+    return handler(args)
 
-    if args.command == "build-manifest":
-        opts = BuildManifestOptions(table_path=args.from_table, track=args.track, output_path=args.output)
-        data = build_manifest_from_table(opts)
-        print(f"✅ Compiled {len(data['segments'])} segments to {args.output or 'stdout'}")
-        return 0
-
-    if args.command == "digest":
-        chunks = semantic_digest_document(args.input, args.max_chars)
-        print(f"✅ Split {args.input.name} into {len(chunks)} semantic chunks")
-        return 0
-
-    if args.command == "render-slide":
-        bullets_tuple = tuple(b.strip() for b in args.bullets.replace("\n", ",").split(",") if b.strip())
-        s_opts = RenderSlideOptions(title=args.title, bullets=bullets_tuple, output_path=args.output, width=args.width, height=args.height)
-        render_slide_card(s_opts)
-        print(f"✅ Rendered slide card -> {args.output}")
-        return 0
-
-    if args.command == "resolve-anchor":
-        a_opts = ResolveAnchorOptions(shot_id=args.shot, hint=args.hint, target_width=args.width, target_height=args.height, output_path=args.output)
-        path, level = resolve_anchor_ladder(a_opts)
-        print(f"✅ Resolved anchor for shot {args.shot} via Level {level} -> {path}")
-        return 0
-
-    return 0
 
 
 if __name__ == "__main__":
