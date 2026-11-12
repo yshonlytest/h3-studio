@@ -4595,60 +4595,6 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
         phoneticBadge.innerHTML = renderPhoneticHintBadge(text);
       }
     }
-      const card = inputEl.closest(".segment-card");
-      if (!card) return;
-      const text = inputEl.value.trim();
-      const cjkChars = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\w]/g) || []).length;
-      const badge = card.querySelector(".seg-pacing-badge");
-      const framesSelect = card.querySelector(".seg-frames-select");
-      const splitBtn = card.querySelector(".seg-split-btn");
-
-      const promptEl = card.querySelector(".seg-prompt-input");
-      if (promptEl) {
-        if (/<d>.*?<\/d>/s.test(promptEl.value)) {
-          promptEl.value = promptEl.value.replace(/<d>(?:\[\w+\])?\s*.*?<\/d>/s, `<d>[Chinese] ${text}</d>`);
-        } else {
-          promptEl.value = `${promptEl.value.trim()} Audio: <d>[Chinese] ${text}</d>.`;
-        }
-      }
-
-      if (cjkChars > 26) {
-        card.style.border = "2px solid #ef4444";
-        card.style.boxShadow = "0 0 16px rgba(239,68,68,0.4)";
-        if (badge) {
-          badge.className = "badge danger";
-          badge.textContent = `🚨 語速過快！建議拆分 (${cjkChars} 字 > 26 上限)`;
-          badge.style.background = "rgba(239,68,68,0.25)";
-          badge.style.color = "#fca5a5";
-          badge.style.borderColor = "#ef4444";
-        }
-        if (splitBtn) splitBtn.style.display = "inline-flex";
-        if (framesSelect) framesSelect.value = "186";
-      } else {
-        card.style.border = "";
-        card.style.boxShadow = "";
-        if (splitBtn) splitBtn.style.display = "none";
-        let bucket = "124";
-        let desc = "124f (5.1s) 語速平穩";
-        if (cjkChars <= 12) { bucket = "93"; desc = "93f (3.8s) 留白充裕"; }
-        else if (cjkChars <= 18) { bucket = "124"; desc = "124f (5.1s) 語速平穩"; }
-        else if (cjkChars <= 22) { bucket = "155"; desc = "155f (6.4s) 語速自然"; }
-        else { bucket = "186"; desc = "186f (7.7s) 語速極限"; }
-
-        if (framesSelect) framesSelect.value = bucket;
-        if (badge) {
-          badge.className = "badge ok";
-          badge.textContent = `字數: ${cjkChars} · ${desc}`;
-          badge.style.background = "rgba(168,85,247,0.2)";
-          badge.style.color = "#d8b4fe";
-          badge.style.borderColor = "#a855f7";
-        }
-      }
-      const phoneticBadge = card.querySelector(".seg-phonetic-badge");
-      if (phoneticBadge && typeof renderPhoneticHintBadge === "function") {
-        phoneticBadge.innerHTML = renderPhoneticHintBadge(text);
-      }
-    }
 
     // ==================== 音訊與破音字唯一發音控制函式 ====================
     let activeLexiconData = {
@@ -6910,7 +6856,7 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
           return;
         }
 
-        // 2. 檢查本機 IndexedDB 是否已有保存的專案
+        // 2. 檢查本機 IndexedDB 並清理過期舊版示範專案（風獅爺與洗手範例）
         const isLegacyProject = (p) => !p || (
           p.id === "fc_shisa_demo" ||
           p.id === "fc_handwashing_edu_demo" ||
@@ -6919,6 +6865,24 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
           (p.chineseDesc && (p.chineseDesc.includes("風獅爺") || p.chineseDesc.includes("洗手")))
         );
 
+        const allProjects = await H3ProjectStore.listProjects();
+        for (const p of allProjects) {
+          if (isLegacyProject(p)) {
+            await H3ProjectStore.deleteProject(p.id);
+          }
+        }
+
+        // 3. 確保三套官方示範專案（賽博偵探九宮格、墨繪靈境潛空間、H3教學成片）均存在於 IndexedDB
+        const goldenKeys = ["detective", "ink_sorcerer", "tutorial_140s"];
+        for (const key of goldenKeys) {
+          const tplObj = createGoldenProjectObject(key);
+          const existing = await H3ProjectStore.getProject(tplObj.id);
+          if (!existing) {
+            await H3ProjectStore.saveProject(tplObj);
+          }
+        }
+
+        // 4. 載入上次活動專案，若無或為過期專案則預設載入 H3 教學成片專案
         const lastId = await H3ProjectStore.getLastActiveProjectId();
         if (lastId) {
           const savedProj = await H3ProjectStore.getProject(lastId);
@@ -6926,30 +6890,11 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
             await applyProjectStateToUI(savedProj);
             return;
           }
-          if (savedProj && isLegacyProject(savedProj)) {
-            await H3ProjectStore.deleteProject(savedProj.id);
-          }
         }
 
-        const allProjects = await H3ProjectStore.listProjects();
-        // 清理所有過期或洗手舊專案
-        for (const p of allProjects) {
-          if (isLegacyProject(p)) {
-            await H3ProjectStore.deleteProject(p.id);
-          }
-        }
-
-        const validProjects = (await H3ProjectStore.listProjects()).filter(p => !isLegacyProject(p));
-        if (validProjects.length > 0) {
-          await applyProjectStateToUI(validProjects[0]);
-          return;
-        }
-
-        // 3. 首次開啟或舊版升級：初始化預設 H3 教學 140s 示範專案並存入 IndexedDB
-        const initialDemo = createGoldenProjectObject("tutorial_140s");
-        await H3ProjectStore.saveProject(initialDemo);
-        await H3ProjectStore.setLastActiveProjectId(initialDemo.id);
-        await applyProjectStateToUI(initialDemo);
+        const defaultProj = (await H3ProjectStore.getProject("fc_tutorial_140s_demo")) || createGoldenProjectObject("tutorial_140s");
+        await H3ProjectStore.setLastActiveProjectId(defaultProj.id);
+        await applyProjectStateToUI(defaultProj);
       } catch (err) {
         console.warn("工作區初始化回退至預設範例:", err);
         loadDefaultDemo();

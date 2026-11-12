@@ -87,4 +87,21 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
     assert.match(htmlContent, /<script\s+src="src\/prompts\/agentPrompts\.js"><\/script>/);
     assert.match(htmlContent, /<script\s+src="src\/controllers\/studioAudioSubtitles\.js"><\/script>/);
   });
+
+  test("should parse all inline script blocks without syntax errors", () => {
+    const vm = require("node:vm");
+    const scriptRegex = /<script(?:\s+type="([^"]*)")?>([\s\S]*?)<\/script>/gi;
+    let match;
+    let count = 0;
+    while ((match = scriptRegex.exec(htmlContent)) !== null) {
+      const type = match[1] || "text/javascript";
+      if (!type || type === "text/javascript") {
+        count++;
+        assert.doesNotThrow(() => {
+          new vm.Script(match[2], { filename: `inline-script-${count}.js` });
+        }, `Inline script block ${count} has syntax errors`);
+      }
+    }
+    assert.ok(count > 0, "Expected at least 1 inline script block");
+  });
 });
