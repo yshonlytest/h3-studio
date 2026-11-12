@@ -53,17 +53,22 @@
         const naturalDur = isEdu && charCount > 0
           ? Math.max(2.0, Math.min(segDur - 0.5, Math.round(((charCount / 3.6) + 0.6) * 10) / 10))
           : extracted.durationSec;
-        const naturalOffset = isEdu ? 0.5 : extracted.startOffsetSec;
+        const naturalOffset = isEdu ? 0.2 : extracted.startOffsetSec;
+
+        const finalBase = (existing && typeof existing.baseSec === "number") ? existing.baseSec : baseSec;
+        const finalDur = (existing && typeof existing.durationSec === "number") ? existing.durationSec : naturalDur;
+        const finalOffset = (existing && typeof existing.startOffsetSec === "number") ? existing.startOffsetSec : naturalOffset;
+        const finalSegDur = (existing && typeof existing.segDurationSec === "number") ? existing.segDurationSec : segDur;
 
         newItems.push({
           partIndex: idx,
           partTitle: seg.title || `Part ${idx + 1}`,
           role: "角色",
           text: text,
-          baseSec: baseSec,
-          segDurationSec: segDur,
-          startOffsetSec: existing && existing.userEdited ? existing.startOffsetSec : naturalOffset,
-          durationSec: existing && existing.userEdited ? existing.durationSec : naturalDur,
+          baseSec: finalBase,
+          segDurationSec: finalSegDur,
+          startOffsetSec: finalOffset,
+          durationSec: finalDur,
           userEdited: existing ? existing.userEdited : false,
           audioBlobUrl: existing ? existing.audioBlobUrl : null
         });
