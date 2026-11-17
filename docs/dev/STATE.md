@@ -18,3 +18,7 @@
 - [x] `F10-5` Skill Discovery 雙平台實證與專案 Skill 統一導向
 - [x] `F10-6A` H3 實測教學成片與完整分鏡範本全鏈路落地
 - [x] `F10-6B` 規範落地與執行 `/code-review` 總驗收
+
+## 3. 後製合成層（選配）規劃
+- 借鏡 heygen-com/hyperframes：詳見 [POST_PRODUCTION_HYPERFRAMES_PLAN.md](POST_PRODUCTION_HYPERFRAMES_PLAN.md)（H0~H6 微批次：ADR → 宣告式時間軸 → lint → headless check → 確定性 render → 教學樣板 → CLI 整併）。
+- 邊界：不取代 `h3.c`／Colab 生成管線；純串接＋靜態字幕維持 FFmpeg 快速路徑，合成層僅在圖表／程式碼高亮／動態字卡需求時啟用。
