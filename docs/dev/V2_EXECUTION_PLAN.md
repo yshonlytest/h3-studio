@@ -352,3 +352,17 @@ flowchart LR
 - [x] `F10-6A` **H3 實測教學成片與完整分鏡範本全鏈路落地**
 - [x] `F10-6B` **規範落地與執行 `/code-review` 總驗收**
 
+---
+
+## 階段 F11：UX 改善、操作動線收斂與資料交接可靠性
+
+- [x] `F11-0` **UX 現況盤點、User Journey 拆解與 P0~P3 問題分級**
+- [x] `F11-1` **Web 操作動線與已知 Bug 修復（移除步驟一錯置藍框、唯一 ID、秒數檔名、步驟三下載入口）**
+- [x] `F11-1-FIX` **修復 Edu 幀數桶秒數累積偏差 (105s)、補齊 jobs 參考圖與消除 Adapter 短路**
+- [x] `F11-2` **Web / Agent / CLI 資料交接可靠性**
+- [x] `F11-3` **Prompt 生成邏輯與 `h3_cli` 整合**
+- [x] `F11-4` **Agent-First 快速體驗入口**
+- [x] `F11-5` **統一 Skill 與授權引導**
+- [x] `F11-FIX` **跨工作流整合驗收缺陷收斂（修復 DOM 遞迴、Inline Payload 碰撞、`build-manifest` 缺圖、Hybrid 無損匯回、Worker Revision 樂觀鎖與 Dispatcher 授權門禁）**
+
+

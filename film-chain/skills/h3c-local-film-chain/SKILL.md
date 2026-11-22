@@ -8,6 +8,8 @@ description: >-
 
 # H3.c Local Film Chain Skill (Local Native Pipeline & Edu-Explainer Workflow)
 
+> **Unified Entry Skill**: For cross-route triage (Web-First, Agent-First, Hybrid) and environment probing, see [../h3-studio/SKILL.md](../h3-studio/SKILL.md).
+
 This skill guides the Agent to run and manage the local native `h3.c` engine and `film-chain` storyboard pipeline for generating coherent video, synchronized speech, lip-sync, and non-diegetic background music without relying on cloud services or external TTS.
 
 ---

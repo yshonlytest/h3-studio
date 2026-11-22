@@ -155,6 +155,56 @@ test("Cloudflare Worker - Session Relay API Tests", async (t) => {
     assert.equal(patchedData.reroll_target.mode, "single");
   });
 
+  await t.test("should reject stale manifest writes with 409 Conflict when expected_revision mismatches", async () => {
+    const revV2 = { revision: "rev_22222222", segments: [{ title: "Updated V2", prompt: "Scene 2" }] };
+    const initReq = new Request("https://film-chain.onlytest.dev/api/session/test_rev_lock/manifest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(revV2),
+    });
+    const initRes = await worker.fetch(initReq, env);
+    assert.equal(initRes.status, 200);
+
+    // Stale POST with expected_revision mismatch must return 409 and preserve rev_22222222
+    const stalePostReq = new Request("https://film-chain.onlytest.dev/api/session/test_rev_lock/manifest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expected_revision: "rev_11111111", revision: "rev_11111111", segments: [{ title: "Stale V1", prompt: "Old" }] }),
+    });
+    const stalePostRes = await worker.fetch(stalePostReq, env);
+    assert.equal(stalePostRes.status, 409);
+    const conflictJson = await stalePostRes.json();
+    assert.equal(conflictJson.ok, false);
+    assert.equal(conflictJson.current_revision, "rev_22222222");
+    assert.equal(conflictJson.expected_revision, "rev_11111111");
+
+    // Stale PATCH with If-Match mismatch must also return 409
+    const stalePatchReq = new Request("https://film-chain.onlytest.dev/api/session/test_rev_lock/manifest", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "If-Match": "rev_wrong" },
+      body: JSON.stringify({ revision: "rev_33333333" }),
+    });
+    const stalePatchRes = await worker.fetch(stalePatchReq, env);
+    assert.equal(stalePatchRes.status, 409);
+
+    // Matching If-Match PATCH must succeed and report previous_revision
+    const validPatchReq = new Request("https://film-chain.onlytest.dev/api/session/test_rev_lock/manifest", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "If-Match": "rev_22222222" },
+      body: JSON.stringify({ revision: "rev_33333333" }),
+    });
+    const validPatchRes = await worker.fetch(validPatchReq, env);
+    assert.equal(validPatchRes.status, 200);
+    const okJson = await validPatchRes.json();
+    assert.equal(okJson.previous_revision, "rev_22222222");
+    assert.equal(okJson.revision, "rev_33333333");
+
+    const checkRes = await worker.fetch(new Request("https://film-chain.onlytest.dev/api/session/test_rev_lock/manifest"), env);
+    const stored = await checkRes.json();
+    assert.equal(stored.revision, "rev_33333333");
+    assert.equal(stored.segments[0].title, "Updated V2");
+  });
+
   await t.test("should upload and retrieve reference image binary", async () => {
     const fakeImgData = new Uint8Array([255, 216, 255, 224, 0, 16, 74, 70, 73, 70]); // JPEG magic header
     const postReq = new Request("https://film-chain.onlytest.dev/api/session/test_123/image", {

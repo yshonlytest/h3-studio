@@ -18,6 +18,7 @@ from pipeline.h3_cli import (
     semantic_digest_document,
     validate_manifest,
 )
+from pipeline.h3_dispatcher import DispatchPlanRequest, create_dispatch_plan
 
 
 class TestH3Cli(unittest.TestCase):
@@ -169,6 +170,28 @@ Final closing thoughts.
             data = json.loads(out_m.read_text(encoding="utf-8"))
             self.assertEqual(data["mode"], "colab_12s")
             self.assertIn(data["segments"][0]["frames"], (241, 289))
+
+    def test_build_manifest_without_first_frame_column_passes_dispatch_plan(self) -> None:
+        """4-column table without first_frame must still validate and produce a dispatch plan."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            tbl = tmp / "four_cols.md"
+            tbl.write_text(
+                "| shot_id | title | dialogue | visual_prompt |\n"
+                "| :--- | :--- | :--- | :--- |\n"
+                "| 1 | Intro | 第一段介紹。 | [Scene] Presenter at desk |\n"
+                "| 2 | Body | 第二段核心原理解析。 | [Scene] Architecture diagram |\n",
+                encoding="utf-8",
+            )
+            out_m = tmp / "agent_built.json"
+            st_f = tmp / "agent.state.json"
+            build_manifest_from_table(BuildManifestOptions(table_path=tbl, track="local_5s", output_path=out_m))
+
+            val = validate_manifest(out_m)
+            self.assertTrue(val.is_valid, f"Expected valid manifest, got {val.errors}")
+            plan = create_dispatch_plan(DispatchPlanRequest(manifest_path=out_m, route="local", state_path=st_f))
+            self.assertEqual(plan.job_count, 2)
+            self.assertTrue(plan.consent_token)
 
 
 if __name__ == "__main__":

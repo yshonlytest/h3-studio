@@ -17,7 +17,7 @@ from pipeline.h3_dispatcher import (
     DispatchPlanRequest,
     create_dispatch_plan,
     execute_dispatched_run,
-    query_colab_usage_safely,
+    probe_compute_environment,
 )
 from pipeline.h3_edu_profile import (
     EXECUTION_TRACK_SPECS,
@@ -25,6 +25,11 @@ from pipeline.h3_edu_profile import (
     calculate_optimal_frames,
     compile_shot_prompt,
     resolve_shot_dialogues,
+)
+from pipeline.h3_manifest_adapter import (
+    HANDOFF_SCHEMA_VERSION,
+    compute_storyboard_revision,
+    extract_manifest_payload,
 )
 from pipeline.h3_state import (
     ShotHashContext,
@@ -35,6 +40,7 @@ from pipeline.h3_state import (
 from pipeline.h3_verifier import verify_video_artifact
 
 LOGGER = logging.getLogger(__name__)
+DEFAULT_ANCHOR_REF_IMAGE = "examples/assets/detective_anchor_ref.jpg"
 
 
 @dataclass(frozen=True)
@@ -54,7 +60,7 @@ def validate_manifest(manifest_path: Path | str) -> ValidationResult:
         return ValidationResult(is_valid=False, total_segments=0, errors=(f"File not found: {m_path}",))
 
     try:
-        data = json.loads(m_path.read_text(encoding="utf-8"))
+        data = extract_manifest_payload(m_path.read_text(encoding="utf-8"))
     except Exception as exc:
         return ValidationResult(is_valid=False, total_segments=0, errors=(f"JSON parse error: {exc}",))
 
@@ -145,62 +151,69 @@ class BuildManifestOptions:
     language_code: str = "zh-TW"
 
 
+def _compile_table_segment(
+    idx: int,
+    row: dict[str, str],
+    opts: BuildManifestOptions,
+) -> dict[str, Any]:
+    """Compile a single parsed table row into a normalized storyboard segment dict."""
+    default_frames = 186 if opts.track == "colab_12s" else 93
+    shot_id = row.get("shot_id") or row.get("segment") or str(idx)
+    raw_diag = row.get("dialogue", "").strip()
+    vis_prompt = row.get("visual_prompt") or row.get("prompt") or ""
+    first_frame = row.get("first_frame", "").strip()
+    if idx == 1 and not first_frame:
+        first_frame = DEFAULT_ANCHOR_REF_IMAGE
+
+    seg_dict: dict[str, Any] = {
+        "segment": idx,
+        "shot_id": shot_id,
+        "title": row.get("title", f"Part {idx}"),
+        "dialogue": raw_diag,
+        "visual_prompt": vis_prompt,
+    }
+    if first_frame:
+        seg_dict["first_frame"] = first_frame
+
+    diag_res = resolve_shot_dialogues(seg_dict, opts.language_code)
+    seg_dict["display_dialogue"] = diag_res.display_dialogue
+    seg_dict["spoken_dialogue"] = diag_res.spoken_dialogue
+    seg_dict["frames"] = (
+        calculate_optimal_frames(
+            diag_res.spoken_dialogue,
+            opts.language_code,
+            shot_id,
+            execution_track=opts.track,
+        )
+        if diag_res.spoken_dialogue
+        else default_frames
+    )
+    seg_dict["prompt"] = compile_shot_prompt(seg_dict, GlobalProfile(language_code=opts.language_code), idx)
+    return seg_dict
+
+
 def build_manifest_from_table(opts: BuildManifestOptions) -> dict[str, Any]:
     """Deterministically compile table into full H3 manifest with F2 normalization."""
-    content = opts.table_path.read_text(encoding="utf-8")
-    rows = _parse_table_rows(content)
+    rows = _parse_table_rows(opts.table_path.read_text(encoding="utf-8"))
     if not rows:
         raise ValueError(f"No valid rows parsed from table at {opts.table_path}")
 
     is_colab = opts.track == "colab_12s"
-    width = 1376 if is_colab else 864
-    height = 768 if is_colab else 480
-    default_frames = 186 if is_colab else 93
-
-    segments: list[dict[str, Any]] = []
-    profile = GlobalProfile(language_code=opts.language_code)
-
-    for idx, row in enumerate(rows, start=1):
-        shot_id = row.get("shot_id") or row.get("segment") or str(idx)
-        title = row.get("title", f"Part {idx}")
-        raw_diag = row.get("dialogue", "").strip()
-        vis_prompt = row.get("visual_prompt") or row.get("prompt") or ""
-        first_frame = row.get("first_frame", "").strip()
-
-        seg_dict: dict[str, Any] = {
-            "shot_id": shot_id,
-            "title": title,
-            "dialogue": raw_diag,
-            "visual_prompt": vis_prompt,
-        }
-        if first_frame:
-            seg_dict["first_frame"] = first_frame
-
-        diag_res = resolve_shot_dialogues(seg_dict, opts.language_code)
-        seg_dict["display_dialogue"] = diag_res.display_dialogue
-        seg_dict["spoken_dialogue"] = diag_res.spoken_dialogue
-
-        # Compute optimal frames if dialogue exists
-        if diag_res.spoken_dialogue:
-            seg_dict["frames"] = calculate_optimal_frames(
-                diag_res.spoken_dialogue,
-                opts.language_code,
-                shot_id,
-                execution_track=opts.track,
-            )
-        else:
-            seg_dict["frames"] = default_frames
-
-        # Compile prompt
-        seg_dict["prompt"] = compile_shot_prompt(seg_dict, profile, idx)
-        segments.append(seg_dict)
+    segments = [_compile_table_segment(idx, row, opts) for idx, row in enumerate(rows, start=1)]
+    slug = opts.table_path.stem
+    first_anchor = segments[0].get("first_frame") or DEFAULT_ANCHOR_REF_IMAGE
 
     manifest_data = {
-        "title": opts.table_path.stem,
-        "width": width,
-        "height": height,
+        "schema_version": HANDOFF_SCHEMA_VERSION,
+        "project": slug,
+        "title": slug,
+        "width": 1376 if is_colab else 864,
+        "height": 768 if is_colab else 480,
         "mode": "colab_12s" if is_colab else "sequential",
         "language_code": opts.language_code,
+        "anchor_ref_image": first_anchor,
+        "segment_count": len(segments),
+        "revision": compute_storyboard_revision(segments, slug),
         "segments": segments,
     }
 
@@ -402,8 +415,8 @@ def _handle_resolve_anchor(args: argparse.Namespace) -> int:
 
 
 def _handle_usage(args: argparse.Namespace) -> int:
-    bal = query_colab_usage_safely()
-    print(json.dumps({"compute_units": bal, "status": "AVAILABLE" if bal is not None else "UNKNOWN"}))
+    report = probe_compute_environment()
+    print(json.dumps(report))
     return 0
 
 
@@ -415,6 +428,7 @@ def _handle_plan(args: argparse.Namespace) -> int:
         max_retries=args.max_retries,
         allow_gpu_fallback=args.allow_fallback,
         state_path=args.state_file,
+        require_colab_auth=getattr(args, "require_colab_auth", False),
     )
     plan = create_dispatch_plan(plan_req)
     print(f"📋 Plan generated: Route={plan.route}, GPU={plan.gpu}, Jobs={plan.job_count}, EstCU={plan.estimated_cu}")
@@ -433,6 +447,7 @@ def _handle_run(args: argparse.Namespace) -> int:
         max_retries=args.max_retries,
         allow_gpu_fallback=args.allow_fallback,
         state_path=args.state_file,
+        require_colab_auth=getattr(args, "require_colab_auth", False),
     )
     exec_req = DispatchExecuteRequest(plan_req=p_req, confirm_token=args.confirm_token, output_dir=args.output_dir or Path("outputs"))
     res = execute_dispatched_run(exec_req)
@@ -489,6 +504,7 @@ def _register_subparsers_c(sub: argparse._SubParsersAction) -> None:
     p_plan.add_argument("--max-retries", type=int, default=1)
     p_plan.add_argument("--allow-fallback", action="store_true")
     p_plan.add_argument("--state-file", type=Path)
+    p_plan.add_argument("--require-colab-auth", action="store_true")
 
     p_run = sub.add_parser("run")
     p_run.add_argument("--manifest", type=Path, required=True)
@@ -500,6 +516,7 @@ def _register_subparsers_c(sub: argparse._SubParsersAction) -> None:
     p_run.add_argument("--dry-run", action="store_true")
     p_run.add_argument("--output-dir", type=Path)
     p_run.add_argument("--state-file", type=Path)
+    p_run.add_argument("--require-colab-auth", action="store_true")
 
     p_stat = sub.add_parser("status")
     p_stat.add_argument("--state-file", type=Path, required=True)

@@ -5,6 +5,7 @@ const timecodeHelper = require('../public/src/core/timecodeHelper.js');
 const promptBuilder = require('../public/src/core/promptBuilder.js');
 const comfyPayload = require('../public/src/core/comfyPayload.js');
 const cloudDiagnostics = require('../public/src/core/cloudDiagnostics.js');
+const agentPrompts = require('../public/src/prompts/agentPrompts.js');
 
 describe('H3 Storyboard Studio - Core Modules Unit Tests', () => {
 
@@ -72,6 +73,120 @@ describe('H3 Storyboard Studio - Core Modules Unit Tests', () => {
       assert.equal(resMonotonic.valid, false);
       assert.ok(resMonotonic.errors.some(e => e.includes("必須維持單調非遞減")));
       assert.ok(resMonotonic.errors.some(e => e.includes("必須錨定為 9")));
+    });
+
+    it('should resolve segment timing across Edu dynamic frames, float title tags, and Creative 5s defaults', () => {
+      // 1. Edu mode uses floored frames / 24 (155f -> 6.4s, 186f -> 7.7s)
+      const eduSeg1 = { title: "Part 1 (0-6.4s): Intro", frames: 155 };
+      const t1 = timecodeHelper.resolveSegmentTiming(eduSeg1, 0, true);
+      assert.deepEqual(t1, { startSec: 0, endSec: 6.4, durationSec: 6.4 });
+
+      // Chained 14 Edu segments (2 x 155f + 12 x 186f) sum to 105.2s -> 105s filename
+      const edu14 = [
+        ...Array.from({ length: 2 }, () => ({ frames: 155 })),
+        ...Array.from({ length: 12 }, () => ({ frames: 186 })),
+      ];
+      let running = 0;
+      for (const seg of edu14) {
+        running = timecodeHelper.resolveSegmentTiming(seg, running, true).endSec;
+      }
+      assert.equal(running, 105.2);
+      assert.equal(
+        timecodeHelper.buildColabManifestFilename("h3_studio_tutorial_105s", running),
+        "colab_manifest_h3_studio_tutorial_105s.json"
+      );
+
+      // 2. Float time range in title when not in Edu mode or frames not set
+      const floatTitleSeg = { title: "Part 2 (6.4-12.8s): Step 1" };
+      const t2 = timecodeHelper.resolveSegmentTiming(floatTitleSeg, 6.4, false);
+      assert.deepEqual(t2, { startSec: 6.4, endSec: 12.8, durationSec: 6.4 });
+
+      // 3. Creative mode default 5s when no time tag and default 124 frames
+      const creativeSeg = { title: "Part 1: Opening", frames: 124 };
+      const t3 = timecodeHelper.resolveSegmentTiming(creativeSeg, 10, false);
+      assert.deepEqual(t3, { startSec: 10, endSec: 15, durationSec: 5 });
+    });
+
+    it('should build Colab manifest filename without duplicating trailing duration suffix', () => {
+      assert.equal(
+        timecodeHelper.buildColabManifestFilename("h3_studio_tutorial_105s", 105.2),
+        "colab_manifest_h3_studio_tutorial_105s.json"
+      );
+      assert.equal(
+        timecodeHelper.buildColabManifestFilename("h3_studio_tutorial_105s", 70),
+        "colab_manifest_h3_studio_tutorial_70s.json"
+      );
+      assert.equal(
+        timecodeHelper.buildColabManifestFilename("cyber_detective", 25),
+        "colab_manifest_cyber_detective_25s.json"
+      );
+    });
+
+    it('should compute deterministic storyboard revision hashes that react to edits', () => {
+      const segsA = [
+        { title: "Part 1 (0-5s)", frames: 124, dialogue: "你好", prompt: "Scene A" },
+        { title: "Part 2 (5-10s)", frames: 124, dialogue: "再見", prompt: "Scene B" }
+      ];
+      const segsB = [
+        { title: "Part 1 (0-5s)", frames: 124, dialogue: "你好改", prompt: "Scene A" },
+        { title: "Part 2 (5-10s)", frames: 124, dialogue: "再見", prompt: "Scene B" }
+      ];
+      const rev1 = timecodeHelper.computeStoryboardRevision(segsA, "my_proj");
+      const rev2 = timecodeHelper.computeStoryboardRevision(segsA, "my_proj");
+      const rev3 = timecodeHelper.computeStoryboardRevision(segsB, "my_proj");
+
+      assert.match(rev1, /^rev_[0-9a-f]{8}$/);
+      assert.equal(rev1, rev2);
+      assert.notEqual(rev1, rev3);
+    });
+
+    it('should select inline_payload for small storyboards, sanitize data URIs, and use manifest_file for large ones', () => {
+      const smallSegs = [
+        { segment: 1, title: "Part 1", first_frame: "data:image/png;base64,AAAA", prompt: "P1" },
+        { segment: 2, title: "Part 2", prompt: "P2" },
+        { segment: 3, title: "Part 3", prompt: "P3" }
+      ];
+      const smallMeta = timecodeHelper.buildHandoffMetadata({
+        projectSlug: "short_film",
+        sessionId: "fc_test_small",
+        segments: smallSegs,
+        totalSeconds: 15
+      });
+      assert.equal(smallMeta.delivery_mode, "inline_payload");
+      assert.equal(smallMeta.schema_version, "h3.storyboard_handoff.v2");
+
+      const block = timecodeHelper.formatInlinePayloadBlock({
+        ...smallMeta,
+        project: "short_film",
+        anchor_ref_image: "data:image/jpeg;base64,BBBB",
+        segments: smallSegs
+      });
+      assert.ok(block.includes("<H3_STORYBOARD_PAYLOAD>"));
+      assert.ok(block.includes("</H3_STORYBOARD_PAYLOAD>"));
+      const jsonMatch = block.match(/<H3_STORYBOARD_PAYLOAD>\s*([\s\S]*?)\s*<\/H3_STORYBOARD_PAYLOAD>/);
+      assert.ok(jsonMatch);
+      const parsed = JSON.parse(jsonMatch[1]);
+      assert.equal(parsed.schema_version, "h3.storyboard_handoff.v2");
+      assert.equal(parsed.segment_count, 3);
+      assert.equal(parsed.anchor_ref_image, "reference_character.png");
+      assert.equal(parsed.segments[0].first_frame, "reference_character.png");
+
+      const largeSegs = Array.from({ length: 14 }, (_, i) => ({
+        segment: i + 1,
+        title: `Part ${i + 1}`,
+        prompt: `Prompt ${i + 1}`
+      }));
+      const largeMeta = timecodeHelper.buildHandoffMetadata({
+        projectSlug: "long_edu",
+        sessionId: "fc_test_large",
+        segments: largeSegs,
+        totalSeconds: 105
+      });
+      assert.equal(largeMeta.delivery_mode, "manifest_file");
+      assert.equal(
+        timecodeHelper.formatInlinePayloadBlock({ ...largeMeta, project: "long_edu", segments: largeSegs }),
+        ""
+      );
     });
   });
 
@@ -277,6 +392,113 @@ describe('H3 Storyboard Studio - Core Modules Unit Tests', () => {
       assert.equal(diagNonConn.isCors, false);
       assert.ok(diagNonConn.title.includes("ComfyUI 執行或回應異常"));
       assert.ok(!diagNonConn.action.includes("一鍵啟動"));
+    });
+  });
+
+  // ==================== 5. agentPrompts (F11-3 Stage & 6-Combination Matrix) ====================
+  describe('agentPrompts (F11-3 Stage & 6-Combination Matrix)', () => {
+    it('should separate Stage 1 screenplay generation from Stage 3 CLI rendering', () => {
+      const s1 = agentPrompts.buildStage1ScreenplayTaskPrompt({
+        desc: "一段測試故事",
+        sysPrompt: "SYSTEM_PROMPT",
+        chainParadigm: "latent_chain"
+      });
+      assert.ok(s1.includes("【階段 1／3：劇本與分鏡生成任務"));
+      assert.ok(!s1.includes("h3_cli run"));
+
+      const s3 = agentPrompts.buildStage3RenderAgentPrompt({
+        projectMode: "creative",
+        route: "colab",
+        manifestFilename: "colab_manifest_demo_15s.json",
+        baseSlug: "demo",
+        totalSeconds: 15,
+        segmentCount: 3,
+        sessionId: "fc_123",
+        revision: "rev_abcd1234",
+        deliveryMode: "inline_payload",
+        inlineBlock: "\n\n<H3_STORYBOARD_PAYLOAD>{}</H3_STORYBOARD_PAYLOAD>",
+        hasSegments: true
+      });
+      assert.ok(s3.includes("【階段 3／3：已確認分鏡之渲染與合成任務】"));
+      assert.ok(s3.includes("python3 -m pipeline.h3_cli plan"));
+      assert.ok(s3.includes("python3 -m pipeline.h3_cli run"));
+      assert.ok(s3.includes("<H3_STORYBOARD_PAYLOAD>{}</H3_STORYBOARD_PAYLOAD>"));
+      assert.ok(!s3.includes("<H3_STORYBOARD_PAYLOAD>...</H3_STORYBOARD_PAYLOAD>"), "Prose must not contain fake closing tag");
+    });
+
+    it('should guard against missing or unconfirmed segments in Stage 3 prompt', () => {
+      const guarded = agentPrompts.buildStage3RenderAgentPrompt({
+        segmentCount: 0,
+        hasSegments: false
+      });
+      assert.ok(guarded.includes("【階段提醒：尚未完成步驟一／二分鏡確認】"));
+      assert.ok(!guarded.includes("h3_cli run"));
+      assert.ok(!guarded.includes("colab_manifest_"));
+    });
+
+    it('should generate valid h3_cli prompts across all 6 mode x route combinations without legacy runner paths', () => {
+      const modes = [
+        { key: "creative", expectedLabel: "Creative Storyboard" },
+        { key: "edu", expectedLabel: "Doc-to-Edu" }
+      ];
+      const routes = ["colab", "local", "saas_api"];
+      for (const m of modes) {
+        for (const r of routes) {
+          const out = agentPrompts.buildStage3RenderAgentPrompt({
+            projectMode: m.key,
+            route: r,
+            manifestFilename: `colab_manifest_test_${m.key}_15s.json`,
+            baseSlug: `test_${m.key}`,
+            totalSeconds: 15,
+            segmentCount: 3,
+            sessionId: "fc_matrix",
+            revision: "rev_11223344",
+            deliveryMode: "manifest_file",
+            hasSegments: true
+          });
+          assert.ok(out.includes(`--route ${r}`), `Missing --route ${r} for ${m.key} x ${r}`);
+          assert.ok(out.includes(m.expectedLabel), `Missing mode label for ${m.key} x ${r}`);
+          assert.ok(out.includes("python3 -m pipeline.h3_cli validate-manifest"));
+          assert.ok(out.includes("python3 -m pipeline.h3_cli plan"));
+          assert.ok(out.includes("python3 -m pipeline.h3_cli run"));
+          assert.ok(out.includes("python3 -m pipeline.h3_cli verify"));
+          assert.ok(!out.includes("runner.py chain"), "Must not reference legacy runner.py chain");
+          assert.ok(!out.includes("h3_storyboard_pipeline.py"), "Must not reference legacy h3_storyboard_pipeline.py");
+          if (r === "colab") {
+            assert.ok(out.includes("--gpu L4"), `Expected --gpu L4 for colab route in ${m.key}`);
+          } else {
+            assert.ok(!out.includes("--gpu L4"), `Must not emit --gpu L4 for ${r} route in ${m.key}`);
+          }
+        }
+      }
+      const eduLocalCmd = agentPrompts.buildEduLocalCliCommand("edu_storyboard_manifest.json", "outputs/edu.state.json");
+      assert.ok(eduLocalCmd.includes("python3 -m pipeline.h3_cli validate-manifest"));
+      assert.ok(eduLocalCmd.includes("--route local"));
+      assert.ok(!eduLocalCmd.includes("h3_storyboard_pipeline.py"));
+    });
+
+    it('should build Agent-First quick-start prompts for both Demo and Production without assuming exported manifests', () => {
+      const demoPrompt = agentPrompts.buildAgentQuickStartPrompt({
+        projectMode: "creative",
+        route: "colab",
+        trackType: "demo",
+        userBrief: ""
+      });
+      assert.ok(demoPrompt.includes("尚未在網頁匯出任何 `colab_manifest_*.json`"));
+      assert.ok(demoPrompt.includes("快速體驗 Demo 路線"));
+      assert.ok(demoPrompt.includes("python3 -m pipeline.h3_cli plan --manifest quickstart_manifest.json --route colab"));
+      assert.ok(demoPrompt.includes("python3 -m pipeline.h3_cli run --manifest quickstart_manifest.json --route colab"));
+
+      const prodEduPrompt = agentPrompts.buildAgentQuickStartPrompt({
+        projectMode: "edu",
+        route: "local",
+        trackType: "production",
+        userBrief: ""
+      });
+      assert.ok(prodEduPrompt.includes("請先主動詢問我要解說的文檔路徑"));
+      assert.ok(prodEduPrompt.includes("python3 -m pipeline.h3_cli digest"));
+      assert.ok(prodEduPrompt.includes("python3 -m pipeline.h3_cli build-manifest"));
+      assert.ok(prodEduPrompt.includes("--route local"));
     });
   });
 

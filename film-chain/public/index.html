@@ -139,6 +139,65 @@
       </div>
     </div>
 
+    <!-- 🧭 Step 0A-2: Workflow Entry Selection (Web-First vs Agent-First) -->
+    <div class="workflow-entry-selection-box" style="background:#0c101c; border:1.5px solid #2d3748; border-radius:var(--radius); padding:14px 20px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <strong style="font-size:0.96rem; color:#e2e8f0; display:flex; align-items:center; gap:8px;">
+          <span>🧭 你希望怎麼開始？ (Workflow Entry)</span>
+        </strong>
+        <span id="currentStartModeBadge" class="badge ok" style="border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.15);">目前方式：🧭 使用網頁逐步操作 (Web-First)</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin-top:10px;">
+        <div id="startModeCardWeb" class="project-mode-card active creative" role="button" tabindex="0" onclick="selectStartWorkflowMode('web')" onkeydown="if(event.key==='Enter'||event.key===' ')selectStartWorkflowMode('web')">
+          <div class="project-mode-title" style="font-size:0.94rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+            <span style="color:#93c5fd;">🧭 使用網頁逐步操作（一般使用者）</span>
+            <span class="badge ok" style="font-size:0.7rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.2);">視覺化引導 · Step 1→3</span>
+          </div>
+          <div class="project-mode-desc" style="font-size:0.78rem; color:var(--muted); line-height:1.45;">
+            由下方網頁引導您完成每一個階段：步驟一生成分鏡 ➔ 步驟二預覽微調台詞與畫面 ➔ 步驟三執行渲染與交付。
+          </div>
+        </div>
+
+        <div id="startModeCardAgent" class="project-mode-card" role="button" tabindex="0" onclick="selectStartWorkflowMode('agent')" onkeydown="if(event.key==='Enter'||event.key===' ')selectStartWorkflowMode('agent')">
+          <div class="project-mode-title" style="font-size:0.94rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+            <span style="color:#fcd34d;">🤖 交給 AI Agent 協助（快速入口）</span>
+            <span class="badge warn" style="font-size:0.7rem;">免填網頁表單 · 直接對話開跑</span>
+          </div>
+          <div class="project-mode-desc" style="font-size:0.78rem; color:var(--muted); line-height:1.45;">
+            不需先在網頁填完步驟一／二！提供「⚡ 快速體驗 Demo」與「🎬 正式創作」兩種路線，由 Agent 主動詢問並操作 CLI 完成。
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent-First Quick-Start Drawer (Progressive Disclosure: only shown when 'agent' selected) -->
+      <div id="agentQuickStartPanel" style="display:none; margin-top:12px; padding:14px 16px; background:#081020; border:1.5px solid #f59e0b; border-radius:10px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; margin-bottom:10px;">
+          <div>
+            <label for="agentQuickTrackSelect" style="font-size:0.8rem; color:#fcd34d; display:block; margin-bottom:4px;">🚀 選擇 Agent 啟動路線</label>
+            <select id="agentQuickTrackSelect" onchange="updateAgentQuickStartPromptUI()" style="width:100%; padding:8px 10px; font-size:0.84rem; background:#040914; color:#f8fafc; border:1px solid #78350f; border-radius:6px;">
+              <option value="production" selected>🎬 正式創作製作（由 Agent 主動詢問您的故事／文檔並建立分鏡）</option>
+              <option value="demo">⚡ 快速體驗 Demo（先以 3 段輕量分鏡驗證環境與算圖管線）</option>
+            </select>
+          </div>
+          <div>
+            <label for="agentQuickBriefInput" style="font-size:0.8rem; color:#fcd34d; display:block; margin-bottom:4px;">💬 一句話主題或本機文檔路徑（選填，留空則由 Agent 主動詢問）</label>
+            <input type="text" id="agentQuickBriefInput" oninput="updateAgentQuickStartPromptUI()" placeholder="例：雨夜偵探追緝短片，或 docs/report.md..." style="width:100%; padding:8px 10px; font-size:0.84rem; background:#040914; color:#f8fafc; border:1px solid #78350f; border-radius:6px;" />
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <span style="font-size:0.78rem; color:#cbd5e1;">💡 自動同步上方所選的「專案模式」與「渲染路線」，且明確告知 Agent 尚未匯出 manifest 檔案。</span>
+          <button type="button" id="copyAgentQuickStartBtn" class="btn primary" onclick="copyAgentQuickStartPrompt()" style="padding:8px 18px; font-size:0.86rem; background:linear-gradient(135deg, #d97706, #b45309); border-color:#f59e0b; color:#fff; font-weight:700;">
+            📋 複製 Agent 快速啟動指令
+          </button>
+        </div>
+        <details style="margin-top:8px; font-size:0.78rem; color:#94a3b8;">
+          <summary style="cursor:pointer; color:#fcd34d;">▾ 檢視 Agent-First 快速啟動指令內容</summary>
+          <textarea id="agentQuickStartTextarea" readonly style="width:100%; height:110px; margin-top:6px; background:#040a14; color:#fde68a; border:1px solid #78350f; border-radius:6px; font-family:monospace; font-size:0.75rem; padding:8px 10px; line-height:1.45; resize:vertical;"></textarea>
+        </details>
+      </div>
+    </div>
+
     <!-- 🔀 Step 0B: Route Selection -->
     <div class="route-selection-box">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -202,34 +261,6 @@
         <div style="font-size:0.78rem; color:var(--muted);">
           提供主角參考圖 ＋ 故事大綱，選擇「潛空間（一鏡到底）」或「九宮格（自訂分鏡）」
         </div>
-      </div>
-
-      <!-- ☁️ 路線 1: Google Colab Agent Prompt 卡片 -->
-      <div id="step1ColabPromptBox" style="background:#091426; border:1.5px solid #0284c7; border-radius:10px; padding:12px 14px; margin-bottom:16px; box-shadow:0 4px 16px rgba(2,132,199,0.2);">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div style="font-size:0.88rem; color:#e0f2fe; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span style="font-size:1.1rem;">☁️</span>
-            <span><strong style="color:#38bdf8;">雲端 GPU 自動化渲染（免本機顯卡）</strong></span>
-            <span style="font-size:0.8rem; color:#94a3b8;">A100 / L4 自動容錯，一鍵產出並無縫拼接長片</span>
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" id="openColabTopBtn" class="btn primary" onclick="openColabNotebook()" style="padding:7px 16px; font-size:0.84rem; min-height:38px; background:linear-gradient(135deg, #0284c7, #0369a1); border-color:#38bdf8; color:#fff; font-weight:700;">
-              🚀 在 Google Colab 開啟
-            </button>
-            <button type="button" id="copyColabPromptBtn" class="btn" onclick="copyColabPrompt()" style="padding:7px 14px; font-size:0.84rem; min-height:38px; background:rgba(56,189,248,0.22); border-color:#38bdf8; color:#7dd3fc; font-weight:700;">
-              📋 複製 Agent 指令
-            </button>
-          </div>
-        </div>
-        <details style="margin-top:8px; font-size:0.78rem; color:#94a3b8;">
-          <summary style="cursor:pointer; color:#7dd3fc;">▾ 查看雲端算力說明與終端 Agent 指令內容</summary>
-          <div style="line-height:1.5; margin:6px 0;">
-            💡 利用 Google Colab 啟動雲端 GPU（預設 A100，滿載時自動切換至 NVIDIA L4，點數省 50%）。首次使用請執行 <code>colab login</code> 授權。
-          </div>
-          <textarea id="colabPromptTextarea" readonly style="width:100%; height:96px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:none;">請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 `film-chain/skills/minimax-h3-colab`（若本機尚未安裝 colab CLI，請執行 `pip install google-colab-cli` 並提示我完成 `colab login` OAuth 授權）。分鏡一律以「我在本網頁步驟一/二產出、並由步驟三匯出的 colab_manifest_*.json」為準，調用 Google Colab GPU（預設 A100，滿載自動切換 L4 備援）依序渲染後自動 ffmpeg 消幀拼接，回填網頁播放廳。
-
-【鐵律】未經我明確同意，禁止執行 examples/storyboards/ 下任何示範分鏡（賽博偵探／墨繪靈境），那只會浪費 Compute Units；開跑前先回報預計消耗點數。若我沒有劇本/生圖 API Key：分鏡提示詞與九宮格圖一律改用你的訂閱額度代產（網頁步驟一選「🤖 Agent 訂閱代寫」走任務包生成，或由你貼 JSON 匯入網頁、九宮格自行生圖後於步驟二上傳），不得因缺 Key 改跑示範分鏡。若你的執行環境對外流量走代理且禁用 WebSocket 升級（colab exec 握手 403），請勿繞過代理：完成安裝與 manifest 準備後，把最終 runner.py chain 指令連同預估成本交回我在本機終端機執行。</textarea>
-        </details>
       </div>
 
       <!-- 🎓 模式 B: Doc-to-Edu Studio 文檔載入與知識點大綱確認區 -->
@@ -550,7 +581,10 @@
           <span class="step-num">3</span>
           <span id="step3TitleText">步驟三：本地管線渲染與自動合併</span>
         </div>
-        <span id="step3RouteTag" class="badge ok">本地工作流模式</span>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span id="step3HandoffStatusBadge" class="badge" style="border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14);">📋 待渲染分鏡：同步中...</span>
+          <span id="step3RouteTag" class="badge ok">本地工作流模式</span>
+        </div>
       </div>
 
       <!-- Mode 1: Google Colab (Gemini Pro Agent) Panel (預設推薦) -->
@@ -585,12 +619,15 @@
             <div>
               <h4 style="color:#e0f2fe; font-size:0.92rem; margin-bottom:4px;">🎮 雙軌執行控制中樞</h4>
               <p style="font-size:0.78rem; color:#94a3b8;">
-                免本機顯卡！可直接點擊「一鍵 Colab 開啟」於瀏覽器全自動運算，或複製指令交由終端 AI Agent 執行：
+                免本機顯卡！可直接點擊「一鍵 Colab 開啟」於瀏覽器全自動運算，或下載分鏡任務檔並複製指令交由終端 AI Agent 執行：
               </p>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
               <button type="button" id="openColabActionBtn" class="primary" onclick="openColabNotebook()" style="padding:9px 18px; font-size:0.88rem; background:linear-gradient(135deg, #0284c7, #0369a1); border-color:#38bdf8; font-weight:700; box-shadow:0 3px 12px rgba(2,132,199,0.35);">
                 🚀 在 Google Colab 開啟執行
+              </button>
+              <button type="button" id="downloadColabManifestBtn" class="btn" onclick="exportColabManifest()" style="padding:9px 16px; font-size:0.88rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.15); font-weight:700;">
+                💾 下載分鏡任務檔 (.json)
               </button>
               <button type="button" id="copyColabPromptBtn" class="btn" onclick="copyColabPrompt()" style="padding:9px 18px; font-size:0.88rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.15);">
                 📋 複製 Agent 終端指令
@@ -603,6 +640,10 @@
               </button>
             </div>
           </div>
+          <details style="margin-top:10px; font-size:0.78rem; color:#94a3b8;">
+            <summary style="cursor:pointer; color:#7dd3fc;">▾ 檢視或手動複製 Agent 終端指令明細</summary>
+            <textarea id="colabPromptTextarea" readonly style="width:100%; height:96px; margin-top:8px; background:#040a14; color:#93c5fd; border:1px solid #1e3a5f; border-radius:6px; font-family:monospace; font-size:0.76rem; padding:8px 10px; line-height:1.45; resize:vertical;"></textarea>
+          </details>
         </div>
 
         <div style="background:rgba(15,23,42,0.8); border:1px dashed #334155; border-radius:8px; padding:12px 14px; font-size:0.8rem; color:#94a3b8; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -811,7 +852,7 @@
 
         <div style="background:#090614; border:1px solid #2e1065; border-radius:8px; padding:12px; margin-bottom:12px;">
           <div style="font-size:0.8rem; color:#a855f7; font-weight:600; margin-bottom:6px;">💻 本地 Native CLI 執行指令（零雲端費用 · 自動適配權重路徑）：</div>
-          <code id="eduPipelineCliCode" style="display:block; white-space:pre-wrap; word-break:break-all; font-size:0.78rem; color:#e9d5ff; background:#000; padding:10px; border-radius:6px; font-family:monospace;">python3 pipeline/h3_storyboard_pipeline.py --manifest storyboards/my_lecture.json --output-dir outputs/my_lecture</code>
+          <code id="eduPipelineCliCode" style="display:block; white-space:pre-wrap; word-break:break-all; font-size:0.78rem; color:#e9d5ff; background:#000; padding:10px; border-radius:6px; font-family:monospace;">python3 -m pipeline.h3_cli validate-manifest --manifest edu_storyboard_manifest.json && python3 -m pipeline.h3_cli plan --manifest edu_storyboard_manifest.json --route local --state-file outputs/edu_lecture.state.json</code>
         </div>
       </div>
 
@@ -1526,10 +1567,6 @@
         }
       }
 
-      // Step 1: Colab prompt box
-      const colabBox = document.getElementById("step1ColabPromptBox");
-      if (colabBox) colabBox.style.display = isColab ? "block" : "none";
-
       // If local, ping local env hub
       if (isLocal && window.H3LocalEnv && typeof window.H3LocalEnv.pingAttention === "function") {
         window.H3LocalEnv.pingAttention();
@@ -1597,6 +1634,63 @@
       }
 
       refreshAllSegmentCardModeUI();
+      if (typeof updateColabPromptText === "function") updateColabPromptText();
+      if (typeof updateAgentQuickStartPromptUI === "function") updateAgentQuickStartPromptUI();
+    }
+
+    let activeStartWorkflowMode = "web";
+
+    function updateAgentQuickStartPromptUI() {
+      const ta = document.getElementById("agentQuickStartTextarea");
+      if (!ta) return;
+      const trackType = document.getElementById("agentQuickTrackSelect")?.value || "production";
+      const userBrief = document.getElementById("agentQuickBriefInput")?.value || "";
+      if (window.H3Prompts && typeof window.H3Prompts.buildAgentQuickStartPrompt === "function") {
+        ta.value = window.H3Prompts.buildAgentQuickStartPrompt({
+          projectMode: activeProjectMode === "edu" ? "edu" : "creative",
+          route: activeRoute || "colab",
+          trackType: trackType,
+          userBrief: userBrief
+        });
+      }
+    }
+
+    function selectStartWorkflowMode(mode) {
+      activeStartWorkflowMode = mode === "agent" ? "agent" : "web";
+      const isAgent = activeStartWorkflowMode === "agent";
+      const cardWeb = document.getElementById("startModeCardWeb");
+      const cardAgent = document.getElementById("startModeCardAgent");
+      const panel = document.getElementById("agentQuickStartPanel");
+      const badge = document.getElementById("currentStartModeBadge");
+      if (cardWeb) cardWeb.className = `project-mode-card ${!isAgent ? "active creative" : ""}`;
+      if (cardAgent) cardAgent.className = `project-mode-card ${isAgent ? "active edu" : ""}`;
+      if (panel) panel.style.display = isAgent ? "block" : "none";
+      if (badge) {
+        badge.textContent = isAgent
+          ? "目前方式：🤖 交給 AI Agent 協助 (Agent-First)"
+          : "目前方式：🧭 使用網頁逐步操作 (Web-First)";
+      }
+      updateAgentQuickStartPromptUI();
+    }
+
+    function copyAgentQuickStartPrompt() {
+      updateAgentQuickStartPromptUI();
+      const ta = document.getElementById("agentQuickStartTextarea");
+      if (!ta) return;
+      const btn = document.getElementById("copyAgentQuickStartBtn");
+      const done = () => {
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = "✅ 已複製快速啟動指令！";
+          setTimeout(() => { btn.textContent = orig; }, 2500);
+        }
+        showToast("📋 已複製 Agent-First 快速啟動指令！直接貼給 Agent 即可對話開始。");
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(ta.value).then(done).catch(() => fallbackCopyText(ta, done));
+      } else {
+        fallbackCopyText(ta, done);
+      }
     }
 
     function copyEduAgentDocPrompt() {
@@ -1738,33 +1832,97 @@
     }
     window.showToast = showToast;
 
-    async function publishSessionManifestAndImage() {
-      const sid = getOrCreateSessionId();
-      const segs = syncSegmentsFromDOM();
-      const effectiveSegs = segs.length > 0 ? segs : (currentPlan?.segments || []);
-      const count = effectiveSegs.length || 1;
-      const totalSec = count * 5;
-      const slug = currentPlan?.project_slug || "story_project";
+    function buildColabCompatibleManifest() {
+      const segs = syncSegmentsFromDOM(true);
+      const plan = currentPlan || { project_slug: "story_project", segments: [] };
+      const effectiveSegs = segs.length > 0 ? segs : (plan.segments || []);
+      const count = effectiveSegs.length;
+      const slug = plan.project_slug || "film_chain_story";
+      const isEdu = activeProjectMode === "edu" || plan.project_mode === "edu_explainer";
+      const chained = typeof window.exportChainedManifest === "function" ? window.exportChainedManifest(true) : null;
+      const defaultRef = (chained && chained.anchor_ref_image) || plan.anchor_ref_image || "examples/assets/detective_anchor_ref.jpg";
+      let runningSec = 0;
 
-      const manifest = {
+      const jobs = effectiveSegs.map((seg, idx) => {
+        let dur = 5.0;
+        if (typeof H3TimecodeHelper !== "undefined" && typeof H3TimecodeHelper.resolveSegmentTiming === "function") {
+          const t = H3TimecodeHelper.resolveSegmentTiming(seg, runningSec, isEdu);
+          dur = t.durationSec;
+          runningSec = t.endSec;
+        } else {
+          const timeMatch = (seg.title || "").match(/\((\d+(?:\.\d+)?)[-~](\d+(?:\.\d+)?)s\)/);
+          if (timeMatch) {
+            const s = parseFloat(timeMatch[1]);
+            const e = parseFloat(timeMatch[2]);
+            dur = Math.round((e - s) * 10) / 10;
+            runningSec = e;
+          } else {
+            runningSec += 5.0;
+          }
+        }
+        const segRef = seg.first_frame || defaultRef;
+        return {
+          id: `${slug}_part${idx + 1}`,
+          title: seg.title || `Part ${idx + 1}`,
+          duration_seconds: dur,
+          end_panel: seg.end_panel || 9,
+          reference_images: segRef ? [segRef] : [],
+          output_name: `tutorial_part${idx + 1}`,
+          source_shot_id: idx + 1,
+          prompt: seg.prompt || "",
+          seed: 20260931 + idx
+        };
+      });
+      const totalSec = count === 0 ? 0 : (Math.round(runningSec) || (count * 5));
+      const sid = getOrCreateSessionId();
+      const targetSegs = (chained && chained.segments) ? chained.segments : effectiveSegs;
+      const handoffMeta = (typeof H3TimecodeHelper !== "undefined" && typeof H3TimecodeHelper.buildHandoffMetadata === "function")
+        ? H3TimecodeHelper.buildHandoffMetadata({ projectSlug: slug, sessionId: sid, segments: targetSegs, totalSeconds: totalSec })
+        : {
+            schema_version: "h3.storyboard_handoff.v2",
+            session_id: sid,
+            revision: "rev_00000000",
+            segment_count: count,
+            total_seconds: totalSec,
+            delivery_mode: count <= 6 ? "inline_payload" : "manifest_file"
+          };
+      const routeGpu = activeRoute === "local" ? "Apple_Silicon_Metal" : (activeRoute === "cloud" ? "SaaS_Cloud_API" : "L4");
+
+      return {
+        ...(chained || {}),
+        schema_version: handoffMeta.schema_version,
+        session_id: handoffMeta.session_id,
+        revision: handoffMeta.revision,
+        delivery_mode: handoffMeta.delivery_mode,
         project: slug,
         total_seconds: totalSec,
-        jobs: effectiveSegs.map((s, idx) => ({
-          id: `part${idx + 1}`,
-          title: s.title || `Part ${idx + 1}`,
-          end_panel: s.end_panel || 9,
-          prompt: s.prompt || "",
-          duration_seconds: 5.0,
-          seed: 20260931 + idx
-        }))
+        segment_count: count,
+        skill: "h3-studio",
+        gpu: routeGpu,
+        jobs: jobs,
+        segments: targetSegs
       };
+    }
+
+    let lastRelaySyncOk = false;
+
+    async function publishSessionManifestAndImage() {
+      const sid = getOrCreateSessionId();
+      const manifest = buildColabCompatibleManifest();
+      const dot = document.getElementById("sessionStatusDot");
+      const text = document.getElementById("sessionStatusText");
+      const idEl = document.getElementById("sessionStatusId");
+      if (idEl) idEl.textContent = sid;
 
       try {
-        await fetch(`/api/session/${sid}/manifest`, {
+        const mRes = await fetch(`/api/session/${sid}/manifest`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(manifest)
         });
+        if (!mRes || !mRes.ok) {
+          throw new Error(`Relay HTTP ${mRes ? mRes.status : "unreachable"}`);
+        }
 
         const refPreview = document.getElementById("refPreview");
         if (refPreview && refPreview.src && refPreview.src.startsWith("data:image")) {
@@ -1776,21 +1934,30 @@
             body: blob
           });
         }
+        lastRelaySyncOk = true;
+        if (dot) dot.textContent = "🟢";
+        if (text) text.textContent = `已同步分鏡至中繼站 (${manifest.revision})`;
+        return { ok: true, manifest };
       } catch (err) {
-        console.warn("Notice: Manifest/Image auto-publish skipped:", err);
+        lastRelaySyncOk = false;
+        if (dot) dot.textContent = "🟠";
+        if (text) {
+          text.textContent = manifest.delivery_mode === "inline_payload"
+            ? `中繼站未連線（已啟用指令內嵌分鏡 ${manifest.revision} 模式）`
+            : `中繼站未連線（請點擊「💾 下載分鏡任務檔」交給 Agent · ${manifest.revision}）`;
+        }
+        console.warn("Notice: Manifest/Image auto-publish fallback to local/inline mode:", err);
+        return { ok: false, manifest };
       }
     }
 
     async function openColabNotebook() {
       const sid = getOrCreateSessionId();
-      const topBtn = document.getElementById("openColabTopBtn");
       const actionBtn = document.getElementById("openColabActionBtn");
-      if (topBtn) { topBtn.disabled = true; topBtn.textContent = "⏳ 正在同步任務至雲端..."; }
       if (actionBtn) { actionBtn.disabled = true; actionBtn.textContent = "⏳ 正在同步任務至雲端..."; }
 
       await publishSessionManifestAndImage();
 
-      if (topBtn) { topBtn.disabled = false; topBtn.textContent = "🚀 在 Google Colab 開啟執行 (免本機環境)"; }
       if (actionBtn) { actionBtn.disabled = false; actionBtn.textContent = "🚀 在 Google Colab 開啟執行"; }
 
       try {
@@ -1990,21 +2157,48 @@
     function updateColabPromptText(segs, totalSec, slug) {
       segs = segs || (currentPlan ? currentPlan.segments : []);
       const count = segs.length || 1;
-      const sec = totalSec || count * 5;
+      const isEdu = activeProjectMode === "edu" || currentPlan?.project_mode === "edu_explainer";
+      let computedSec = totalSec;
+      if (!computedSec) {
+        let running = 0;
+        segs.forEach((seg) => {
+          if (typeof H3TimecodeHelper !== "undefined" && typeof H3TimecodeHelper.resolveSegmentTiming === "function") {
+            running = H3TimecodeHelper.resolveSegmentTiming(seg, running, isEdu).endSec;
+          } else {
+            running += 5;
+          }
+        });
+        computedSec = Math.round(running) || (count * 5);
+      }
+      const sec = Math.round(computedSec);
       const s = slug || (currentPlan ? currentPlan.project_slug : "story_project");
+      const baseSlug = String(s).replace(/_\d+(?:\.\d+)?s$/i, "");
+      const manifestFilename = (typeof H3TimecodeHelper !== "undefined" && typeof H3TimecodeHelper.buildColabManifestFilename === "function")
+        ? H3TimecodeHelper.buildColabManifestFilename(s, sec)
+        : `colab_manifest_${baseSlug}_${sec}s.json`;
       const sid = getOrCreateSessionId();
+      const manifest = typeof buildColabCompatibleManifest === "function" ? buildColabCompatibleManifest() : null;
+      const rev = (manifest && manifest.revision) || "rev_00000000";
+      const deliveryMode = (manifest && manifest.delivery_mode) || "manifest_file";
+      const inlineBlock = (manifest && typeof H3TimecodeHelper !== "undefined" && typeof H3TimecodeHelper.formatInlinePayloadBlock === "function")
+        ? H3TimecodeHelper.formatInlinePayloadBlock(manifest)
+        : "";
 
-      const promptText = `請幫我下載開源專案 https://github.com/yshonlytest/h3-studio 作為長影片輸入/輸出控制模板，並安裝專案內建的 \`film-chain/skills/minimax-h3-colab\`（若本機尚未安裝 colab CLI，請執行 \`pip install google-colab-cli\` 並提示我完成 \`colab login\` OAuth 授權）。
-
-【分鏡來源】本次任務為「我在本網頁產出的自有分鏡」，manifest 檔名 colab_manifest_${s}_${sec}s.json（已由網頁匯出），禁止改用 examples/storyboards/ 任何示範分鏡。
-
-直接執行專案原生自動串接命令：
-
-python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest colab_manifest_${s}_${sec}s.json --session-id ${sid}
-
-此命令會自動在 Colab A100 上依序完成各分鏡渲染、尾幀傳遞、FFmpeg 消幀拼接成 ${s}_${sec}s_seamless_merged.mp4，並即時回報進度與自動回傳至網頁播放廳中！
-
-【鐵律】開跑前先回報預計消耗的 Compute Units 並取得我同意。若我沒有劇本/生圖 API Key：分鏡提示詞與九宮格圖改用你的訂閱額度代產（網頁步驟一選「🤖 Agent 訂閱代寫」走任務包，或你直接呼叫 window.H3StudioApplyPlan() 帶入分鏡、自行生九宮格 PNG 後於步驟二上傳），不得改跑示範分鏡。若你的執行環境對外流量走代理且禁用 WebSocket 升級（colab exec 握手 403），請勿繞過代理：完成安裝與 manifest 準備工作後，把上述最終指令連同預估成本交回我在本機終端機執行，並用 colab stop 釋放你建立的閒置 session 以免背景扣點。`;
+      const promptText = (window.H3Prompts && typeof window.H3Prompts.buildStage3RenderAgentPrompt === "function")
+        ? window.H3Prompts.buildStage3RenderAgentPrompt({
+            projectMode: isEdu ? "edu" : "creative",
+            route: activeRoute || "colab",
+            manifestFilename,
+            baseSlug,
+            totalSeconds: sec,
+            segmentCount: segs.length,
+            sessionId: sid,
+            revision: rev,
+            deliveryMode,
+            inlineBlock,
+            hasSegments: segs.length > 0
+          })
+        : `python3 -m pipeline.h3_cli validate-manifest --manifest ${manifestFilename}`;
 
       const textarea1 = document.getElementById("colabPromptTextarea");
       if (textarea1) textarea1.value = promptText;
@@ -2012,39 +2206,69 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
     }
 
     function renderColabPipelineTracker() {
+      if (renderColabPipelineTracker._running) return;
+      renderColabPipelineTracker._running = true;
+      try {
+        return _renderColabPipelineTrackerInner();
+      } finally {
+        renderColabPipelineTracker._running = false;
+      }
+    }
+
+    function _renderColabPipelineTrackerInner() {
       const container = document.getElementById("colabPipelineTracker");
       if (!container) return;
       const cards = document.querySelectorAll("#segmentsContainer .segment-card");
       const segs = [];
       cards.forEach((card, i) => {
+        const framesSelect = card.querySelector(".seg-frames-select");
         segs.push({
           title: card.querySelector(".seg-title-input")?.value.trim() || `Part ${i + 1}`,
           end_panel: parseInt(card.querySelector(".seg-panel-select")?.value, 10) || 9,
+          frames: framesSelect ? (parseInt(framesSelect.value, 10) || 124) : (currentPlan?.segments?.[i]?.frames || 124),
           prompt: card.querySelector(".seg-prompt-input")?.value.trim() || "",
         });
       });
       const effectiveSegs = segs.length > 0 ? segs : (currentPlan?.segments || []);
-      const count = effectiveSegs.length || 1;
-      const isEdu = activeProjectMode === "edu";
+      const count = effectiveSegs.length;
+      const slug = currentPlan?.project_slug || "story_project";
+      const baseSlug = String(slug).replace(/_\d+(?:\.\d+)?s$/i, "");
+      const handoffBadge = document.getElementById("step3HandoffStatusBadge");
+      if (count === 0) {
+        if (handoffBadge) handoffBadge.textContent = "📋 尚未建立分鏡（請先在步驟一／二產生分鏡）";
+        container.innerHTML = `<div style="padding:10px 12px; color:#94a3b8; font-size:0.82rem;">⚠️ 尚未建立分鏡段落，完成步驟一／二分鏡確認後將顯示渲染管線預估。</div>`;
+        updateColabPromptText([], 0, slug);
+        return;
+      }
+      const isEdu = activeProjectMode === "edu" || currentPlan?.project_mode === "edu_explainer";
       let runningSec = 0;
       const timeRanges = [];
-      effectiveSegs.forEach((seg, idx) => {
-        const timeMatch = (seg.title || "").match(/\((\d+)[-~](\d+)s\)/);
-        let s = runningSec;
-        let e = runningSec + 5;
-        if (timeMatch) {
-          s = parseInt(timeMatch[1], 10);
-          e = parseInt(timeMatch[2], 10);
-          runningSec = e;
+      effectiveSegs.forEach((seg) => {
+        if (typeof H3TimecodeHelper !== "undefined" && typeof H3TimecodeHelper.resolveSegmentTiming === "function") {
+          const t = H3TimecodeHelper.resolveSegmentTiming(seg, runningSec, isEdu);
+          runningSec = t.endSec;
+          timeRanges.push({ startS: t.startSec, endS: t.endSec });
         } else {
-          runningSec += 5;
+          const timeMatch = (seg.title || "").match(/\((\d+(?:\.\d+)?)[-~](\d+(?:\.\d+)?)s\)/);
+          let s = runningSec;
+          let e = runningSec + 5;
+          if (timeMatch) {
+            s = parseFloat(timeMatch[1]);
+            e = parseFloat(timeMatch[2]);
+            runningSec = e;
+          } else {
+            runningSec += 5;
+          }
+          timeRanges.push({ startS: s, endS: e });
         }
-        timeRanges.push({ startS: s, endS: e });
       });
-      const totalSec = runningSec || (count * 5);
-      const slug = currentPlan?.project_slug || "story_project";
+      const totalSec = Math.round(runningSec) || (count * 5);
       const minTime = Math.round(count * 4.5);
       const maxTime = Math.round(count * 5.0);
+
+      if (handoffBadge) {
+        handoffBadge.textContent = `📋 待渲染分鏡：共 ${count} 段 · 總長 ${totalSec} 秒`;
+      }
 
       let cardsHtml = `
         <div id="stage-card-0" class="pipeline-step-card stage-init">
@@ -2119,7 +2343,7 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
       `;
 
       const hintEl = document.getElementById("colabOutputFilenameHint");
-      if (hintEl) hintEl.textContent = `${slug}_${totalSec}s_seamless_merged.mp4`;
+      if (hintEl) hintEl.textContent = `${baseSlug}_${totalSec}s_seamless_merged.mp4`;
 
       updateColabPromptText(effectiveSegs, totalSec, slug);
 
@@ -2128,6 +2352,13 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
     }
 
     function copyColabPrompt() {
+      syncSegmentsFromDOM();
+      if (typeof renderColabPipelineTracker === "function") {
+        renderColabPipelineTracker();
+      }
+      if (typeof publishSessionManifestAndImage === "function") {
+        publishSessionManifestAndImage();
+      }
       const textarea = document.getElementById("colabPromptTextarea");
       if (!textarea) return;
       const textToCopy = textarea.value;
@@ -2139,6 +2370,14 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
         btn.textContent = "✅ 已複製 Colab 指令！";
         btn.style.borderColor = "#10b981";
         btn.style.color = "#a7f3d0";
+        const m = typeof buildColabCompatibleManifest === "function" ? buildColabCompatibleManifest() : null;
+        if (m && m.delivery_mode === "inline_payload") {
+          showToast("📋 已複製 Agent 指令（已內嵌 " + m.revision + " 分鏡 Payload，可直接貼給 Agent）！");
+        } else if (!lastRelaySyncOk) {
+          showToast("📋 已複製指令（" + (m ? m.revision : "") + "）！中繼站未連線，請一併點擊「💾 下載分鏡任務檔 (.json)」。");
+        } else {
+          showToast("📋 已複製 Agent 終端指令（已同步 " + (m ? m.revision : "") + " 至中繼站）！");
+        }
         setTimeout(() => {
           btn.textContent = originalText;
           btn.style.borderColor = "#38bdf8";
@@ -2156,49 +2395,23 @@ python film-chain/skills/minimax-h3-colab/scripts/runner.py chain --manifest col
     }
 
     function exportColabManifest() {
-      const segs = syncSegmentsFromDOM();
-      const plan = currentPlan || SHISA_DEFAULT_CONFIG.plan;
-      const effectiveSegs = segs.length > 0 ? segs : (plan.segments || []);
-      const count = effectiveSegs.length || 1;
-      const slug = plan.project_slug || "film_chain_story";
-      let runningSec = 0;
-
-      const jobs = effectiveSegs.map((seg, idx) => {
-        let dur = 5.0;
-        const timeMatch = (seg.title || "").match(/\((\d+)[-~](\d+)s\)/);
-        if (timeMatch) {
-          const s = parseInt(timeMatch[1], 10);
-          const e = parseInt(timeMatch[2], 10);
-          dur = e - s;
-          runningSec = e;
-        } else {
-          runningSec += 5.0;
-        }
-        return {
-          id: `${slug}_part${idx + 1}`,
-          title: seg.title || `Part ${idx + 1}`,
-          duration_seconds: dur,
-          end_panel: seg.end_panel,
-          prompt: seg.prompt,
-          seed: 20260931 + idx
-        };
-      });
-      const totalSec = runningSec || (count * 5);
-
-      const manifest = {
-        project: slug,
-        total_seconds: totalSec,
-        segment_count: count,
-        skill: "minimax-h3-colab",
-        gpu: "A100",
-        jobs: jobs
-      };
+      const manifest = buildColabCompatibleManifest();
+      if (!manifest || !Array.isArray(manifest.segments) || manifest.segments.length === 0) {
+        showToast("⚠️ 請先在步驟一／二建立並確認分鏡段落後，再下載分鏡任務檔！");
+        return null;
+      }
+      const slug = manifest.project || "film_chain_story";
+      const totalSec = manifest.total_seconds || 5;
+      const filename = (typeof H3TimecodeHelper !== "undefined" && typeof H3TimecodeHelper.buildColabManifestFilename === "function")
+        ? H3TimecodeHelper.buildColabManifestFilename(slug, totalSec)
+        : `colab_manifest_${String(slug).replace(/_\d+(?:\.\d+)?s$/i, "")}_${totalSec}s.json`;
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifest, null, 2));
       const a = document.createElement("a");
       a.href = dataStr;
-      a.download = `colab_manifest_${slug}_${totalSec}s.json`;
+      a.download = filename;
       a.click();
+      showToast(`💾 已下載分鏡任務檔 ${filename}！`);
     }
 
     function fallbackCopyText(textarea, onSuccess) {
@@ -2570,6 +2783,13 @@ Return ONLY valid JSON matching this schema:
     // ==================== 🤖 Agent 訂閱代寫路徑（免 API Key） ====================
     function buildAgentPlanTaskPack(desc, durationMode, targetSec, chainParadigm) {
       const sysPrompt = buildDirectorSystemPrompt(durationMode, targetSec, chainParadigm);
+      if (window.H3Prompts && typeof window.H3Prompts.buildStage1ScreenplayTaskPrompt === "function") {
+        return window.H3Prompts.buildStage1ScreenplayTaskPrompt({
+          desc: desc,
+          sysPrompt: sysPrompt,
+          chainParadigm: chainParadigm
+        });
+      }
       const extra = chainParadigm === "grid_keyframes"
         ? `\n\n【九宮格圖】你需使用你自己的生圖能力（Claude / Gemini Canvas / gpt-image 等訂閱內建生圖），依 \`grid_image_prompt\` 產生一張 3×3 九宮格 PNG（Panel 1~9 由左至右、由上至下，格間細白線，全圖不可含任何文字或浮水印）。擇一交付：(a) 存成 PNG 檔給使用者，再到步驟二點「📁 更換九宮格圖」上傳；(b) 將圖片轉為 data URL，放進 JSON 的 "grid_image_dataurl" 欄位。`
         : "";
@@ -2632,18 +2852,33 @@ ${desc}${extra}
         if (!seg || typeof seg !== "object" || !String(seg.prompt || "").trim()) {
           throw new Error(`segments[${i}].prompt 不可為空（Agent 需輸出 5D 英文影片提示詞）`);
         }
+        const dialogueVal = typeof seg.dialogue === "string"
+          ? seg.dialogue
+          : (typeof seg.display_dialogue === "string" ? seg.display_dialogue : "");
         return {
           segment: i + 1,
+          shot_id: seg.shot_id || (i + 1),
           title: String(seg.title || `Part ${i + 1}`).trim(),
           end_panel: Math.max(1, Math.min(9, Number(seg.end_panel) || (i === 0 ? 1 : 3))),
           chain_mode: seg.chain_mode === "first_frame" ? "first_frame" : (seg.chain_mode === "motion_context" ? "motion_context" : (i === 0 ? "first_frame" : "motion_context")),
+          frames: Number(seg.frames) > 0 ? Number(seg.frames) : 124,
+          shot_type: seg.shot_type || "presenter_chart",
+          first_frame: seg.first_frame,
           context_ir: (seg.context_ir && typeof seg.context_ir === "object") ? seg.context_ir : null,
           prompt: String(seg.prompt).trim(),
-          dialogue: typeof seg.dialogue === "string" ? seg.dialogue : ""
+          dialogue: dialogueVal,
+          display_dialogue: typeof seg.display_dialogue === "string" ? seg.display_dialogue : dialogueVal,
+          spoken_dialogue: typeof seg.spoken_dialogue === "string" ? seg.spoken_dialogue : dialogueVal
         };
       });
+      const rawSlug = plan.project_slug || plan.project || plan.title || "agent_storyboard";
+      const cleanSlug = String(rawSlug).replace(/_\d+(?:\.\d+)?s$/i, "").replace(/[^a-zA-Z0-9_-]/g, "_") || "agent_storyboard";
       const normalized = {
-        project_slug: String(plan.project_slug || "agent_storyboard").replace(/[^a-zA-Z0-9_-]/g, "_"),
+        project_slug: cleanSlug,
+        project_mode: plan.project_mode || ((plan.global_profile || plan.shots) ? "edu_explainer" : undefined),
+        global_profile: plan.global_profile,
+        anchor_ref_image: plan.anchor_ref_image,
+        revision: plan.revision,
         reasoning_zh: String(plan.reasoning_zh || "由 Agent 訂閱額度代寫的分鏡"),
         expanded_story_zh: String(plan.expanded_story_zh || ""),
         grid_image_prompt: String(plan.grid_image_prompt || ""),
@@ -3024,7 +3259,7 @@ ${desc}${extra}
         if (isEdu) {
           const framesSelect = card.querySelector(".seg-frames-select");
           const frames = framesSelect ? (parseInt(framesSelect.value, 10) || 124) : 124;
-          const sec = Math.round((frames / 24) * 10) / 10;
+          const sec = Math.floor((frames / 24) * 10) / 10;
           const startSec = Math.round(runningSec * 10) / 10;
           runningSec += sec;
           const endSec = Math.round(runningSec * 10) / 10;
@@ -3738,14 +3973,14 @@ ${desc}${extra}
     // ==================== Step 2: Render & Edit Segments ====================
     function renderPlanUI(plan) {
       currentPlan = plan;
-      updateDurationBadge();
-      syncDialogueItemsFromPlan();
 
       const container = document.getElementById("segmentsContainer");
       container.innerHTML = "";
       (plan.segments || []).forEach((seg, idx) => {
         appendSegmentCardDOM(seg, idx);
       });
+      updateDurationBadge();
+      syncDialogueItemsFromPlan();
       refreshAllSegmentCardModeUI();
 
       // 🤖 九宮格 Agent 代產引導：有 grid_image_prompt 時顯示複製框
@@ -4939,17 +5174,22 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
     }
 
     function copyEduPipelineCliCommand() {
-      const cmd = "python3 pipeline/h3_storyboard_pipeline.py --manifest edu_storyboard_manifest.json --output-dir outputs/edu_lecture";
+      const cmd = (window.H3Prompts && typeof window.H3Prompts.buildEduLocalCliCommand === "function")
+        ? window.H3Prompts.buildEduLocalCliCommand("edu_storyboard_manifest.json", "outputs/edu_lecture.state.json")
+        : "python3 -m pipeline.h3_cli validate-manifest --manifest edu_storyboard_manifest.json && python3 -m pipeline.h3_cli plan --manifest edu_storyboard_manifest.json --route local --state-file outputs/edu_lecture.state.json";
       if (navigator.clipboard) {
         navigator.clipboard.writeText(cmd);
       }
-      showToast("📋 已複製教學長片本地 CLI 執行指令！");
+      showToast("📋 已複製教學長片統一 H3 CLI 執行指令！");
     }
 
-    function syncSegmentsFromDOM() {
+    function syncSegmentsFromDOM(silent = false) {
       if (!currentPlan) return [];
       const prevSegs = currentPlan.segments || [];
       const cards = document.querySelectorAll("#segmentsContainer .segment-card");
+      if (silent && cards.length === 0 && prevSegs.length > 0) {
+        return prevSegs;
+      }
       const segs = [];
       cards.forEach((card, i) => {
         const modeSelect = card.querySelector(".seg-chain-mode-select");
@@ -4991,13 +5231,15 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
         });
       });
       currentPlan.segments = segs;
-      updateDurationBadge();
-      renderChainTimelineBar();
+      if (!silent) {
+        updateDurationBadge();
+        renderChainTimelineBar();
+      }
       return segs;
     }
 
-    window.exportChainedManifest = function() {
-      const segs = syncSegmentsFromDOM();
+    window.exportChainedManifest = function(silent = false) {
+      const segs = syncSegmentsFromDOM(silent);
       if (!segs || segs.length === 0) {
         return null;
       }
@@ -5071,7 +5313,7 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
         cards.forEach((card, idx) => {
           const framesSelect = card.querySelector(".seg-frames-select");
           const frames = framesSelect ? (parseInt(framesSelect.value, 10) || 124) : 124;
-          const sec = Math.round((frames / 24) * 10) / 10;
+          const sec = Math.floor((frames / 24) * 10) / 10;
           const startSec = Math.round(runningSec * 10) / 10;
           runningSec += sec;
           const endSec = Math.round(runningSec * 10) / 10;
@@ -5118,6 +5360,25 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
         showToast("⚠️ 請先至少保留或新增 1 個分鏡段落！");
         return;
       }
+      if (typeof saveCurrentActiveProjectState === "function") {
+        saveCurrentActiveProjectState();
+      }
+      if (typeof updateStep3UI === "function") {
+        updateStep3UI();
+      }
+      if (typeof publishSessionManifestAndImage === "function") {
+        publishSessionManifestAndImage();
+      }
+      const m = typeof buildColabCompatibleManifest === "function" ? buildColabCompatibleManifest() : null;
+      const handoffBadge = document.getElementById("step3HandoffStatusBadge");
+      const durBadge = document.getElementById("totalDurationBadge");
+      if (handoffBadge) {
+        handoffBadge.textContent = `✅ 已確認分鏡：${durBadge ? durBadge.textContent : `共 ${segs.length} 段`}${m && m.revision ? " · " + m.revision : ""}`;
+        handoffBadge.style.borderColor = "#10b981";
+        handoffBadge.style.color = "#6ee7b7";
+        handoffBadge.style.background = "rgba(16,185,129,0.16)";
+      }
+      showToast(`✅ 已確認並同步最新分鏡（共 ${segs.length} 段），可於步驟三執行渲染或下載任務檔！`);
       document.getElementById("step3Card").scrollIntoView({ behavior: "smooth" });
     }
 

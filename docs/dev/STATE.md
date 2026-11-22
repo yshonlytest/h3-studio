@@ -19,6 +19,16 @@
 - [x] `F10-6A` H3 實測教學成片與完整分鏡範本全鏈路落地
 - [x] `F10-6B` 規範落地與執行 `/code-review` 總驗收
 
-## 3. 後製合成層（選配）規劃
+## 3. F11 微批次進度表（UX 改善、動線收斂與資料交接可靠性）
+- [x] `F11-0` UX 現況盤點、User Journey 拆解與 P0~P3 問題分級
+- [x] `F11-1` Web 操作動線與已知 Bug 修復（移除步驟一錯置藍框、唯一 ID、秒數檔名、步驟三下載入口）
+- [x] `F11-1-FIX` 修復 Edu 幀數桶秒數累積偏差 (105s)、補齊 jobs 參考圖與消除 Adapter 短路
+- [x] `F11-2` Web / Agent / CLI 資料交接可靠性
+- [x] `F11-3` Prompt 生成邏輯與 `h3_cli` 整合
+- [x] `F11-4` Agent-First 快速體驗入口
+- [x] `F11-5` 統一 Skill 與授權引導
+- [x] `F11-FIX` 跨工作流整合缺陷收斂（DOM 遞迴、Inline 碰撞、缺圖、Hybrid 無損、Worker 鎖與 OAuth 門禁）
+
+## 4. 後製合成層（選配）規劃
 - 借鏡 heygen-com/hyperframes：詳見 [POST_PRODUCTION_HYPERFRAMES_PLAN.md](POST_PRODUCTION_HYPERFRAMES_PLAN.md)（H0~H6 微批次：ADR → 宣告式時間軸 → lint → headless check → 確定性 render → 教學樣板 → CLI 整併）。
 - 邊界：不取代 `h3.c`／Colab 生成管線；純串接＋靜態字幕維持 FFmpeg 快速路徑，合成層僅在圖表／程式碼高亮／動態字卡需求時啟用。

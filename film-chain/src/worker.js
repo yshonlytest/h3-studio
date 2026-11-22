@@ -11,7 +11,7 @@ function corsHeaders(extra = {}) {
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, X-Target-URL, X-Requested-With, X-User-Api-Key",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Range, If-Match, X-Target-URL, X-Requested-With, X-User-Api-Key",
     "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
     ...extra,
   };
@@ -104,38 +104,41 @@ export default {
         }
       }
 
-      // 1.25 GET / POST / PATCH /api/session/:id/manifest - 分鏡任務清單同步
+      // 1.25 GET / POST / PUT / PATCH /api/session/:id/manifest - 分鏡任務清單同步（支援樂觀鎖）
       if (action === "manifest") {
-        if (request.method === "PATCH") {
+        if (request.method === "PATCH" || request.method === "POST" || request.method === "PUT") {
           try {
-            const patchData = await request.json();
-            let current = {};
+            const rawBody = await request.json();
+            const { expected_revision: bodyExpectedRev, ...cleanBody } = rawBody || {};
+            const expectedRev = request.headers.get("If-Match") || bodyExpectedRev || "";
+            let current = null;
             if (kv) {
               const raw = await kv.get(`session:${sessionId}:manifest`);
               if (raw) {
                 try { current = JSON.parse(raw); } catch (e) {}
               }
-              const merged = { ...current, ...patchData };
-              await kv.put(`session:${sessionId}:manifest`, JSON.stringify(merged), { expirationTtl: 86400 });
             }
-            return new Response(JSON.stringify({ ok: true, session_id: sessionId }), {
-              status: 200,
-              headers: corsHeaders({ "Content-Type": "application/json; charset=utf-8" }),
-            });
-          } catch (err) {
-            return new Response(JSON.stringify({ error: `Manifest 更新失敗: ${err.message}` }), {
-              status: 400,
-              headers: corsHeaders({ "Content-Type": "application/json; charset=utf-8" }),
-            });
-          }
-        }
-        if (request.method === "POST" || request.method === "PUT") {
-          try {
-            const manifestData = await request.json();
+            if (expectedRev && current && current.revision && current.revision !== expectedRev) {
+              return new Response(JSON.stringify({
+                ok: false,
+                error: "Revision conflict: stale manifest write rejected",
+                current_revision: current.revision,
+                expected_revision: expectedRev,
+              }), {
+                status: 409,
+                headers: corsHeaders({ "Content-Type": "application/json; charset=utf-8" }),
+              });
+            }
+            const saved = request.method === "PATCH" ? { ...(current || {}), ...cleanBody } : cleanBody;
             if (kv) {
-              await kv.put(`session:${sessionId}:manifest`, JSON.stringify(manifestData), { expirationTtl: 86400 });
+              await kv.put(`session:${sessionId}:manifest`, JSON.stringify(saved), { expirationTtl: 86400 });
             }
-            return new Response(JSON.stringify({ ok: true, session_id: sessionId }), {
+            return new Response(JSON.stringify({
+              ok: true,
+              session_id: sessionId,
+              revision: saved.revision || null,
+              previous_revision: (current && current.revision) || null,
+            }), {
               status: 200,
               headers: corsHeaders({ "Content-Type": "application/json; charset=utf-8" }),
             });

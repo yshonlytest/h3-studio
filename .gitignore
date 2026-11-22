@@ -67,5 +67,14 @@ PROGRESS.md
 AGENTS.md
 .opencode*
 **/.agents/
+!.agents/
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/h3-studio/
+!.agents/skills/h3-studio/**
+!.agents/skills/h3c-local-film-chain/
+!.agents/skills/h3c-local-film-chain/**
+!.agents/skills/minimax-h3-colab/
+!.agents/skills/minimax-h3-colab/**
 **/.git_backup/
 *.command

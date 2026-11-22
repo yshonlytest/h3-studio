@@ -104,4 +104,27 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
     }
     assert.ok(count > 0, "Expected at least 1 inline script block");
   });
+
+  test("should have zero duplicate DOM element IDs and place Colab rendering actions strictly in Step 3", () => {
+    const idRegex = /\bid="([^"]+)"/g;
+    const idCounts = new Map();
+    for (const match of htmlContent.matchAll(idRegex)) {
+      const id = match[1];
+      idCounts.set(id, (idCounts.get(id) || 0) + 1);
+    }
+    const duplicates = Array.from(idCounts.entries())
+      .filter(([, count]) => count > 1)
+      .map(([id, count]) => `${id} (x${count})`);
+
+    assert.strictEqual(
+      duplicates.length,
+      0,
+      `Found duplicate DOM IDs in index.html: ${duplicates.join(", ")}`
+    );
+
+    assert.ok(!htmlContent.includes('id="step1ColabPromptBox"'), "step1ColabPromptBox must be removed from Step 1");
+    assert.ok(htmlContent.includes('id="downloadColabManifestBtn"'), "Step 3 must include downloadColabManifestBtn");
+    assert.ok(htmlContent.includes('id="copyColabPromptBtn"'), "Step 3 must include unique copyColabPromptBtn");
+    assert.ok(htmlContent.includes('id="colabPromptTextarea"'), "Step 3 must include unique colabPromptTextarea");
+  });
 });

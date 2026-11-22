@@ -134,13 +134,152 @@
     };
   }
 
+  /**
+   * 計算單一分鏡段落的秒數與時間區間 (相容 Creative 固定秒數與 Edu 動態幀數 / 浮點時間標籤)
+   * @param {Object} seg - 分鏡物件
+   * @param {number} runningSec - 累計起始秒數
+   * @param {boolean} isEdu - 是否為教學長片模式
+   * @returns {{ startSec: number, endSec: number, durationSec: number }}
+   */
+  function resolveSegmentTiming(seg, runningSec, isEdu) {
+    const startS = Math.round((Number(runningSec) || 0) * 10) / 10;
+    if (seg && typeof seg === 'object') {
+      if (isEdu && Number(seg.frames) > 0) {
+        const dur = Math.floor((Number(seg.frames) / 24) * 10) / 10;
+        const endS = Math.round((startS + dur) * 10) / 10;
+        return { startSec: startS, endSec: endS, durationSec: dur };
+      }
+      const timeMatch = String(seg.title || '').match(/\((\d+(?:\.\d+)?)[-~](\d+(?:\.\d+)?)s\)/);
+      if (timeMatch) {
+        const s = parseFloat(timeMatch[1]);
+        const e = parseFloat(timeMatch[2]);
+        if (!isNaN(s) && !isNaN(e) && e > s) {
+          const dur = Math.round((e - s) * 10) / 10;
+          return { startSec: s, endSec: e, durationSec: dur };
+        }
+      }
+      if (Number(seg.frames) > 0 && Number(seg.frames) !== 124) {
+        const dur = Math.floor((Number(seg.frames) / 24) * 10) / 10;
+        const endS = Math.round((startS + dur) * 10) / 10;
+        return { startSec: startS, endSec: endS, durationSec: dur };
+      }
+    }
+    const endS = Math.round((startS + SEGMENT_DURATION_SECONDS) * 10) / 10;
+    return { startSec: startS, endSec: endS, durationSec: SEGMENT_DURATION_SECONDS };
+  }
+
+  /**
+   * 建構 Colab 分鏡任務檔名，避免 project_slug 已結尾為 _\d+s 時重複拼接秒數
+   * @param {string} slug - 專案代稱
+   * @param {number} totalSeconds - 總秒數
+   * @returns {string} 例如 "colab_manifest_h3_studio_tutorial_105s.json" 或 "colab_manifest_detective_25s.json"
+   */
+  function buildColabManifestFilename(slug, totalSeconds) {
+    const cleanSlug = String(slug || 'story_project').trim() || 'story_project';
+    const roundedSec = Math.max(5, Math.round(Number(totalSeconds) || 5));
+    const baseSlug = cleanSlug.replace(/_\d+(?:\.\d+)?s$/i, '');
+    return `colab_manifest_${baseSlug}_${roundedSec}s.json`;
+  }
+
+  const HANDOFF_SCHEMA_VERSION = 'h3.storyboard_handoff.v2';
+  const INLINE_PAYLOAD_MAX_SEGMENTS = 6;
+  const INLINE_PAYLOAD_MAX_BYTES = 12000;
+
+  /**
+   * 依分鏡段落內容計算穩定版次雜湊，避免 Agent 誤跑舊版分鏡
+   * @param {Array} segments
+   * @param {string} projectSlug
+   * @returns {string}
+   */
+  function computeStoryboardRevision(segments, projectSlug) {
+    const segs = Array.isArray(segments) ? segments : [];
+    const slug = String(projectSlug || 'story_project').trim();
+    let hash = 2166136261;
+    const feed = (str) => {
+      const s = String(str || '');
+      for (let i = 0; i < s.length; i++) {
+        hash ^= s.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+    };
+    feed(`${slug}:${segs.length}`);
+    segs.forEach((seg, idx) => {
+      if (!seg || typeof seg !== 'object') return;
+      feed(`|${idx + 1}:${seg.title || ''}:${seg.frames || 124}:${seg.shot_type || ''}:${seg.chain_mode || ''}:${seg.end_panel || 9}:${seg.dialogue || seg.display_dialogue || ''}:${seg.spoken_dialogue || ''}:${seg.prompt || ''}`);
+    });
+    return 'rev_' + (hash >>> 0).toString(16).padStart(8, '0');
+  }
+
+  /**
+   * 建立分鏡交接中繼資料與配送策略 (小型分鏡內嵌 / 大型分鏡匯出檔)
+   * @param {{ projectSlug?: string, sessionId?: string, segments?: Array, totalSeconds?: number }} ctx
+   */
+  function buildHandoffMetadata(ctx) {
+    const c = ctx || {};
+    const segs = Array.isArray(c.segments) ? c.segments : [];
+    const slug = String(c.projectSlug || 'story_project').trim() || 'story_project';
+    const roundedSec = Math.max(5, Math.round(Number(c.totalSeconds) || 5));
+    const revision = computeStoryboardRevision(segs, slug);
+    const approxBytes = JSON.stringify(segs).length;
+    const useInline = segs.length > 0 && segs.length <= INLINE_PAYLOAD_MAX_SEGMENTS && approxBytes <= INLINE_PAYLOAD_MAX_BYTES;
+    return {
+      schema_version: HANDOFF_SCHEMA_VERSION,
+      session_id: String(c.sessionId || ''),
+      revision,
+      segment_count: segs.length,
+      total_seconds: roundedSec,
+      delivery_mode: useInline ? 'inline_payload' : 'manifest_file'
+    };
+  }
+
+  /**
+   * 當交接模式為 inline_payload 時，輸出精簡版 <H3_STORYBOARD_PAYLOAD> 區塊並清理 data URI
+   * @param {Object} manifest
+   * @returns {string}
+   */
+  function formatInlinePayloadBlock(manifest) {
+    if (!manifest || typeof manifest !== 'object' || manifest.delivery_mode !== 'inline_payload') {
+      return '';
+    }
+    const sanitizeRef = (val) => (typeof val === 'string' && val.startsWith('data:') ? 'reference_character.png' : val);
+    const cleanSegments = Array.isArray(manifest.segments)
+      ? manifest.segments.map((s) => ({
+          ...s,
+          first_frame: sanitizeRef(s.first_frame)
+        }))
+      : [];
+    const payload = {
+      schema_version: manifest.schema_version || HANDOFF_SCHEMA_VERSION,
+      project: manifest.project || 'story_project',
+      title: manifest.title || manifest.project || 'story_project',
+      session_id: manifest.session_id || '',
+      revision: manifest.revision || computeStoryboardRevision(cleanSegments, manifest.project),
+      total_seconds: manifest.total_seconds || 5,
+      segment_count: cleanSegments.length,
+      execution_track: manifest.execution_track,
+      anchor_ref_image: sanitizeRef(manifest.anchor_ref_image),
+      global_profile: manifest.global_profile,
+      segments: cleanSegments
+    };
+    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
+    return `\n\n<H3_STORYBOARD_PAYLOAD>\n${JSON.stringify(payload)}\n</H3_STORYBOARD_PAYLOAD>`;
+  }
+
   return {
     SEGMENT_DURATION_SECONDS,
+    HANDOFF_SCHEMA_VERSION,
+    INLINE_PAYLOAD_MAX_SEGMENTS,
+    INLINE_PAYLOAD_MAX_BYTES,
     getSegmentTimeRange,
     calculateTotalSeconds,
     calculateSegmentCountFromSeconds,
     formatSegmentTitle,
     calculateDefaultEndPanel,
-    validateSegments
+    validateSegments,
+    resolveSegmentTiming,
+    buildColabManifestFilename,
+    computeStoryboardRevision,
+    buildHandoffMetadata,
+    formatInlinePayloadBlock
   };
 });

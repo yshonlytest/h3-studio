@@ -7,6 +7,8 @@ description: >-
 
 # MiniMax H3 on Google Colab (Unified Deterministic Pipeline)
 
+> **Unified Entry Skill**: For cross-route triage (Web-First, Agent-First, Hybrid) and environment probing, see [../h3-studio/SKILL.md](../h3-studio/SKILL.md).
+
 This skill guides the AI Agent to run Ref2VA video jobs on Google Colab using the repo's single source of truth CLI `python3 -m pipeline.h3_cli`.
 
 ---
