@@ -54,10 +54,10 @@
       </div>
 
       <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-        <button type="button" class="btn" onclick="createNewBlankProject()" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;">
-          ➕ 新專案
+        <button type="button" class="btn" onclick="createNewBlankProject()" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;" title="清空目前分鏡，建立全新空白專案開始自己的創作">
+          ✨ 清空開新專案
         </button>
-        <button type="button" class="btn" onclick="loadGoldenTemplate('tutorial_140s')" style="padding:6px 10px; font-size:0.78rem; border-color:#f59e0b; color:#fde68a; background:rgba(245,158,11,0.22); font-weight:700;" title="載入 140 秒 H3 Storyboard Studio 完整教學與極速創作指南實測成片">
+        <button type="button" class="btn" onclick="loadGoldenTemplate('tutorial_140s')" style="padding:6px 10px; font-size:0.78rem; border-color:#f59e0b; color:#fde68a; background:rgba(245,158,11,0.22); font-weight:700;" title="載入 105 秒 H3 Storyboard Studio 完整教學與極速創作指南實測成片">
           🎓 H3 教學成片 (105s 實測)
         </button>
         <button type="button" class="btn" onclick="loadGoldenTemplate('detective')" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14);" title="載入 25 秒賽博偵探九宮格專屬範本與實測成片">
@@ -95,6 +95,21 @@
             </button>
           </div>
         </details>
+      </div>
+    </div>
+
+    <!-- 🧭 範例體驗 / 清空開始創作 引導列 -->
+    <div id="workspaceOnboardingBanner" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div id="workspaceOnboardingText" style="font-size:0.84rem; color:#bae6fd; line-height:1.45;">
+        👀 目前正在瀏覽官方實測範例！您可以先試聽／預覽各步驟效果，準備好開始自己的影片時，隨時點擊右側按鈕清空重來。
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" id="onboardingClearBtn" class="btn" onclick="createNewBlankProject()" style="padding:6px 12px; font-size:0.8rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.18); font-weight:700;">
+          ✨ 清空開始我的創作
+        </button>
+        <button type="button" id="onboardingLoadDemoBtn" class="btn" onclick="loadGoldenTemplate('tutorial_140s')" style="display:none; padding:6px 12px; font-size:0.8rem; border-color:#f59e0b; color:#fde68a; background:rgba(245,158,11,0.18); font-weight:700;">
+          🎓 載入官方 105s 範例體驗
+        </button>
       </div>
     </div>
 
@@ -266,7 +281,7 @@
       <!-- 🎓 模式 B: Doc-to-Edu Studio 文檔載入與知識點大綱確認區 -->
       <div id="step1EduBox" style="display:none; background:#120726; border:1.5px solid #a855f7; border-radius:10px; padding:14px 16px; margin-bottom:16px; box-shadow:0 4px 18px rgba(168,85,247,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-          <div style="font-size:0.92rem; color:#f3e8ff; display:flex; align-items:center; gap:8px;">
+          <div style="font-size:0.92rem; color:#f3e8ff; display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0; max-width:100%;">
             <span style="font-size:1.2rem;">🎓</span>
             <span><strong style="color:#d8b4fe;">教學長片工作流 (Doc-to-Edu Studio)</strong></span>
             <span class="badge ok" style="font-size:0.72rem; border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.2);">大綱防漏 · 語速紅綠燈 · 動態幀數 · 防漂移錨點</span>
@@ -315,7 +330,13 @@
           </details>
         </div>
 
-        <textarea id="eduDocInput" rows="5" placeholder="請在此貼上長篇知識報告、論文或技術文檔（支援 Markdown 標題 # / ##，將自動依章節拆解為無漏分鏡）..." style="width:100%; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:6px; font-family:monospace; font-size:0.82rem; padding:10px 12px; line-height:1.5; resize:vertical;"></textarea>
+        <details open style="margin-bottom:10px; background:rgba(9,4,20,0.65); border:1px solid #3b0764; border-radius:8px; padding:8px 10px;">
+          <summary style="cursor:pointer; color:#d8b4fe; font-weight:600; font-size:0.82rem; display:flex; align-items:center; justify-content:space-between; user-select:none;">
+            <span>📄 教學文檔／論文原始內容輸入框（點擊收合／展開）</span>
+            <span style="font-size:0.75rem; color:#c084fc;">▾</span>
+          </summary>
+          <textarea id="eduDocInput" rows="5" placeholder="請在此貼上長篇知識報告、論文或技術文檔（支援 Markdown 標題 # / ##，將自動依章節拆解為無漏分鏡）..." style="width:100%; margin-top:8px; background:#090414; color:#e9d5ff; border:1px solid #3b0764; border-radius:6px; font-family:monospace; font-size:0.82rem; padding:10px 12px; line-height:1.5; resize:vertical;"></textarea>
+        </details>
 
         <!-- Global Profile Settings -->
         <details open style="margin-top:10px; background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.2); border-radius:8px; padding:10px 12px;">
@@ -401,16 +422,21 @@
         <div class="step1-controls-col">
           <!-- Chinese Description -->
           <div class="form-group" style="margin-bottom:0;">
-            <label for="chineseDesc">
-              <span>📝 故事劇情大綱與對白（台詞請置於「...」引號內）</span>
-              <span class="info-tip" role="button" tabindex="0" aria-label="查看對白口型同步提示">ⓘ
-                <span class="tooltip-content">
-                  <strong>📝 對白口型同步提示</strong><br>
-                  對白請置於引號中（如「坐太久活動一下」），AI 導演會自動標註 <code>&lt;d&gt;[Chinese] ...&lt;/d&gt;</code>，生成自然的中文發音與精確唇形。
+            <details open style="background:rgba(15,23,42,0.5); border:1px solid #1e293b; border-radius:8px; padding:8px 10px;">
+              <summary style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; font-weight:600; color:#e2e8f0; font-size:0.88rem; user-select:none;">
+                <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span>📝 故事劇情大綱與對白（台詞請置於「...」引號內）</span>
+                  <span class="info-tip" role="button" tabindex="0" aria-label="查看對白口型同步提示">ⓘ
+                    <span class="tooltip-content">
+                      <strong>📝 對白口型同步提示</strong><br>
+                      對白請置於引號中（如「坐太久活動一下」），AI 導演會自動標註 <code>&lt;d&gt;[Chinese] ...&lt;/d&gt;</code>，生成自然的中文發音與精確唇形。
+                    </span>
+                  </span>
                 </span>
-              </span>
-            </label>
-            <textarea id="chineseDesc" placeholder="請輸入您的故事創意、場景轉換與主角台詞..."></textarea>
+                <span style="font-size:0.76rem; color:#94a3b8; white-space:nowrap;">收合／展開 ▾</span>
+              </summary>
+              <textarea id="chineseDesc" style="margin-top:8px;" placeholder="請輸入您的故事創意、場景轉換與主角台詞..."></textarea>
+            </details>
           </div>
 
           <!-- Duration Strategy -->
@@ -3633,7 +3659,7 @@ ${desc}${extra}
         const tpl = GOLDEN_TEMPLATES_FALLBACK.tutorial_140s;
         return {
           id: "fc_tutorial_140s_demo",
-          name: "🎓 H3 工作流教學 140s 示範專案",
+          name: "🎓 H3 工作流教學 105s 實測指南",
           updatedAt: Date.now(),
           isDemo: true,
           activeProjectMode: "edu",
@@ -3754,7 +3780,7 @@ ${desc}${extra}
       }
 
       const tplName = templateKey === "tutorial_140s"
-        ? "H3工作流教學（140s極速指南）"
+        ? "H3工作流教學（105s實測指南）"
         : (templateKey === "ink_sorcerer" ? "墨繪靈境（潛空間專屬）" : "賽博偵探（九宮格專屬）");
 
       if (statusEl) {
@@ -4095,20 +4121,26 @@ ${desc}${extra}
           <button type="button" class="btn" onclick="rerollSingleShot(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(168,85,247,0.18); border-color:#a855f7; color:#d8b4fe;">重算此鏡</button>
         </div>
 
-        <!-- 🎙️ 鏡段音訊、發音校正與快速重抽控制列 (全模式通用) -->
-        <div class="seg-audio-controls-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0 8px 0; padding:8px 10px; background:rgba(15,23,42,0.65); border:1px solid #1e3a5f; border-radius:6px;">
-          <div style="flex:1; min-width:240px; display:flex; align-items:center; gap:6px;">
-            <span style="font-size:0.8rem; color:#38bdf8; font-weight:600; white-space:nowrap;">台詞：</span>
-            <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（如：期末作業截止只剩幾小時、步驟一打上一句想像...）" style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
+        <!-- 🎙️ 鏡段音訊、發音校正與快速重抽控制列 (全模式通用・可收合) -->
+        <details open class="seg-dialogue-details" style="margin:6px 0 8px 0; background:rgba(15,23,42,0.65); border:1px solid #1e3a5f; border-radius:6px; padding:6px 10px;">
+          <summary style="cursor:pointer; color:#7dd3fc; font-weight:600; font-size:0.8rem; display:flex; align-items:center; justify-content:space-between; user-select:none;">
+            <span>🎙️ 台詞、音軌與發音校正</span>
+            <span style="font-size:0.74rem; color:#94a3b8;">收合／展開 ▾</span>
+          </summary>
+          <div class="seg-audio-controls-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px;">
+            <div style="flex:1; min-width:220px; display:flex; align-items:center; gap:6px;">
+              <span style="font-size:0.8rem; color:#38bdf8; font-weight:600; white-space:nowrap;">台詞：</span>
+              <input type="text" class="seg-dialogue-input" value="${escapeHtml(initialDialogue)}" oninput="onShotDialogueInput(this)" placeholder="輸入台詞（如：期末作業截止只剩幾小時、步驟一打上一句想像...）" style="flex:1; padding:4px 8px; font-size:0.82rem; min-height:32px; background:#0f0920; color:#f1f5f9; border:1px solid #475569; border-radius:4px;" />
+            </div>
+            <button type="button" class="btn" onclick="rerollShotAudio(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;" title="調用 H3 代理畫布重抽 32kHz 音訊，保留原片聲紋與背景音樂">
+              重抽音軌
+            </button>
+            <button type="button" class="btn" onclick="toggleShotPhoneticsDrawer(this, ${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fde68a;" title="展開查看破音字偵測、字幕文字 vs 口播讀音">
+              發音校正 ▾
+            </button>
+            <span class="seg-phonetic-badge" style="font-size:0.74rem; color:#94a3b8;">${renderPhoneticHintBadge(initialDialogue)}</span>
           </div>
-          <button type="button" class="btn" onclick="rerollShotAudio(${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(56,189,248,0.18); border-color:#38bdf8; color:#7dd3fc;" title="調用 H3 代理畫布重抽 32kHz 音訊，保留原片聲紋與背景音樂">
-            重抽音軌
-          </button>
-          <button type="button" class="btn" onclick="toggleShotPhoneticsDrawer(this, ${idx + 1})" style="padding:4px 10px; font-size:0.76rem; min-height:30px; background:rgba(245,158,11,0.18); border-color:#f59e0b; color:#fde68a;" title="展開查看破音字偵測、字幕文字 vs 口播讀音">
-            發音校正 ▾
-          </button>
-          <span class="seg-phonetic-badge" style="font-size:0.74rem; color:#94a3b8;">${renderPhoneticHintBadge(initialDialogue)}</span>
-        </div>
+        </details>
 
         <div class="seg-phonetics-drawer" style="display:none; margin:4px 0 8px 0; padding:10px; background:#070d1a; border:1px solid #334155; border-radius:6px;">
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
@@ -4158,7 +4190,13 @@ ${desc}${extra}
             </div>
           </div>
         </details>
-        <textarea class="seg-prompt-input" oninput="onRawPromptInput(this)" rows="4">${seg.prompt || ""}</textarea>
+        <details open class="seg-raw-prompt-details" style="margin:4px 0 2px 0; font-size:0.82rem; background:rgba(15,23,42,0.35); border:1px solid rgba(148,163,184,0.2); border-radius:6px; padding:6px 10px;">
+          <summary style="cursor:pointer; color:#cbd5e1; font-weight:600; display:flex; align-items:center; justify-content:space-between; user-select:none;">
+            <span>🧾 原始 5D 分鏡提示詞（可直接微調）</span>
+            <span style="font-size:0.74rem; color:#94a3b8;">收合／展開 ▾</span>
+          </summary>
+          <textarea class="seg-prompt-input" oninput="onRawPromptInput(this)" rows="4" style="margin-top:6px;">${seg.prompt || ""}</textarea>
+        </details>
       `;
       container.appendChild(div);
       const dialInput = div.querySelector(".seg-dialogue-input");
@@ -4536,7 +4574,7 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
 不知不覺天已經亮了，通宵趕完的期末報告順利搞定交卷！現在就打開 H3 試試看吧。`;
       const input = document.getElementById("eduDocInput");
       if (input) input.value = sample;
-      showToast("💡 已載入 H3 Studio 工作流教學文檔並同步套用 140s 分鏡");
+      showToast("💡 已載入 H3 Studio 工作流教學文檔並同步套用 105s 實測分鏡");
       extractEduOutlines();
       loadGoldenTemplate("tutorial_140s");
     }
@@ -4688,7 +4726,10 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
       if (!card) return;
       const inputEl = card.querySelector(".seg-dialogue-input");
       const text = inputEl ? inputEl.value.trim() : "";
-      const cjkChars = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\w]/g) || []).length;
+      const cjkCount = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+      const latinTokens = text.match(/[A-Za-z0-9_]+/g) || [];
+      const latinSyllables = latinTokens.reduce((sum, tok) => sum + Math.max(1, Math.ceil(tok.length / 2)), 0);
+      const cjkChars = cjkCount + latinSyllables;
       const badge = card.querySelector(".seg-pacing-badge");
       const framesSelect = card.querySelector(".seg-frames-select");
       const splitBtn = card.querySelector(".seg-split-btn");
@@ -4697,18 +4738,18 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
       const durationSec = Math.max(1, frames / 24);
       const cps = durationSec > 0 ? (cjkChars / durationSec) : 0;
 
-      if (cps >= 4.5 && cjkChars > 10) {
+      if (cps >= 6.5 && cjkChars > 12) {
         card.style.border = "2px solid #ef4444";
         card.style.boxShadow = "0 0 16px rgba(239,68,68,0.4)";
         if (badge) {
           badge.className = "badge danger";
-          badge.textContent = `🚨 語速過快 (${cps.toFixed(1)} 字/秒 > 4.5 上限 · ${cjkChars}字/${durationSec.toFixed(1)}s)`;
+          badge.textContent = `🚨 語速過快 (${cps.toFixed(1)} 字/秒 ≥ 6.5 上限 · ${cjkChars}字/${durationSec.toFixed(1)}s)`;
           badge.style.background = "rgba(239,68,68,0.25)";
           badge.style.color = "#fca5a5";
           badge.style.borderColor = "#ef4444";
         }
         if (splitBtn) splitBtn.style.display = "inline-flex";
-      } else if (cps >= 3.6 && cjkChars > 8) {
+      } else if (cps >= 5.2 && cjkChars > 8) {
         card.style.border = "1.5px solid #f59e0b";
         card.style.boxShadow = "";
         if (splitBtn) splitBtn.style.display = "none";
@@ -6709,8 +6750,31 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
         }
 
         await refreshProjectSwitcherDropdown();
+        updateWorkspaceOnboardingBanner(proj);
       } finally {
         isRestoringProject = false;
+      }
+    }
+
+    function updateWorkspaceOnboardingBanner(proj) {
+      const textEl = document.getElementById("workspaceOnboardingText");
+      const clearBtn = document.getElementById("onboardingClearBtn");
+      const demoBtn = document.getElementById("onboardingLoadDemoBtn");
+      if (!textEl) return;
+      const segLen = proj?.plan?.segments?.length || 0;
+      const isDemo = Boolean(proj?.isDemo || String(proj?.id || "").endsWith("_demo"));
+      if (segLen === 0) {
+        textEl.innerHTML = "✨ <strong>目前為空白創作模式</strong>：請於下方選擇「創意短片」或「教學長片」，輸入主題／文檔並建立自己的分鏡！（想先看效果可點右側載入範例）";
+        if (clearBtn) clearBtn.style.display = "none";
+        if (demoBtn) demoBtn.style.display = "inline-flex";
+      } else if (isDemo) {
+        textEl.innerHTML = "👀 <strong>目前正在瀏覽官方實測範例</strong>：您可以自由試聽／預覽各步驟，準備好製作自己的影片時，點右側【✨ 清空開始我的創作】即可從零開始！";
+        if (clearBtn) clearBtn.style.display = "inline-flex";
+        if (demoBtn) demoBtn.style.display = "none";
+      } else {
+        textEl.innerHTML = `🎬 <strong>正在編輯自有專案</strong>（共 ${segLen} 段分鏡）：修改會自動儲存於瀏覽器，也可隨時匯出給 Agent 或重置為空白。`;
+        if (clearBtn) clearBtn.style.display = "inline-flex";
+        if (demoBtn) demoBtn.style.display = "inline-flex";
       }
     }
 
@@ -6722,9 +6786,23 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
       const list = await H3ProjectStore.listProjects();
       select.innerHTML = list.map(p => {
         const dateStr = new Date(p.updatedAt || Date.now()).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
-        const segCount = p.plan?.segments?.length || 0;
+        const segs = p.plan?.segments || [];
+        const segCount = segs.length;
+        let durationLabel = "空白專案";
+        if (segCount > 0) {
+          const isEdu = p.activeProjectMode === "edu" || p.plan?.project_mode === "edu_explainer" || segs.some(s => Number(s.frames) > 0 && Number(s.frames) !== 124);
+          let running = 0;
+          if (typeof H3TimecodeHelper !== "undefined" && typeof H3TimecodeHelper.resolveSegmentTiming === "function") {
+            segs.forEach(seg => {
+              running = H3TimecodeHelper.resolveSegmentTiming(seg, running, isEdu).endSec;
+            });
+          } else {
+            running = segCount * 5;
+          }
+          durationLabel = `${Math.max(5, Math.round(running))}s`;
+        }
         const selected = p.id === currentActiveProjectId ? "selected" : "";
-        return `<option value="${escapeHtml(p.id)}" ${selected}>${escapeHtml(p.name)} (${segCount * 5}s · ${dateStr})</option>`;
+        return `<option value="${escapeHtml(p.id)}" ${selected}>${escapeHtml(p.name)} (${durationLabel} · ${dateStr})</option>`;
       }).join("");
     }
 
@@ -6793,11 +6871,18 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
       await H3ProjectStore.saveProject(captureCurrentProjectState());
       const list = await H3ProjectStore.listProjects();
       const newProj = H3ProjectStore.createEmptyProject({
-        name: `新分鏡專案 #${list.length + 1}`
+        name: `我的創作專案 #${list.length + 1}`
       });
+      newProj.plan.segments = [];
+      newProj.plan.recommended_total_seconds = 0;
+      newProj.plan.reasoning_zh = "空白創作專案：請於步驟一輸入故事大綱或貼上教學文檔後產生分鏡。";
+      const eduInput = document.getElementById("eduDocInput");
+      if (eduInput) eduInput.value = "";
       await H3ProjectStore.saveProject(newProj);
+      await H3ProjectStore.setLastActiveProjectId(newProj.id);
       await applyProjectStateToUI(newProj);
-      showToast(`✨ 已建立空白專案：「${newProj.name}」`);
+      document.getElementById("step1Card")?.scrollIntoView({ behavior: "smooth" });
+      showToast(`✨ 已清空並建立空白專案：「${newProj.name}」，請於步驟一開始創作！`);
     }
 
     async function resetToDefaultDemoProject() {
@@ -7100,6 +7185,9 @@ MiniMax 雖然是開源模型，但在多鏡頭連貫上已經相當扎實好用
           const existing = await H3ProjectStore.getProject(tplObj.id);
           if (!existing) {
             await H3ProjectStore.saveProject(tplObj);
+          } else if (existing.isDemo && existing.name !== tplObj.name) {
+            existing.name = tplObj.name;
+            await H3ProjectStore.saveProject(existing);
           }
         }
 
