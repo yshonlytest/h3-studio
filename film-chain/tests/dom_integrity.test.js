@@ -160,4 +160,175 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
     assert.ok(htmlContent.includes('id="copyColabPromptBtn"'), "Step 3 must include unique copyColabPromptBtn");
     assert.ok(htmlContent.includes('id="colabPromptTextarea"'), "Step 3 must include unique colabPromptTextarea");
   });
+
+  test("should execute built studio.js bundle and load all 3 golden demo templates without errors", async () => {
+    const vm = require("node:vm");
+
+    function createMockElement(id, tag = "div") {
+      let innerHtmlValue = "";
+      return {
+        id,
+        tagName: tag.toUpperCase(),
+        value: "",
+        textContent: "",
+        get innerHTML() {
+          return innerHtmlValue;
+        },
+        set innerHTML(v) {
+          innerHtmlValue = String(v);
+          if (innerHtmlValue === "") this.children = [];
+        },
+        src: "",
+        href: "",
+        disabled: false,
+        checked: false,
+        style: {},
+        dataset: {},
+        children: [],
+        options: [],
+        selectedIndex: 0,
+        classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+        addEventListener() {},
+        removeEventListener() {},
+        appendChild(child) { this.children.push(child); return child; },
+        querySelector() { return null; },
+        querySelectorAll() { return []; },
+        closest() { return null; },
+        focus() {},
+        click() {},
+        load() {},
+        play() { return Promise.resolve(); },
+        setAttribute() {},
+        getAttribute() { return null; },
+        removeAttribute() {},
+        scrollIntoView() {},
+        getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 100 }; },
+        getContext() { return new Proxy({}, { get() { return () => {}; } }); },
+      };
+    }
+
+    const elements = new Map();
+    for (const match of htmlContent.matchAll(/\bid="([^"]+)"/g)) {
+      elements.set(match[1], createMockElement(match[1]));
+    }
+
+    const winListeners = {};
+    const docListeners = {};
+    const mockDoc = {
+      readyState: "loading",
+      getElementById(id) { return elements.get(id) || null; },
+      querySelector() { return null; },
+      querySelectorAll() { return []; },
+      createElement(tag) { return createMockElement("", tag); },
+      addEventListener(ev, fn) { (docListeners[ev] ||= []).push(fn); },
+      removeEventListener() {},
+      body: createMockElement("body", "body"),
+      head: createMockElement("head", "head"),
+      documentElement: createMockElement("html", "html"),
+    };
+
+    const storage = new Map();
+    const localStorageMock = {
+      getItem: (k) => (storage.has(k) ? storage.get(k) : null),
+      setItem: (k, v) => storage.set(k, String(v)),
+      removeItem: (k) => storage.delete(k),
+    };
+
+    const trackedTimers = new Set();
+    const silentConsole = { ...console, debug() {}, warn() {}, log() {} };
+    const sandbox = {
+      console: silentConsole,
+      setTimeout: (fn, ms) => {
+        const t = setTimeout(fn, ms);
+        trackedTimers.add(t);
+        return t;
+      },
+      clearTimeout: (t) => { trackedTimers.delete(t); clearTimeout(t); },
+      setInterval: (fn, ms) => {
+        const t = setInterval(fn, ms);
+        trackedTimers.add(t);
+        return t;
+      },
+      clearInterval: (t) => { trackedTimers.delete(t); clearInterval(t); },
+      URL,
+      URLSearchParams,
+      Blob,
+      FileReader: function FileReaderMock() {},
+      Image: function ImageMock() {},
+      navigator: { clipboard: { writeText: () => Promise.resolve() }, userAgent: "node-test" },
+      location: {
+        href: "https://film-chain.onlytest.dev/",
+        pathname: "/",
+        search: "",
+        origin: "https://film-chain.onlytest.dev",
+        protocol: "https:",
+        host: "film-chain.onlytest.dev",
+      },
+      history: { replaceState() {} },
+      fetch: () => Promise.resolve({ ok: false, status: 404, text: async () => "", json: async () => ({}) }),
+      document: mockDoc,
+      localStorage: localStorageMock,
+      addEventListener(ev, fn) { (winListeners[ev] ||= []).push(fn); },
+      removeEventListener() {},
+      alert() {},
+      confirm() { return true; },
+      prompt() { return ""; },
+      crypto: globalThis.crypto,
+    };
+    sandbox.window = sandbox;
+    sandbox.self = sandbox;
+    sandbox.globalThis = sandbox;
+    vm.createContext(sandbox);
+
+    try {
+      const orderedScripts = [
+        "../public/src/core/timecodeHelper.js",
+        "../public/src/prompts/agentPrompts.js",
+        "../public/src/core/promptBuilder.js",
+        "../public/src/core/comfyPayload.js",
+        "../public/src/core/cloudDiagnostics.js",
+        "../public/src/core/cloudApiAdapter.js",
+        "../public/src/core/audioStudio.js",
+        "../public/src/core/projectStore.js",
+        "../public/dist/studio.js",
+        "../public/src/controllers/workspaceSync.js",
+      ];
+      for (const rel of orderedScripts) {
+        const full = path.resolve(__dirname, rel);
+        vm.runInContext(fs.readFileSync(full, "utf-8"), sandbox, { filename: rel });
+      }
+
+      for (const fn of winListeners.DOMContentLoaded || []) await fn();
+      for (const fn of docListeners.DOMContentLoaded || []) await fn();
+
+      assert.strictEqual(typeof sandbox.loadGoldenTemplate, "function", "window.loadGoldenTemplate must be bound");
+
+      const expectations = [
+        { key: "tutorial_140s", namePart: "H3 工作流教學", segments: 14, video: "assets/demo/tutorial_140s_merged.mp4" },
+        { key: "detective", namePart: "賽博偵探", segments: 5, video: "assets/demo/detective_25s_merged.mp4" },
+        { key: "ink_sorcerer", namePart: "墨繪靈境", segments: 5, video: "assets/demo/ink_sorcerer_25s_merged.mp4" },
+      ];
+
+      for (const exp of expectations) {
+        await sandbox.loadGoldenTemplate(exp.key);
+        const projName = mockDoc.getElementById("currentProjectNameInput").value;
+        const descVal = mockDoc.getElementById("chineseDesc").value;
+        const segCount = mockDoc.getElementById("segmentsContainer").children.length;
+        const videoSrc = mockDoc.getElementById("mainVideoPlayer").src;
+        const statusHtml = mockDoc.getElementById("planStatusMsg").innerHTML;
+
+        assert.ok(projName.includes(exp.namePart), `${exp.key} project name "${projName}" missing "${exp.namePart}"`);
+        assert.ok(descVal.length > 10, `${exp.key} description should be populated`);
+        assert.strictEqual(segCount, exp.segments, `${exp.key} expected ${exp.segments} rendered segments, got ${segCount}`);
+        assert.strictEqual(videoSrc, exp.video, `${exp.key} expected video ${exp.video}, got ${videoSrc}`);
+        assert.ok(statusHtml.includes("✅ 已載入"), `${exp.key} expected loaded status badge, got "${statusHtml}"`);
+      }
+    } finally {
+      for (const t of trackedTimers) {
+        clearTimeout(t);
+        clearInterval(t);
+      }
+      trackedTimers.clear();
+    }
+  });
 });

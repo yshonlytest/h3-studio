@@ -74,6 +74,6 @@ npm test
 - **GitHub 專案庫 (Monorepo)**：`https://github.com/yshonlytest/h3-studio`
 - **Cloudflare Workers Builds 設定**：
   - **Root Directory**：`film-chain`
-  - **Build Command**：留空 (None)
+  - **Build Command**：`npm run build`（建議填寫；`wrangler.jsonc` 亦已內建 `build.command = "npm run build"` 自動在部署前編譯 `public/dist/studio.js`）
   - **Deploy Command**：`npx wrangler deploy`
   - **Config File**：`wrangler.jsonc` (官方標準格式)

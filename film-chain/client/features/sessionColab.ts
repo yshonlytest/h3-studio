@@ -12,7 +12,7 @@ let isRenderingColabTracker = false;
 export function getOrCreateSessionId(): string {
   let sid = coreStore.getState().currentSessionId;
   if (sid) return sid;
-  const hashMatch = window.location.hash.match(/session=([a-zA-Z0-9_-]+)/);
+  const hashMatch = (window.location.hash || "").match(/session=([a-zA-Z0-9_-]+)/);
   if (hashMatch && hashMatch[1]) {
     sid = hashMatch[1];
     coreStore.setSessionId(sid);

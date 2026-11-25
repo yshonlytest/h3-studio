@@ -96,7 +96,7 @@ test -s film-chain/public/dist/studio.js
 npm test --prefix film-chain | tee "$NODE_LOG"
 /usr/bin/python3 - "$NODE_LOG" <<'PY'
 import re, sys
-MIN_NODE_TESTS = 89  # 隨新增測試同步調升基準，嚴禁下調
+MIN_NODE_TESTS = 91  # 隨新增測試同步調升基準，嚴禁下調
 txt = open(sys.argv[1], encoding="utf-8").read()
 parsed = {}
 for k in ("tests", "pass", "fail", "skipped", "cancelled", "todo"):

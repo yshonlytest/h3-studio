@@ -229,4 +229,22 @@ describe("Architecture Unidirectional Boundaries & Bridge Contracts", () => {
       }
     }
   });
+
+  it("enforces wrangler.jsonc build hook before publishing public/ assets", () => {
+    const wranglerPath = path.join(FILM_CHAIN_ROOT, "wrangler.jsonc");
+    const raw = fs.readFileSync(wranglerPath, "utf-8");
+    // Strip // line comments and /* */ block comments outside strings if any
+    const cleaned = raw.replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
+    const config = JSON.parse(cleaned) as {
+      assets?: { directory?: string };
+      build?: { command?: string; watch_dir?: string };
+    };
+    assert.equal(config.assets?.directory, "public");
+    assert.ok(
+      typeof config.build?.command === "string" &&
+        (config.build.command.includes("npm run build") || config.build.command.includes("vite build")),
+      `wrangler.jsonc build.command must build dist/studio.js before deploy, got: ${config.build?.command}`
+    );
+    assert.equal(config.build?.watch_dir, "client");
+  });
 });
