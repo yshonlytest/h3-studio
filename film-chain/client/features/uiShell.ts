@@ -294,15 +294,16 @@ function syncModeToolbarUI(isEdu: boolean, isCreative: boolean, gridImageDataUrl
   if (creativeForm) creativeForm.style.display = isCreative ? "grid" : "none";
   if (eduBox) eduBox.style.display = isEdu ? "block" : "none";
 
+  const paradigm = (document.getElementById("chainParadigmSelect") as HTMLSelectElement | null)?.value || "latent_chain";
   const gridContainer = document.getElementById("gridPreviewContainer");
   if (gridContainer) {
-    gridContainer.style.display = isCreative && gridImageDataUrl ? "block" : "none";
+    gridContainer.style.display = isCreative && paradigm === "grid_keyframes" && gridImageDataUrl ? "block" : "none";
   }
 
   const step2HeaderTitle = document.getElementById("step2HeaderTitleText");
   if (step2HeaderTitle) {
     step2HeaderTitle.textContent = isCreative
-      ? "步驟二：分鏡腳本與運鏡微調（潛空間一鏡到底）"
+      ? (paradigm === "grid_keyframes" ? "步驟二：九宮格與分鏡腳本微調" : "步驟二：分鏡腳本與運鏡微調（潛空間一鏡到底）")
       : "步驟二：教學長片分鏡台（自由秒數 · 語速監控 · 任意段數）";
   }
 

@@ -8,7 +8,7 @@ import { coreStore } from "../stores/coreStore.ts";
 import { storyboardStore } from "../stores/storyboardStore.ts";
 import { copyTextToClipboard, escapeHtml, selectProjectMode, selectRoute, selectSpeed, showToast } from "./uiShell.ts";
 import { loadGoldenTemplate, renderSlicedPanelsBar, showGridPreview } from "./director.ts";
-import { renderPlanUI, syncSegmentsFromDOM } from "./storyboardEditor.ts";
+import { renderPlanUI, syncChainParadigmUI, syncSegmentsFromDOM } from "./storyboardEditor.ts";
 import { playVideoInStage, renderSegmentsPlaylist } from "./stagePlayer.ts";
 import { downloadSubtitleFile, syncDialogueItemsFromPlan, updateBgmVolume } from "./audioSubtitles.ts";
 
@@ -38,6 +38,8 @@ export function captureCurrentProjectState(): Record<string, any> {
     id: core.currentActiveProjectId || "fc_detective_25s_demo",
     name: activeProjectName || "未命名分鏡專案",
     updatedAt: Date.now(),
+    activeProjectMode: core.activeProjectMode || "creative",
+    chainParadigm: (document.getElementById("chainParadigmSelect") as HTMLSelectElement | null)?.value || "latent_chain",
     chineseDesc: (document.getElementById("chineseDesc") as HTMLTextAreaElement | null)?.value || "",
     speedMode: compute.selectedSpeed || "quality",
     activeRoute: compute.activeRoute || "colab",
@@ -75,6 +77,13 @@ export async function applyProjectStateToUI(proj: Record<string, any> | null | u
       (proj.id === "fc_handwashing_edu_demo" || proj.id === "fc_tutorial_140s_demo" || proj.plan?.project_mode === "edu_explainer"
         ? "edu"
         : "creative");
+    const projParadigm =
+      projMode === "edu"
+        ? "latent_chain"
+        : proj.chainParadigm || (proj.gridImageDataUrl ? "grid_keyframes" : "latent_chain");
+
+    const paradigmSelect = document.getElementById("chainParadigmSelect") as HTMLSelectElement | null;
+    if (paradigmSelect) paradigmSelect.value = projParadigm;
     selectProjectMode(projMode, false);
 
     const refImg = document.getElementById("refPreview") as HTMLImageElement | null;
@@ -115,10 +124,10 @@ export async function applyProjectStateToUI(proj: Record<string, any> | null | u
       const bar = document.getElementById("slicedPanelsContainer");
       if (bar) bar.innerHTML = "";
     }
+    syncChainParadigmUI(projParadigm);
 
     const descEl = document.getElementById("chineseDesc") as HTMLTextAreaElement | null;
     if (descEl) descEl.value = proj.chineseDesc || "";
-    selectSpeed((proj.speedMode || "quality") as SpeedKey);
     if (proj.activeRoute) selectRoute(proj.activeRoute);
 
     computeStore.patchCompute({
@@ -126,14 +135,17 @@ export async function applyProjectStateToUI(proj: Record<string, any> | null | u
       activeVersionIndex: proj.activeVersionIndex ? JSON.parse(JSON.stringify(proj.activeVersionIndex)) : {},
     });
 
+    // Clear or seed dialogue items BEFORE renderPlanUI so empty/new projects never inherit previous project timecodes.
+    audioSubtitleStore.setDialogueItems(
+      Array.isArray(proj.dialogueItems) ? JSON.parse(JSON.stringify(proj.dialogueItems)) : []
+    );
+
     if (proj.plan) {
       renderPlanUI(JSON.parse(JSON.stringify(proj.plan)));
+    } else {
+      syncDialogueItemsFromPlan();
     }
-
-    if (Array.isArray(proj.dialogueItems) && proj.dialogueItems.length > 0) {
-      audioSubtitleStore.setDialogueItems(JSON.parse(JSON.stringify(proj.dialogueItems)));
-    }
-    syncDialogueItemsFromPlan();
+    selectSpeed((proj.speedMode || "quality") as SpeedKey);
     const bgmSelect = document.getElementById("bgmStyleSelect") as HTMLSelectElement | null;
     if (bgmSelect && proj.bgmStyle) bgmSelect.value = proj.bgmStyle;
     const bgmSlider = document.getElementById("bgmVolumeSlider") as HTMLInputElement | null;
@@ -141,6 +153,16 @@ export async function applyProjectStateToUI(proj: Record<string, any> | null | u
       bgmSlider.value = String(proj.bgmVolume);
       updateBgmVolume(proj.bgmVolume);
     }
+    const duckCheck = document.getElementById("audioDuckingCheck") as HTMLInputElement | null;
+    if (duckCheck) duckCheck.checked = proj.audioDucking ?? true;
+    const softSubCheck = document.getElementById("enableSoftSubtitleCheck") as HTMLInputElement | null;
+    if (softSubCheck) softSubCheck.checked = proj.softSubtitle ?? true;
+    const burnSubCheck = document.getElementById("burnInSubtitleCheck") as HTMLInputElement | null;
+    if (burnSubCheck) burnSubCheck.checked = proj.burnInSubtitle ?? false;
+
+    computeStore.setSeamlessPlayback(false, 0);
+    const seamlessBtn = document.getElementById("seamlessPlayBtn");
+    if (seamlessBtn) seamlessBtn.textContent = "▶️ 連續無縫全片播放";
 
     if (Array.isArray(proj.playlist) && proj.playlist.length > 0) {
       renderSegmentsPlaylist(proj.playlist);
@@ -148,6 +170,8 @@ export async function applyProjectStateToUI(proj: Record<string, any> | null | u
       computeStore.setPlaylist([]);
       const box = document.getElementById("cloudSegmentsPlaylistBox");
       if (box) box.style.display = "none";
+      const badge4 = document.getElementById("step4SegmentsBadge");
+      if (badge4) badge4.textContent = "尚無分段影片";
     }
 
     if (proj.mergedVideoUrl) {
@@ -162,10 +186,27 @@ export async function applyProjectStateToUI(proj: Record<string, any> | null | u
     }
 
     await refreshProjectSwitcherDropdown();
+    syncActiveDemoTemplateButtons(projectId);
     updateWorkspaceOnboardingBanner(proj);
   } finally {
     coreStore.setRestoringProject(false);
   }
+}
+
+function resolveTemplateKeyForProject(projectId: string): string {
+  if (projectId === "fc_tutorial_140s_demo") return "tutorial_140s";
+  if (projectId === "fc_detective_25s_demo") return "detective";
+  if (projectId === "fc_ink_sorcerer_25s_demo") return "ink_sorcerer";
+  return "";
+}
+
+export function syncActiveDemoTemplateButtons(projectId: string): void {
+  const activeKey = resolveTemplateKeyForProject(projectId);
+  document.querySelectorAll<HTMLElement>(".demo-template-btn[data-template-key]").forEach((btn) => {
+    const isActive = Boolean(activeKey && btn.dataset.templateKey === activeKey);
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
 }
 
 export function updateWorkspaceOnboardingBanner(proj: Record<string, any> | null | undefined): void {

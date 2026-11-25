@@ -166,6 +166,8 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
 
     function createMockElement(id, tag = "div") {
       let innerHtmlValue = "";
+      const classes = new Set();
+      const attrs = new Map();
       return {
         id,
         tagName: tag.toUpperCase(),
@@ -187,7 +189,17 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
         children: [],
         options: [],
         selectedIndex: 0,
-        classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+        classList: {
+          add(...names) { names.forEach((n) => classes.add(n)); },
+          remove(...names) { names.forEach((n) => classes.delete(n)); },
+          toggle(name, force) {
+            const next = force === undefined ? !classes.has(name) : Boolean(force);
+            if (next) classes.add(name);
+            else classes.delete(name);
+            return next;
+          },
+          contains(name) { return classes.has(name); },
+        },
         addEventListener() {},
         removeEventListener() {},
         appendChild(child) { this.children.push(child); return child; },
@@ -198,9 +210,9 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
         click() {},
         load() {},
         play() { return Promise.resolve(); },
-        setAttribute() {},
-        getAttribute() { return null; },
-        removeAttribute() {},
+        setAttribute(k, v) { attrs.set(k, String(v)); },
+        getAttribute(k) { return attrs.has(k) ? attrs.get(k) : null; },
+        removeAttribute(k) { attrs.delete(k); },
         scrollIntoView() {},
         getBoundingClientRect() { return { left: 0, top: 0, width: 100, height: 100 }; },
         getContext() { return new Proxy({}, { get() { return () => {}; } }); },
@@ -211,6 +223,15 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
     for (const match of htmlContent.matchAll(/\bid="([^"]+)"/g)) {
       elements.set(match[1], createMockElement(match[1]));
     }
+    const demoButtons = [];
+    for (const match of htmlContent.matchAll(/class="btn demo-template-btn"[^>]*data-template-key="([^"]+)"/g)) {
+      const btn = createMockElement("", "button");
+      btn.classList.add("btn", "demo-template-btn");
+      btn.dataset.templateKey = match[1];
+      btn.setAttribute("aria-pressed", "false");
+      demoButtons.push(btn);
+    }
+    assert.strictEqual(demoButtons.length, 6, `Expected 6 demo-template-btn elements (3 top + 3 step1), got ${demoButtons.length}`);
 
     const winListeners = {};
     const docListeners = {};
@@ -218,7 +239,15 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
       readyState: "loading",
       getElementById(id) { return elements.get(id) || null; },
       querySelector() { return null; },
-      querySelectorAll() { return []; },
+      querySelectorAll(selector) {
+        if (selector === "#segmentsContainer .segment-card") {
+          return elements.get("segmentsContainer")?.children || [];
+        }
+        if (selector === ".demo-template-btn[data-template-key]") {
+          return demoButtons;
+        }
+        return [];
+      },
       createElement(tag) { return createMockElement("", tag); },
       addEventListener(ev, fn) { (docListeners[ev] ||= []).push(fn); },
       removeEventListener() {},
@@ -304,9 +333,54 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
       assert.strictEqual(typeof sandbox.loadGoldenTemplate, "function", "window.loadGoldenTemplate must be bound");
 
       const expectations = [
-        { key: "tutorial_140s", namePart: "H3 工作流教學", segments: 14, video: "assets/demo/tutorial_140s_merged.mp4" },
-        { key: "detective", namePart: "賽博偵探", segments: 5, video: "assets/demo/detective_25s_merged.mp4" },
-        { key: "ink_sorcerer", namePart: "墨繪靈境", segments: 5, video: "assets/demo/ink_sorcerer_25s_merged.mp4" },
+        {
+          key: "tutorial_140s",
+          namePart: "H3 工作流教學",
+          segments: 14,
+          video: "assets/demo/tutorial_140s_merged.mp4",
+          paradigm: "latent_chain",
+          imgDisabled: true,
+          gridDisplay: "none",
+          step2TitlePart: "教學長片",
+          planBtnPart: "潛空間",
+          estPart: "共 14 段",
+        },
+        {
+          key: "detective",
+          namePart: "賽博偵探",
+          segments: 5,
+          video: "assets/demo/detective_25s_merged.mp4",
+          paradigm: "grid_keyframes",
+          imgDisabled: false,
+          gridDisplay: "block",
+          step2TitlePart: "九宮格",
+          planBtnPart: "九宮格",
+          estPart: "共 5 段",
+        },
+        {
+          key: "ink_sorcerer",
+          namePart: "墨繪靈境",
+          segments: 5,
+          video: "assets/demo/ink_sorcerer_25s_merged.mp4",
+          paradigm: "latent_chain",
+          imgDisabled: true,
+          gridDisplay: "none",
+          step2TitlePart: "潛空間",
+          planBtnPart: "潛空間",
+          estPart: "共 5 段",
+        },
+        {
+          key: "detective",
+          namePart: "賽博偵探",
+          segments: 5,
+          video: "assets/demo/detective_25s_merged.mp4",
+          paradigm: "grid_keyframes",
+          imgDisabled: false,
+          gridDisplay: "block",
+          step2TitlePart: "九宮格",
+          planBtnPart: "九宮格",
+          estPart: "共 5 段",
+        },
       ];
 
       for (const exp of expectations) {
@@ -316,12 +390,42 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
         const segCount = mockDoc.getElementById("segmentsContainer").children.length;
         const videoSrc = mockDoc.getElementById("mainVideoPlayer").src;
         const statusHtml = mockDoc.getElementById("planStatusMsg").innerHTML;
+        const paradigmVal = mockDoc.getElementById("chainParadigmSelect").value;
+        const imgDisabled = mockDoc.getElementById("imageProviderSelect").disabled;
+        const gridDisplay = mockDoc.getElementById("gridPreviewContainer").style.display;
+        const step2Title = mockDoc.getElementById("step2HeaderTitleText").textContent;
+        const planBtnText = mockDoc.getElementById("planBtn").textContent;
+        const estText = mockDoc.getElementById("localEstimatedDurationText").textContent;
+        const dialogueHtml = mockDoc.getElementById("dialogueTrackList").innerHTML;
 
         assert.ok(projName.includes(exp.namePart), `${exp.key} project name "${projName}" missing "${exp.namePart}"`);
         assert.ok(descVal.length > 10, `${exp.key} description should be populated`);
         assert.strictEqual(segCount, exp.segments, `${exp.key} expected ${exp.segments} rendered segments, got ${segCount}`);
         assert.strictEqual(videoSrc, exp.video, `${exp.key} expected video ${exp.video}, got ${videoSrc}`);
         assert.ok(statusHtml.includes("✅ 已載入"), `${exp.key} expected loaded status badge, got "${statusHtml}"`);
+        assert.strictEqual(paradigmVal, exp.paradigm, `${exp.key} expected paradigm ${exp.paradigm}, got ${paradigmVal}`);
+        assert.strictEqual(imgDisabled, exp.imgDisabled, `${exp.key} expected imageProviderSelect.disabled=${exp.imgDisabled}`);
+        assert.strictEqual(gridDisplay, exp.gridDisplay, `${exp.key} expected gridPreviewContainer.style.display=${exp.gridDisplay}, got ${gridDisplay}`);
+        assert.ok(step2Title.includes(exp.step2TitlePart), `${exp.key} Step 2 title "${step2Title}" missing "${exp.step2TitlePart}"`);
+        assert.ok(planBtnText.includes(exp.planBtnPart), `${exp.key} planBtn "${planBtnText}" missing "${exp.planBtnPart}"`);
+        assert.ok(estText.includes(exp.estPart), `${exp.key} Step 3 estimate "${estText}" missing "${exp.estPart}"`);
+        if (exp.key === "detective" || exp.key === "ink_sorcerer") {
+          assert.ok(dialogueHtml.includes("0 - 5s"), `${exp.key} Step 5 dialogue should use 5s segment timecode`);
+          assert.equal(dialogueHtml.includes("7.26"), false, `${exp.key} Step 5 dialogue must not leak 7.26s from tutorial_140s`);
+        }
+        for (const btn of demoButtons) {
+          const expectedActive = btn.dataset.templateKey === exp.key;
+          assert.strictEqual(
+            btn.classList.contains("active"),
+            expectedActive,
+            `${exp.key}: button ${btn.dataset.templateKey} active=${btn.classList.contains("active")} != ${expectedActive}`
+          );
+          assert.strictEqual(
+            btn.getAttribute("aria-pressed"),
+            expectedActive ? "true" : "false",
+            `${exp.key}: button ${btn.dataset.templateKey} aria-pressed mismatch`
+          );
+        }
       }
     } finally {
       for (const t of trackedTimers) {

@@ -36,16 +36,58 @@ interface TrackCanvasElement extends HTMLCanvasElement {
   };
 }
 
-export function onChainParadigmChange(fromUser = false): void {
+export function syncChainParadigmUI(paradigm: string): void {
   const paradigmSelect = document.getElementById("chainParadigmSelect") as HTMLSelectElement | null;
-  const paradigm = paradigmSelect ? paradigmSelect.value : "latent_chain";
+  if (paradigmSelect && paradigmSelect.value !== paradigm) {
+    paradigmSelect.value = paradigm;
+  }
+  const isEdu = coreStore.getState().activeProjectMode === "edu";
   const gridContainer = document.getElementById("gridPreviewContainer");
   const barContainer = document.getElementById("slicedPanelsContainer");
   const planBtn = document.getElementById("planBtn");
   const step2Title = document.getElementById("step2HeaderTitleText");
   const imgSelect = document.getElementById("imageProviderSelect") as HTMLSelectElement | null;
-  const targetMode = paradigm === "latent_chain" ? "motion_context" : "first_frame";
+  const imgLabel = document.getElementById("imageProviderLabel");
   const gridImageDataUrl = storyboardStore.getState().gridImageDataUrl;
+
+  if (paradigm === "latent_chain") {
+    if (gridContainer) gridContainer.style.display = "none";
+    if (barContainer) barContainer.style.display = "none";
+    if (planBtn) planBtn.textContent = "✨ 生成分鏡腳本（潛空間一鏡到底）";
+    if (step2Title) {
+      step2Title.textContent = isEdu
+        ? "步驟二：教學長片分鏡台（自由秒數 · 語速監控 · 任意段數）"
+        : "步驟二：分鏡腳本與運鏡微調（潛空間一鏡到底）";
+    }
+    if (imgSelect) {
+      imgSelect.disabled = true;
+      imgSelect.title = "潛空間一鏡到底不使用九宮格圖，無需選擇生圖模型";
+    }
+    if (imgLabel) imgLabel.style.opacity = "0.45";
+  } else {
+    if (gridContainer) {
+      gridContainer.style.display = !isEdu && gridImageDataUrl ? "block" : "none";
+    }
+    if (barContainer) barContainer.style.display = isEdu ? "none" : "flex";
+    if (planBtn) planBtn.textContent = "✨ 生成分鏡腳本與九宮格圖";
+    if (step2Title) {
+      step2Title.textContent = isEdu
+        ? "步驟二：教學長片分鏡台（自由秒數 · 語速監控 · 任意段數）"
+        : "步驟二：九宮格與分鏡腳本微調";
+    }
+    if (imgSelect) {
+      imgSelect.disabled = false;
+      imgSelect.title = "";
+      if (!imgSelect.value) imgSelect.value = "agent-image";
+    }
+    if (imgLabel) imgLabel.style.opacity = "1";
+  }
+}
+
+export function onChainParadigmChange(fromUser = false): void {
+  const paradigmSelect = document.getElementById("chainParadigmSelect") as HTMLSelectElement | null;
+  const paradigm = paradigmSelect ? paradigmSelect.value : "latent_chain";
+  const targetMode = paradigm === "latent_chain" ? "motion_context" : "first_frame";
 
   const modeSelects = Array.from(document.querySelectorAll<HTMLSelectElement>("#segmentsContainer .seg-chain-mode-select"));
   const customizedSelects = modeSelects.filter((sel) => sel.dataset.userModified === "true" && sel.value !== targetMode);
@@ -58,43 +100,13 @@ export function onChainParadigmChange(fromUser = false): void {
     );
   }
 
-  if (paradigm === "latent_chain") {
-    if (gridContainer) gridContainer.style.display = "none";
-    if (barContainer) barContainer.style.display = "none";
-    if (planBtn) planBtn.textContent = "✨ 生成分鏡腳本（潛空間一鏡到底）";
-    if (step2Title) step2Title.textContent = "步驟二：分鏡腳本與運鏡微調（潛空間一鏡到底）";
-    if (imgSelect) {
-      imgSelect.disabled = true;
-      imgSelect.title = "潛空間一鏡到底不使用九宮格圖，無需選擇生圖模型";
-    }
-    const imgLabelGray = document.getElementById("imageProviderLabel");
-    if (imgLabelGray) imgLabelGray.style.opacity = "0.45";
-    if (shouldOverwriteSegments) {
-      modeSelects.forEach((sel) => {
-        sel.value = "motion_context";
-        delete sel.dataset.userModified;
-      });
-    }
-  } else {
-    if (gridContainer && gridImageDataUrl) {
-      gridContainer.style.display = "block";
-    }
-    if (barContainer) barContainer.style.display = "flex";
-    if (planBtn) planBtn.textContent = "✨ 生成分鏡腳本與九宮格圖";
-    if (step2Title) step2Title.textContent = "步驟二：九宮格與分鏡腳本微調";
-    if (imgSelect) {
-      imgSelect.disabled = false;
-      imgSelect.title = "";
-    }
-    const imgLabelBright = document.getElementById("imageProviderLabel");
-    if (imgLabelBright) imgLabelBright.style.opacity = "1";
-    if (imgSelect && !imgSelect.value) imgSelect.value = "agent-image";
-    if (shouldOverwriteSegments) {
-      modeSelects.forEach((sel) => {
-        sel.value = "first_frame";
-        delete sel.dataset.userModified;
-      });
-    }
+  syncChainParadigmUI(paradigm);
+
+  if (shouldOverwriteSegments) {
+    modeSelects.forEach((sel) => {
+      sel.value = targetMode;
+      delete sel.dataset.userModified;
+    });
   }
   refreshAllSegmentCardModeUI();
   syncSegmentsFromDOM();

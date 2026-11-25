@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "brand": {
+    "name": "H3 Storyboard Studio",
+    "pageTitle": "H3 Storyboard Studio — AI 首尾連貫分鏡工作坊",
+    "subtitle": "專業級 AI 首尾連貫影像創作平台 · 支援本機 Metal 與雲端受控渲染"
+  },
+  "workflowStages": [
+    { "step": 1, "id": "story", "label": "故事", "cardId": "step1Card" },
+    { "step": 2, "id": "storyboard", "label": "分鏡", "cardId": "step2Card" },
+    { "step": 3, "id": "render", "label": "渲染", "cardId": "step3Card" },
+    { "step": 4, "id": "preview", "label": "成片", "cardId": "step4Card" },
+    { "step": 5, "id": "postprod", "label": "後製", "cardId": "step5Card" }
+  ],
+  "governance": {
+    "cliEntrypoint": "python3 -m pipeline.h3_cli",
+    "localLauncher": "./scripts/start_studio.sh",
+    "twoPhaseConsentRequired": true,
+    "noUnconsentedGpuFallback": true,
+    "verificationStatusRequired": "ARTIFACT_VERIFIED",
+    "fallbackPolicySummaryZh": "未經使用者明確授權，嚴禁自動降級 GPU 或私自切換算力路線；遇尖峰滿載時一律暫停並提供替代方案待確認。"
+  },
+  "routes": {
+    "colab": {
+      "label": "Google Colab (Agent 受控排程)",
+      "defaultGpu": "L4 / A100（依 plan 試算確認）",
+      "costModel": "依 Colab Compute Units 試算（L4 約 1.0 CU/hr）",
+      "requiresConsent": true,
+      "onBusyPolicy": "暫停並回報滿載，經使用者同意後才改選其他 GPU 或路線"
+    },
+    "saas_api": {
+      "label": "商用雲端 API (Seedance / fal.ai / MiniMax)",
+      "defaultGpu": "雲端託管推論集群",
+      "costModel": "依第三方 API 按次／按秒計費（呼叫前顯示估算並確認）",
+      "requiresConsent": true,
+      "onBusyPolicy": "回報錯誤診斷與重試建議，不無授權切換供應商"
+    },
+    "local": {
+      "label": "本機 Metal / ComfyUI 雙引擎",
+      "defaultGpu": "Apple Silicon Unified Memory (h3.c Metal) 或本機 ComfyUI",
+      "costModel": "零雲端費用（僅消耗本機記憶體與電力）",
+      "requiresConsent": false,
+      "onBusyPolicy": "低記憶體時於執行前提示安全畫布建議，不強制覆寫"
+    }
+  }
+}

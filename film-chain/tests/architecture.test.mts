@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { coreStore } from "../client/stores/coreStore.ts";
 import { registerWindowBindings } from "../client/registry/windowBindings.ts";
+import { EXECUTION_RULES } from "../client/config/executionRules.ts";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const FILM_CHAIN_ROOT = path.resolve(TEST_DIR, "..");
@@ -246,5 +247,44 @@ describe("Architecture Unidirectional Boundaries & Bridge Contracts", () => {
       `wrangler.jsonc build.command must build dist/studio.js before deploy, got: ${config.build?.command}`
     );
     assert.equal(config.build?.watch_dir, "client");
+  });
+
+  it("enforces execution_rules.json SSOT parity and blocks unconsented GPU fallback copy", () => {
+    const rulesPath = path.join(FILM_CHAIN_ROOT, "config", "execution_rules.json");
+    const jsonRules = JSON.parse(fs.readFileSync(rulesPath, "utf-8"));
+    assert.deepEqual(EXECUTION_RULES, jsonRules);
+
+    const htmlSrc = fs.readFileSync(path.join(FILM_CHAIN_ROOT, "public", "index.html"), "utf-8");
+    const bridgeSrc = fs.readFileSync(path.join(FILM_CHAIN_ROOT, "public", "h3ServeBridge.js"), "utf-8");
+    const promptsSrc = fs.readFileSync(
+      path.join(FILM_CHAIN_ROOT, "public", "src", "prompts", "agentPrompts.js"),
+      "utf-8"
+    );
+    const eduSrc = fs.readFileSync(path.join(CLIENT_DIR, "features", "eduStudio.ts"), "utf-8");
+
+    const forbiddenPhrases = [
+      "Auto-Fallback",
+      "自動無縫容錯切換",
+      "自動降級保底",
+      "--no-fallback",
+      "--no-high-mem",
+    ];
+    for (const [label, src] of [
+      ["public/index.html", htmlSrc],
+      ["public/h3ServeBridge.js", bridgeSrc],
+      ["public/src/prompts/agentPrompts.js", promptsSrc],
+      ["client/features/eduStudio.ts", eduSrc],
+    ] as const) {
+      for (const phrase of forbiddenPhrases) {
+        assert.equal(src.includes(phrase), false, `${label} must not contain "${phrase}"`);
+      }
+    }
+
+    assert.ok(htmlSrc.includes(`<title>${EXECUTION_RULES.brand.pageTitle}</title>`));
+    assert.ok(htmlSrc.includes(`<h1>${EXECUTION_RULES.brand.name}</h1>`));
+    assert.equal(htmlSrc.includes("`h3_server`"), false, "index.html must not contain raw markdown backticks");
+    assert.equal(htmlSrc.includes("Step 1→3"), false, "index.html must not claim 3-step flow");
+    assert.ok(bridgeSrc.includes(EXECUTION_RULES.governance.localLauncher));
+    assert.ok(bridgeSrc.includes(EXECUTION_RULES.governance.cliEntrypoint));
   });
 });

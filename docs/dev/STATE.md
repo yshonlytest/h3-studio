@@ -18,14 +18,15 @@
 - [x] `A3-4` 垂直拆分 Step 3～5、Workspace 與 Bootstrap，達成 `index.html` 零內嵌 `<script>`
 - [x] `A3-5` 架構契約初版測試建立（原全倉 Gate 因 `.pyc` 失敗且僅補跑部分檢查，最終全倉驗收併入 `A4-6`）
 
-## 3. Phase A 收斂修訂（A4-1 ～ A4-6 全部完成；Layer 2 遠端 CI 待推送驗證）
-- [x] `A4-1` Fail-Closed Full Gate、本機 `:8080` 靜態服務與 `start_studio.sh` 自動建置、兩層 CI 納管（Layer 1 靜態 YAML/Job）
-- [x] `A4-2` 修復 `saas_api`/`refImage` 回歸、Store 白名單型別與 `deepFreeze` 防護、45 處 Sink 脈絡分類防護與 CLI 收斂
-- [x] `A4-3` 開啟 TS `strict: true`、集中常數、精簡 `windowBindings.ts`、強化架構測試並轉 `.mts` 靜音
-- [x] `A4-4` 證據驅動重構 Batch 1（編導、分鏡、Colab、UI Shell：附四項設計卡與豁免紀錄）
-- [x] `A4-5` 證據驅動重構 Batch 2（算力調度、播放器、音訊、工作區、監聽器與 `AudioContext` 釋放）
-- [x] `A4-6` 完整 Fail-Closed Gate 驗收、Git Diff 範圍確認、Layer 2 遠端 CI（待推送驗證）與雙軸複驗 PASS 結案
+## 3. Phase A 收斂修訂（A4-1 ～ A4-6 完成，已推送並通過遠端 CI）
+- [x] `A4-1` ～ `A4-6` 嚴格 TS、Store 不可變防禦、重構設計卡、資源釋放、Fail-Closed Full Gate 與 Layer 2 遠端 CI 全綠結案
 
-## 4. Phase B：引擎擴充（Phase A 正式結案後方可啟動）
-- [ ] `B0-SPEC` 契約先行（ADR-0003）：定義 `TimelineSpec`（Timebase/FPS/32kHz/同步）、分離 `VoiceProvider` 與 `ResourceScheduler`、鎖定 `HyperFrames`（Next Up）
-- 後製合成層參考：[POST_PRODUCTION_HYPERFRAMES_PLAN.md](POST_PRODUCTION_HYPERFRAMES_PLAN.md)（待 Phase A 結案後啟動 `B0-SPEC`）。
+## 4. UI/UX 精修（U0～U3：規則一致性 → 漸進式揭露 → 狀態回饋）
+- [x] `U0-DOCS` 更新 [AGENTS.md](../../AGENTS.md) 反映 `client/` TypeScript + Vite 架構、`dist/` 禁止手改與本機啟動驗證指令
+- [x] `U1-CONSISTENCY` 建立 `execution_rules.json` / `executionRules.ts` SSOT、移除無授權 GPU 降級承諾、統一品牌與 `h3ServeBridge.js` Prompt
+- [ ] `U2-IA-WORKFLOW` 首屏漸進式揭露（安全提示／模式說明／路線詳情）與 Web-First / Agent-First 雙工作介面分級（Next Up）
+- [ ] `U3-FEEDBACK` 範例動態摘要、資料驅動 5 階段進度列（`deriveWorkflowProgress`）與渲染前授權成本摘要
+
+## 5. Phase B：引擎擴充（UI/UX 精修完成後方可啟動）
+- [ ] `B0-SPEC` 契約先行（ADR-0003）：定義 `TimelineSpec`（Timebase/FPS/32kHz/同步）、分離 `VoiceProvider` 與 `ResourceScheduler`、鎖定 `HyperFrames`
+- 後製合成層參考：[POST_PRODUCTION_HYPERFRAMES_PLAN.md](POST_PRODUCTION_HYPERFRAMES_PLAN.md)（待 `U3` 結案後啟動 `B0-SPEC`）。

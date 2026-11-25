@@ -586,11 +586,6 @@ export async function loadGoldenTemplate(templateKey: string): Promise<void> {
 
   await applyProjectStateToUI(projObj);
 
-  const paradigmSelect = document.getElementById("chainParadigmSelect") as HTMLSelectElement | null;
-  if (paradigmSelect) {
-    paradigmSelect.value = templateKey === "detective" ? "grid_keyframes" : "latent_chain";
-  }
-
   const tplName =
     templateKey === "tutorial_140s"
       ? "H3工作流教學（105s實測指南）"

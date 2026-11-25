@@ -96,7 +96,7 @@ test -s film-chain/public/dist/studio.js
 npm test --prefix film-chain | tee "$NODE_LOG"
 /usr/bin/python3 - "$NODE_LOG" <<'PY'
 import re, sys
-MIN_NODE_TESTS = 91  # 隨新增測試同步調升基準，嚴禁下調
+MIN_NODE_TESTS = 92  # 隨新增測試同步調升基準，嚴禁下調
 txt = open(sys.argv[1], encoding="utf-8").read()
 parsed = {}
 for k in ("tests", "pass", "fail", "skipped", "cancelled", "todo"):
@@ -117,7 +117,7 @@ PY
 python3 -m unittest discover -s tests 2>&1 | tee "$PY_LOG"
 /usr/bin/python3 - "$PY_LOG" <<'PY'
 import re, sys
-MIN_PY_TESTS = 127  # 隨新增測試同步調升基準，嚴禁下調
+MIN_PY_TESTS = 128  # 隨新增測試同步調升基準，嚴禁下調
 txt = open(sys.argv[1], encoding="utf-8").read()
 ran = re.findall(r"^Ran (\d+) tests? in [0-9.]+s$", txt, re.M)
 if len(ran) != 1:
@@ -237,7 +237,20 @@ EOF
 
 ---
 
-## 階段 B：引擎擴充前導契約（`B0-SPEC`，Phase A 正式結案後方可啟動）
+## UI/UX 精修微批次（U0～U3，位於 Phase A 之後、B0-SPEC 之前）
+
+- [x] `U0-DOCS` **獨立更新工程文件 [`AGENTS.md`](../../AGENTS.md)**：反映 `film-chain/client/` TypeScript + Vite 架構、明確禁止手改 `public/dist/`、補充 `./scripts/start_studio.sh` 與前後端驗證指令（不混入 UI 改動）。
+- [x] `U1-CONSISTENCY` **Batch 1（P0）：產品一致性、執行規則 SSOT 與 GPU 授權治理對齊**：
+  - 建立 `film-chain/config/execution_rules.json` 與 `film-chain/client/config/executionRules.ts`（品牌、5 階段流程、兩階段授權鐵律與三路線規則 SSOT）。
+  - 全面移除 UI（路線 1 卡片、步驟三算力指南）與 `eduStudio.ts` 範例文本內無授權 GPU 自動降級／`Auto-Fallback`／`--no-fallback`／`--no-high-mem` 承諾與過時參數。
+  - 統一品牌為 `H3 Storyboard Studio`、流程為 5 階段、修正裸露 Markdown 反引號與 `selectRoute('saas_api')`，並更新 `public/h3ServeBridge.js` 引導 Prompt 與精靈第 4 步（`./scripts/start_studio.sh` 與 `python3 -m pipeline.h3_cli usage`）。
+  - 新增 `architecture.test.mts` 與 `tests/test_execution_rules_sync.py` 跨端鎖定規則一致性。
+- [ ] `U2-IA-WORKFLOW` **Batch 2（高優先）：首屏漸進式揭露與 Web-First / Agent-First 雙工作介面**：收斂頂部安全聲明與模式說明、三路線改為「保留摘要、預設展開當前所選」、將步驟一帶入首屏、區分 Web-First（完整工作台）與 Agent-First（精簡工作台，共用同一套 Store）及 4 類階段式 Agent Prompt 入口。
+- [ ] `U3-FEEDBACK` **Batch 3（高優先）：範例載入動態摘要、資料驅動 5 階段進度列與渲染前授權成本摘要**：同步高亮選中範例、動態計算專案摘要並防呆檢查成品是否存在、新增純函式 `deriveWorkflowProgress()` 驅動進度條、統一三路線渲染前成本與資源授權摘要。
+
+---
+
+## 階段 B：引擎擴充前導契約（`B0-SPEC`，Phase A 與 U0～U3 結案後方可啟動）
 
 - [ ] `B0-SPEC` **契約先行（立案 `ADR-0003`）：定義 `TimelineSpec`、分離 `VoiceProvider` 與 `ResourceScheduler`、鎖定 `HyperFrames` 轉接契約**
   - **前置條件**：僅於 `A4-6` 達雙軸 `PASS` 且 Full Gate 全綠後方可開啟；此批次僅產出設計契約與型別骨架，不寫入推理或渲染實作。

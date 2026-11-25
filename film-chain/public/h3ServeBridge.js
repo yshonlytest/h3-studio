@@ -15,25 +15,25 @@
 
   // 交給 AI Agent（本機 / 遠端虛擬機）代架環境時使用的引導 Prompt
   const AGENT_ONBOARDING_PROMPT = [
-    '請在這台機器上替我架設 MiniMax-H3 本機渲染環境，完成後「帶我在網頁上操作產出自己的影片」，全程不要自行跑任何範例：',
+    '請在這台機器上替我架設 H3 Storyboard Studio 本機渲染環境，完成後「帶我在網頁上操作產出自己的影片」，全程不要自行跑任何範例：',
     '',
-    '【架設環境】',
+    '【架設與探測環境】',
     '1. git clone https://github.com/yshonlytest/h3-studio.git && cd h3-studio',
     '2. ./setup.sh（編譯 Apple Silicon Metal 引擎 engines/h3.c/h3）',
-    '3. pip install -U "huggingface_hub[cli]" && huggingface-cli download MiniMax-AI/MiniMax-H3 --local-dir models/MiniMax-H3',
-    '4. python3 -m pipeline.h3_server（守護進程監聽 127.0.0.1:8080）',
+    '3. python3 -m pipeline.h3_cli usage（探測本機 Metal、權重與雲端授權狀態）',
+    '4. 依提示下載模型權重後執行 ./scripts/start_studio.sh（自動建置前端並啟動守護進程 127.0.0.1:8080；亦可獨立執行 python3 -m pipeline.h3_server）',
     '',
     '【環境就緒後：帶我操作網頁】',
-    '- 引導我開啟網頁 https://film-chain.onlytest.dev/ ，選「路線 3：本機 Metal / ComfyUI」。',
-    '- 陪我走完網頁五個步驟：步驟一讓我輸入「我自己的」故事大綱與主角參考圖 → 生成分鏡（潛空間一鏡到底或九宮格）→ 步驟三讓我按下「啟動本機渲染」→ 步驟四預覽成片。',
-    '- 過程中協助我修改提示詞、運鏡與參數；影片渲染一律由本機 GPU 執行（零雲端費用）。',
+    '- 引導我開啟網頁 http://127.0.0.1:8080/（或 https://film-chain.onlytest.dev/），選「路線 3：本機 Metal / ComfyUI」。',
+    '- 陪我走完網頁 5 階段流程：步驟一輸入故事與主角參考圖 ➔ 生成並匯入分鏡 ➔ 步驟二微調審稿 ➔ 步驟三啟動本機渲染 ➔ 步驟四成片預覽（步驟五可選用後期配音字幕）。',
+    '- 若經 CLI 調用算力，務必遵守先執行 plan 唯讀試算、取得我明確同意後才帶入 --confirm-token 執行，並通過 verify 達 ARTIFACT_VERIFIED。',
     '',
     '【禁止事項】',
     '- 未經我明確說出「要跑範例」，不得執行 examples/storyboards/ 下任何示範 storyboard（如賽博偵探／墨繪靈境 25 秒），以免白白浪費算力與點數。',
-    '- 若你認為需要測試，必須先說明會消耗什麼資源並取得我的同意。',
+    '- 未經我授權不得私自降級 GPU 或切換算力路線；若你認為需要測試，必須先說明會消耗什麼資源並取得我的同意。',
     '',
     '【驗收標準】',
-    '我的自訂故事在網頁上完成分鏡、由本機渲染並在步驟四播放成功，才算任務完成。'
+    '我的自訂故事在網頁上完成分鏡、由本機渲染並在步驟四播放成功（且通過 verify ARTIFACT_VERIFIED），才算任務完成。'
   ].join('\n');
 
   // ==================== 狀態核心 H3LocalEnv（單一真相） ====================
@@ -135,8 +135,8 @@
             <button type="button" class="h3-hud-copy" data-cmd='pip install -U "huggingface_hub[cli]" && huggingface-cli download MiniMax-AI/MiniMax-H3 --local-dir models/MiniMax-H3' style="background: #1e293b; color: #7dd3fc; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer;">複製</button>
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 11px; color: #93a3bf; flex: 1;">4️⃣ 啟動守護進程（Port 8080）</span>
-            <button type="button" class="h3-hud-copy" data-cmd="python3 -m pipeline.h3_server" style="background: #1e293b; color: #7dd3fc; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer;">複製</button>
+            <span style="font-size: 11px; color: #93a3bf; flex: 1;">4️⃣ 啟動 Studio 與守護進程（Port 8080）</span>
+            <button type="button" class="h3-hud-copy" data-cmd="./scripts/start_studio.sh" style="background: #1e293b; color: #7dd3fc; border: 1px solid #334155; border-radius: 4px; padding: 2px 8px; font-size: 10px; cursor: pointer;">複製</button>
           </div>
           <button type="button" class="h3-hud-copy h3-hud-copy-agent" data-source="agentPrompt" style="margin-top: 2px; background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid #f59e0b; border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🤖 不想自己動手？複製引導 Prompt 交給 AI Agent（會帶你開網頁產出自己的影片）</button>
           <button id="h3-hud-redetect-btn" style="margin-top: 2px; background: rgba(56,189,248,0.2); color: #7dd3fc; border: 1px solid #38bdf8; border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 600; cursor: pointer;">🔄 重新檢測</button>

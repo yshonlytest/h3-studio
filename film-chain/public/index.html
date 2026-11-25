@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>H3 九宮格分鏡自動產片工作坊</title>
+  <title>H3 Storyboard Studio — AI 首尾連貫分鏡工作坊</title>
   <link rel="stylesheet" href="src/styles/studio.css" />
 </head>
 <body>
@@ -15,8 +15,8 @@
       </a>
       <span style="font-size: 1.5rem;">🎬</span>
       <div>
-        <h1>FilmChain AI 影視連貫分鏡工作坊</h1>
-        <span style="font-size: 0.76rem; color: var(--muted);">專業級 AI 首尾連貫影像創作平台 · 支援本地工作流與雲端極速渲染</span>
+        <h1>H3 Storyboard Studio</h1>
+        <span style="font-size: 0.76rem; color: var(--muted);">專業級 AI 首尾連貫影像創作平台 · 支援本機 Metal 與雲端受控渲染</span>
       </div>
     </div>
   </header>
@@ -57,13 +57,13 @@
         <button type="button" class="btn" onclick="createNewBlankProject()" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14); font-weight:600;" title="清空目前分鏡，建立全新空白專案開始自己的創作">
           ✨ 清空開新專案
         </button>
-        <button type="button" class="btn" onclick="loadGoldenTemplate('tutorial_140s')" style="padding:6px 10px; font-size:0.78rem; border-color:#f59e0b; color:#fde68a; background:rgba(245,158,11,0.22); font-weight:700;" title="載入 105 秒 H3 Storyboard Studio 完整教學與極速創作指南實測成片">
+        <button type="button" class="btn demo-template-btn" data-template-key="tutorial_140s" aria-pressed="false" onclick="loadGoldenTemplate('tutorial_140s')" style="padding:6px 10px; font-size:0.78rem;" title="載入 105 秒 H3 Storyboard Studio 完整教學與極速創作指南實測成片">
           🎓 H3 教學成片 (105s 實測)
         </button>
-        <button type="button" class="btn" onclick="loadGoldenTemplate('detective')" style="padding:6px 10px; font-size:0.78rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.14);" title="載入 25 秒賽博偵探九宮格專屬範本與實測成片">
+        <button type="button" class="btn demo-template-btn" data-template-key="detective" aria-pressed="false" onclick="loadGoldenTemplate('detective')" style="padding:6px 10px; font-size:0.78rem;" title="載入 25 秒賽博偵探九宮格專屬範本與實測成片">
           🕵️ 賽博偵探 (九宮格)
         </button>
-        <button type="button" class="btn" onclick="loadGoldenTemplate('ink_sorcerer')" style="padding:6px 10px; font-size:0.78rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.14);" title="載入 25 秒水墨奇幻潛空間專屬範本與實測成片">
+        <button type="button" class="btn demo-template-btn" data-template-key="ink_sorcerer" aria-pressed="false" onclick="loadGoldenTemplate('ink_sorcerer')" style="padding:6px 10px; font-size:0.78rem;" title="載入 25 秒水墨奇幻潛空間專屬範本與實測成片">
           🖌️ 墨繪靈境 (潛空間)
         </button>
         <button type="button" class="btn" onclick="openPronunciationLexiconModal()" style="padding:6px 10px; font-size:0.78rem; border-color:#f59e0b; color:#fde68a; background:rgba(245,158,11,0.14);" title="檢視與管理發音字典、破音字唯一字詞替換與全片體檢">
@@ -167,10 +167,10 @@
         <div id="startModeCardWeb" class="project-mode-card active creative" role="button" tabindex="0" onclick="selectStartWorkflowMode('web')" onkeydown="if(event.key==='Enter'||event.key===' ')selectStartWorkflowMode('web')">
           <div class="project-mode-title" style="font-size:0.94rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
             <span style="color:#93c5fd;">🧭 使用網頁逐步操作（一般使用者）</span>
-            <span class="badge ok" style="font-size:0.7rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.2);">視覺化引導 · Step 1→3</span>
+            <span class="badge ok" style="font-size:0.7rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.2);">視覺化引導 · 5 階段全流程</span>
           </div>
           <div class="project-mode-desc" style="font-size:0.78rem; color:var(--muted); line-height:1.45;">
-            由下方網頁引導您完成每一個階段：步驟一生成分鏡 ➔ 步驟二預覽微調台詞與畫面 ➔ 步驟三執行渲染與交付。
+            由下方網頁引導您完成每一個階段：步驟一故事分鏡 ➔ 步驟二微調審稿 ➔ 步驟三渲染調度 ➔ 步驟四成片預覽 ➔ 步驟五後製成片。
           </div>
         </div>
 
@@ -221,9 +221,9 @@
           <span class="info-tip" role="button" tabindex="0" aria-label="查看渲染模式說明">ⓘ
             <span class="tooltip-content">
               <strong>💡 三條獨立渲染工作流</strong><br>
-              • 路線 1 (預設推薦)：Google Colab + Gemini Agent 自動化工作流。<br>
-              • 路線 2：商用雲端首尾幀模型 API（Seedance / fal.ai）。<br>
-              • 路線 3：本機 ComfyUI 高門檻示範工作流。
+              • 路線 1 (預設推薦)：Google Colab + AI Agent 兩階段授權工作流（先 <code>plan</code> 試算確認，未經授權絕不自動降級 GPU）。<br>
+              • 路線 2：商用雲端首尾幀模型 API（Seedance / fal.ai / MiniMax）。<br>
+              • 路線 3：本機 Apple Silicon Metal 原生引擎（<code>h3_server</code> Port 8080）與 ComfyUI 雙引擎。
             </span>
           </span>
         </strong>
@@ -235,10 +235,10 @@
         <div id="routeCardColab" class="route-tab-card active colab" role="button" tabindex="0" onclick="selectRoute('colab')" onkeydown="if(event.key==='Enter'||event.key===' ')selectRoute('colab')">
           <div class="route-tab-title">
             <span style="color:#7dd3fc;">☁️ 路線 1：Google Colab (Gemini Pro)</span>
-            <span class="badge ok" style="font-size:0.7rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.2);">預設推薦 · A100/L4 自動容錯</span>
+            <span class="badge ok" style="font-size:0.7rem; border-color:#38bdf8; color:#7dd3fc; background:rgba(56,189,248,0.2);">預設推薦 · 兩階段門禁授權</span>
           </div>
           <div class="route-tab-desc">
-            無需高階顯卡！一鍵打包 Manifest 交由終端 AI Agent 調用 Colab A100 自動生成每段並由 ffmpeg 縫合。內建智慧算力備援（A100 尖峰滿載時自動無縫容錯切換至 NVIDIA L4，推論零等待且點數省 50%）。
+            無需高階顯卡！一鍵打包 Manifest 交由終端 AI Agent 透過 <code>python3 -m pipeline.h3_cli</code> 執行唯讀 <code>plan</code> 試算並經您明確同意後，再調用 Colab GPU（A100 / L4）分段生成並縫合；遇尖峰滿載將暫停提示替代方案，<strong>未經授權絕不自動降級 GPU</strong>。
           </div>
         </div>
 
@@ -260,7 +260,7 @@
             <span class="badge ok" style="font-size:0.7rem; border-color:#f59e0b; color:#fcd34d; background:rgba(245,158,11,0.2);">潛空間接力 · 零雲端費用</span>
           </div>
           <div class="route-tab-desc">
-            支援 Apple Silicon 原生 Metal 算圖（`h3_server` Port 8080 · 6 Steps）與 ComfyUI 排程，資產留存本機。
+            支援 Apple Silicon 原生 Metal 算圖（<code>h3_server</code> Port 8080 · 6 Steps）與 ComfyUI 排程，資產留存本機。
           </div>
         </div>
       </div>
@@ -475,9 +475,9 @@
             <div>
               <label>⚡ 實測示範範本</label>
               <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:rgba(245,158,11,0.22); border-color:#f59e0b; color:#fde68a; font-weight:700;" onclick="loadGoldenTemplate('tutorial_140s')">🎓 H3 教學 (105s 實測)</button>
-                <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:#1e293b;" onclick="loadGoldenTemplate('detective')">🕵️ 賽博偵探 (九宮格)</button>
-                <button type="button" class="btn" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem; background:#1e293b;" onclick="loadGoldenTemplate('ink_sorcerer')">🖌️ 墨繪靈境 (潛空間)</button>
+                <button type="button" class="btn demo-template-btn" data-template-key="tutorial_140s" aria-pressed="false" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem;" onclick="loadGoldenTemplate('tutorial_140s')">🎓 H3 教學 (105s 實測)</button>
+                <button type="button" class="btn demo-template-btn" data-template-key="detective" aria-pressed="false" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem;" onclick="loadGoldenTemplate('detective')">🕵️ 賽博偵探 (九宮格)</button>
+                <button type="button" class="btn demo-template-btn" data-template-key="ink_sorcerer" aria-pressed="false" style="flex:1; min-width:110px; padding:7px 8px; font-size:0.75rem;" onclick="loadGoldenTemplate('ink_sorcerer')">🖌️ 墨繪靈境 (潛空間)</button>
               </div>
             </div>
           </div>
@@ -691,34 +691,35 @@
           </div>
 
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; font-size:0.8rem; color:#cbd5e1; line-height:1.55;">
-            <!-- 方案 1: GPU 智慧自動容錯 -->
+            <!-- 方案 1: 兩階段門禁與 GPU 授權治理 -->
             <div style="background:#040914; border:1px solid #1e293b; border-radius:8px; padding:10px 12px;">
               <div style="color:#7dd3fc; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-                <span>⚡ 方案一：GPU 智慧自動容錯 (Auto-Fallback)</span>
+                <span>🛡️ 方案一：兩階段門禁與 GPU 授權治理（嚴禁無授權降級）</span>
               </div>
               <p style="margin:0 0 6px 0; color:#94a3b8; font-size:0.76rem;">
-                若 Google Colab 尖峰時段 A100 滿載（<code>503 Service Unavailable</code>），執行腳本已內建自動容錯階梯：
+                所有 Colab 任務一律先執行唯讀 <code>plan</code> 試算並回報目標 GPU、總段數、預估 Compute Units 與 <code>consent_token</code>，經您明確授權後才啟動算圖：
               </p>
               <div style="font-family:monospace; font-size:0.74rem; background:#0b1322; padding:6px 8px; border-radius:4px; color:#38bdf8; margin-bottom:6px;">
-                A100 (High-RAM) ➔ A100 (Standard) ➔ NVIDIA L4 (24GB)
+                plan (試算報價) ➔ 使用者確認授權 ➔ run --confirm-token
               </div>
               <p style="margin:0; font-size:0.75rem; color:#94a3b8;">
-                • <strong>推薦首選替代 L4：</strong>具備 24GB VRAM 與 Ada Lovelace 架構，完美適配 MiniMax H3 NVFP4+INT8 量化，免排隊且算力點數消耗省 50%（約 1.0 CU/hr）。
+                • <strong>遇尖峰滿載（503）：</strong>立即暫停並請您選擇授權改用建議的 <code>--gpu L4</code>（24GB · 約 1.0 CU/hr）或切換其他路線，<strong>未經同意絕不私自降級</strong>。
               </p>
             </div>
 
-            <!-- 方案 2: 手動參數強制覆蓋 -->
+            <!-- 方案 2: 現行 h3_cli 標準算力與重試參數 -->
             <div style="background:#040914; border:1px solid #1e293b; border-radius:8px; padding:10px 12px;">
               <div style="color:#a7f3d0; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-                <span>🛠️ 方案二：終端指令自選備援算力</span>
+                <span>🛠️ 方案二：現行 h3_cli 標準算力與重試參數</span>
               </div>
               <p style="margin:0 0 6px 0; color:#94a3b8; font-size:0.76rem;">
-                您可直接在終端帶入參數，強制指派高可用算力或跳過 High-RAM 請求：
+                統一透過唯一合法 CLI 入口 <code>python3 -m pipeline.h3_cli</code> 控管算力、授權與重試上限：
               </p>
               <ul style="margin:0; padding-left:16px; font-size:0.74rem; color:#94a3b8; font-family:monospace;">
-                <li style="margin-bottom:4px;"><code style="color:#6ee7b7;">--gpu L4</code>：直連 L4 節點，隨叫隨有零排隊</li>
-                <li style="margin-bottom:4px;"><code style="color:#6ee7b7;">--no-high-mem</code>：避開 High-RAM 資源池滿載</li>
-                <li><code style="color:#6ee7b7;">--no-fallback</code>：嚴格鎖定指定 GPU 不做降級</li>
+                <li style="margin-bottom:4px;"><code style="color:#6ee7b7;">usage</code>：查核 Colab 授權狀態與 Compute Units 餘額</li>
+                <li style="margin-bottom:4px;"><code style="color:#6ee7b7;">--gpu L4 / A100</code>：於 <code>plan</code> 與 <code>run</code> 明確指定目標 GPU</li>
+                <li style="margin-bottom:4px;"><code style="color:#6ee7b7;">--max-retries 1</code>：鎖定單段最大重試次數防止額度耗盡</li>
+                <li><code style="color:#6ee7b7;">--confirm-token &lt;TOKEN&gt;</code>：帶入授權 Token 執行受控渲染</li>
               </ul>
             </div>
 
@@ -732,10 +733,10 @@
               </p>
               <p style="margin:0 0 4px 0; font-size:0.75rem; color:#cbd5e1;">
                 • <strong style="color:#6ee7b7;">切換至【路線 2 商業 API】：</strong>支援 fal.ai / MiniMax 直連，並行全開 1~2 分鐘出全片。<br>
-                • <strong style="color:#fcd34d;">切換至【路線 3 本地引擎】：</strong>支援 Mac Metal / RTX 4090，零雲端費用離線推論。
+                • <strong style="color:#fcd34d;">切換至【路線 3 本地引擎】：</strong>支援 Mac Metal / ComfyUI，零雲端費用離線推論。
               </p>
               <div style="margin-top:6px; display:flex; gap:6px;">
-                <button type="button" class="btn" onclick="selectRoute('cloud')" style="padding:3px 8px; font-size:0.72rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.12);">切換路線 2</button>
+                <button type="button" class="btn" onclick="selectRoute('saas_api')" style="padding:3px 8px; font-size:0.72rem; border-color:#10b981; color:#6ee7b7; background:rgba(16,185,129,0.12);">切換路線 2</button>
                 <button type="button" class="btn" onclick="selectRoute('local')" style="padding:3px 8px; font-size:0.72rem; border-color:#f59e0b; color:#fcd34d; background:rgba(245,158,11,0.12);">切換路線 3</button>
               </div>
             </div>
