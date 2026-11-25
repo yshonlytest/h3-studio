@@ -206,7 +206,12 @@ class TestH3Server(unittest.TestCase):
         self.assertIn('src="dist/studio.js"', resp)
 
     def test_static_assets_mime_types(self) -> None:
-        raw_js = b"GET /dist/studio.js HTTP/1.1\r\nHost: 127.0.0.1:8080\r\n\r\n"
+        import tempfile
+        from pathlib import Path
+
+        from pipeline.h3_server import _guess_static_mime_type, resolve_static_asset_path
+
+        raw_js = b"GET /h3ServeBridge.js HTTP/1.1\r\nHost: 127.0.0.1:8080\r\n\r\n"
         resp_js = self._call_handler(raw_js)
         self.assertIn("200 OK", resp_js)
         self.assertIn("Content-Type: application/javascript; charset=utf-8", resp_js)
@@ -215,6 +220,16 @@ class TestH3Server(unittest.TestCase):
         resp_css = self._call_handler(raw_css)
         self.assertIn("200 OK", resp_css)
         self.assertIn("Content-Type: text/css; charset=utf-8", resp_css)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            static_root = Path(tmp_dir)
+            dist_dir = static_root / "dist"
+            dist_dir.mkdir()
+            bundle = dist_dir / "studio.js"
+            bundle.write_text("console.log('ok');", encoding="utf-8")
+            resolved = resolve_static_asset_path("/dist/studio.js", static_root=static_root)
+            self.assertEqual(resolved, bundle.resolve())
+            self.assertEqual(_guess_static_mime_type(resolved), "application/javascript; charset=utf-8")
 
     def test_static_path_traversal_and_hidden_files_blocked(self) -> None:
         import tempfile
