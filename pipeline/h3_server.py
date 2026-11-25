@@ -11,6 +11,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import mimetypes
 import os
 import queue
 import re
@@ -21,7 +22,7 @@ from dataclasses import asdict, dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 from pipeline.config import REPO_ROOT, get_output_dir, get_scratch_dir
 from pipeline.h3_context_ir import ContextIR, compile_context_ir, expand_with_local_llm
@@ -53,6 +54,46 @@ def validate_safe_project_id(project_id: str) -> Path:
     if base_dir != target_path and base_dir not in target_path.parents:
         raise PermissionError("Path traversal detected outside allowed output directory")
     return target_path
+
+
+STATIC_MIME_TYPES: dict[str, str] = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".mjs": "application/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+}
+
+
+def resolve_static_asset_path(request_path: str, static_root: Path | None = None) -> Path | None:
+    """Resolve a static URL path safely within film-chain/public, blocking hidden files and traversal."""
+    decoded = unquote(request_path)
+    if "\x00" in decoded:
+        raise PermissionError("Invalid null byte in static path")
+    rel = decoded.lstrip("/") or "index.html"
+    rel_path = Path(rel)
+    if rel_path.is_absolute() or any(part == ".." or part.startswith(".") for part in rel_path.parts):
+        raise PermissionError("Forbidden static path")
+    base_dir = (static_root or (REPO_ROOT / "film-chain" / "public")).resolve()
+    candidate = (base_dir / rel_path).resolve()
+    if candidate != base_dir and base_dir not in candidate.parents:
+        raise PermissionError("Path traversal detected outside static root")
+    return candidate if candidate.is_file() else None
+
+
+def _guess_static_mime_type(file_path: Path) -> str:
+    mime = STATIC_MIME_TYPES.get(file_path.suffix.lower())
+    if mime:
+        return mime
+    guessed, _ = mimetypes.guess_type(str(file_path))
+    return guessed or "application/octet-stream"
 
 
 @dataclass
@@ -208,8 +249,10 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
             self._handle_templates()
         elif url.path.startswith("/api/videos/"):
             self._handle_video_stream(url.path[len("/api/videos/"):])
-        else:
+        elif url.path.startswith("/api/"):
             self._send_json(404, {"error": "Not Found", "path": url.path})
+        else:
+            self._handle_static_asset(url.path)
 
     def do_POST(self) -> None:
         url = urlparse(self.path)
@@ -596,6 +639,25 @@ class H3DaemonHandler(BaseHTTPRequestHandler):
         self._send_cors_headers()
         self.send_header("Content-Type", "video/mp4")
         self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _handle_static_asset(self, request_path: str) -> None:
+        try:
+            target = resolve_static_asset_path(request_path)
+        except PermissionError as exc:
+            self._send_json(403, {"error": "Forbidden", "detail": str(exc)})
+            return
+        if target is None:
+            self._send_json(404, {"error": "Not Found", "path": request_path})
+            return
+        data = target.read_bytes()
+        self.send_response(200)
+        self._send_cors_headers()
+        self.send_header("Content-Type", _guess_static_mime_type(target))
+        self.send_header("Content-Length", str(len(data)))
+        if target.suffix.lower() in (".html", ".js", ".mjs", ".css"):
+            self.send_header("Cache-Control", "no-cache")
         self.end_headers()
         self.wfile.write(data)
 

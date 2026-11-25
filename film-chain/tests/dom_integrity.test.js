@@ -17,7 +17,6 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
   // Load extracted scripts
   const jsFiles = [
     "../public/src/prompts/agentPrompts.js",
-    "../public/src/controllers/studioAudioSubtitles.js",
     "../public/src/controllers/workspaceSync.js",
     "../public/src/core/timecodeHelper.js",
     "../public/src/core/promptBuilder.js",
@@ -28,6 +27,23 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
     "../public/src/core/projectStore.js"
   ];
 
+  const windowBindingsPath = path.resolve(__dirname, "../client/registry/windowBindings.ts");
+  const windowBindingsContent = fs.readFileSync(windowBindingsPath, "utf-8");
+
+  function readTsFilesRecursively(dir) {
+    if (!fs.existsSync(dir)) return "";
+    let out = "";
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        out += readTsFilesRecursively(full);
+      } else if (entry.isFile() && entry.name.endsWith(".ts")) {
+        out += "\n" + fs.readFileSync(full, "utf-8");
+      }
+    }
+    return out;
+  }
+
   let combinedJs = htmlContent;
   for (const rel of jsFiles) {
     const full = path.resolve(__dirname, rel);
@@ -35,6 +51,7 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
       combinedJs += "\n" + fs.readFileSync(full, "utf-8");
     }
   }
+  combinedJs += readTsFilesRecursively(path.resolve(__dirname, "../client"));
 
   test("should have function definitions for all inline DOM event handlers", () => {
     // Extract inline handlers like onclick="myFunc(...)"
@@ -64,14 +81,19 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
 
     assert.ok(invokedFunctions.size > 20, `Expected >20 DOM handler functions, found ${invokedFunctions.size}`);
 
-    // Check that each invoked function is declared: function fnName( or window.fnName = or fnName = function
+    // Check that each invoked function is declared and registered on windowBindings.ts
     const missing = [];
+    const unbound = [];
     for (const fn of invokedFunctions) {
       const declRegex = new RegExp(
         `(function\\s+${fn}\\b|\\bwindow\\.${fn}\\s*=|\\b${fn}\\s*=\\s*(async\\s+)?function|\\bclass\\s+${fn}\\b|\\bconst\\s+${fn}\\s*=|\\blet\\s+${fn}\\s*=|\\bvar\\s+${fn}\\s*=)`
       );
       if (!declRegex.test(combinedJs)) {
         missing.push(fn);
+      }
+      const bindingRegex = new RegExp(`\\b${fn}\\b`);
+      if (!bindingRegex.test(windowBindingsContent)) {
+        unbound.push(fn);
       }
     }
 
@@ -80,15 +102,21 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
       0,
       `Found undefined DOM handler functions: ${missing.join(", ")}`
     );
+    assert.strictEqual(
+      unbound.length,
+      0,
+      `Found DOM handler functions missing from windowBindings.ts: ${unbound.join(", ")}`
+    );
   });
 
   test("should correctly link required external CSS and script assets", () => {
     assert.match(htmlContent, /<link\s+rel="stylesheet"\s+href="src\/styles\/studio\.css"/);
     assert.match(htmlContent, /<script\s+src="src\/prompts\/agentPrompts\.js"><\/script>/);
-    assert.match(htmlContent, /<script\s+src="src\/controllers\/studioAudioSubtitles\.js"><\/script>/);
+    assert.match(htmlContent, /<script\s+src="dist\/studio\.js"><\/script>/);
+    assert.doesNotMatch(htmlContent, /studioAudioSubtitles\.js/);
   });
 
-  test("should parse all inline script blocks without syntax errors", () => {
+  test("should have zero inline script blocks and parse built studio bundle without syntax errors", () => {
     const vm = require("node:vm");
     const scriptRegex = /<script(?:\s+type="([^"]*)")?>([\s\S]*?)<\/script>/gi;
     let match;
@@ -97,12 +125,17 @@ describe("H3 Storyboard Studio - DOM Integrity Tests", () => {
       const type = match[1] || "text/javascript";
       if (!type || type === "text/javascript") {
         count++;
-        assert.doesNotThrow(() => {
-          new vm.Script(match[2], { filename: `inline-script-${count}.js` });
-        }, `Inline script block ${count} has syntax errors`);
       }
     }
-    assert.ok(count > 0, "Expected at least 1 inline script block");
+    assert.strictEqual(count, 0, `Expected 0 inline script blocks in index.html, found ${count}`);
+    assert.ok(htmlContent.split("\n").length < 1500, `Expected index.html < 1500 lines, got ${htmlContent.split("\n").length}`);
+
+    const studioBundlePath = path.resolve(__dirname, "../public/dist/studio.js");
+    assert.ok(fs.existsSync(studioBundlePath), "Expected built bundle public/dist/studio.js to exist");
+    const bundleContent = fs.readFileSync(studioBundlePath, "utf-8");
+    assert.doesNotThrow(() => {
+      new vm.Script(bundleContent, { filename: "public/dist/studio.js" });
+    }, "Built public/dist/studio.js has syntax errors");
   });
 
   test("should have zero duplicate DOM element IDs and place Colab rendering actions strictly in Step 3", () => {

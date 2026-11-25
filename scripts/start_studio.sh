@@ -23,11 +23,28 @@ if [ ! -x "$H3_BINARY" ]; then
 fi
 
 COMFY_DIR="${COMFY_DIR:-$ROOT_DIR/MiniMax-H3-h3c-ComfyUI/ComfyUI}"
-STUDIO_HTML="$ROOT_DIR/film-chain/public/index.html"
+STUDIO_DIR="$ROOT_DIR/film-chain"
+STUDIO_BUNDLE="$STUDIO_DIR/public/dist/studio.js"
+STUDIO_URL="http://127.0.0.1:8080/"
 
 echo "========================================================"
 echo "🚀 Launching H3 Studio..."
 echo "========================================================"
+
+# 0. Ensure frontend TypeScript bundle (public/dist/studio.js) is built
+if command -v npm >/dev/null 2>&1; then
+  if [ ! -d "$STUDIO_DIR/node_modules" ]; then
+    echo "📦 Installing Film-Chain frontend dependencies..."
+    npm --prefix "$STUDIO_DIR" ci
+  fi
+  echo "🔨 Building Film-Chain frontend bundle..."
+  npm run build --prefix "$STUDIO_DIR"
+elif [ ! -s "$STUDIO_BUNDLE" ]; then
+  echo "❌ Missing $STUDIO_BUNDLE and npm is not installed to build it."
+  exit 1
+else
+  echo "⚠️ npm not found; reusing existing prebuilt $STUDIO_BUNDLE"
+fi
 
 # 1. Check and launch H3 Native Metal Daemon on port 8080
 if lsof -nP -iTCP:8080 -sTCP:LISTEN >/dev/null 2>&1; then
@@ -53,15 +70,21 @@ elif [ -d "$COMFY_DIR" ]; then
   fi
 fi
 
-# Wait briefly and open Web Studio
-sleep 1
+# Wait briefly for port 8080 health check and open Web Studio over HTTP
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  if curl -fsS "http://127.0.0.1:8080/health" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.5
+done
+
 if command -v open >/dev/null 2>&1; then
-  echo "🌐 Opening Film-Chain Studio UI in your browser..."
-  open "$STUDIO_HTML"
+  echo "🌐 Opening Film-Chain Studio UI in your browser: $STUDIO_URL"
+  open "$STUDIO_URL"
 elif command -v xdg-open >/dev/null 2>&1; then
-  xdg-open "$STUDIO_HTML"
+  xdg-open "$STUDIO_URL"
 else
-  echo "🌐 Studio UI ready at: file://$STUDIO_HTML"
+  echo "🌐 Studio UI ready at: $STUDIO_URL"
 fi
 
 echo "========================================================"

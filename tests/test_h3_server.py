@@ -198,6 +198,50 @@ class TestH3Server(unittest.TestCase):
             import shutil
             shutil.rmtree(p_dir, ignore_errors=True)
 
+    def test_static_root_serves_index_html(self) -> None:
+        raw = b"GET / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\n\r\n"
+        resp = self._call_handler(raw)
+        self.assertIn("200 OK", resp)
+        self.assertIn("Content-Type: text/html; charset=utf-8", resp)
+        self.assertIn('src="dist/studio.js"', resp)
+
+    def test_static_assets_mime_types(self) -> None:
+        raw_js = b"GET /dist/studio.js HTTP/1.1\r\nHost: 127.0.0.1:8080\r\n\r\n"
+        resp_js = self._call_handler(raw_js)
+        self.assertIn("200 OK", resp_js)
+        self.assertIn("Content-Type: application/javascript; charset=utf-8", resp_js)
+
+        raw_css = b"GET /src/styles/studio.css HTTP/1.1\r\nHost: 127.0.0.1:8080\r\n\r\n"
+        resp_css = self._call_handler(raw_css)
+        self.assertIn("200 OK", resp_css)
+        self.assertIn("Content-Type: text/css; charset=utf-8", resp_css)
+
+    def test_static_path_traversal_and_hidden_files_blocked(self) -> None:
+        import tempfile
+        from pathlib import Path
+
+        from pipeline.h3_server import resolve_static_asset_path
+
+        for target in ("/../package.json", "/%2e%2e/package.json", "/.assetsignore"):
+            raw = f"GET {target} HTTP/1.1\r\nHost: 127.0.0.1:8080\r\n\r\n".encode("utf-8")
+            resp = self._call_handler(raw)
+            self.assertIn("403 Forbidden", resp, f"Expected 403 for {target}")
+
+        for missing in ("/api/does-not-exist", "/does_not_exist_12345.js"):
+            raw = f"GET {missing} HTTP/1.1\r\nHost: 127.0.0.1:8080\r\n\r\n".encode("utf-8")
+            resp = self._call_handler(raw)
+            self.assertIn("404 Not Found", resp, f"Expected 404 for {missing}")
+
+        with tempfile.TemporaryDirectory() as outer_dir:
+            outer = Path(outer_dir)
+            static_root = outer / "public"
+            static_root.mkdir()
+            secret = outer / "secret.txt"
+            secret.write_text("secret", encoding="utf-8")
+            (static_root / "escape.txt").symlink_to(secret)
+            with self.assertRaises(PermissionError):
+                resolve_static_asset_path("/escape.txt", static_root=static_root)
+
 
 if __name__ == "__main__":
     unittest.main()

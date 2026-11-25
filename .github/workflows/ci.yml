@@ -44,8 +44,49 @@ jobs:
 
       - name: "Leak check for hardcoded user paths"
         run: |
-          ! grep -rn "/Users/" pipeline tests examples README.md
+          python3 - <<'PY'
+          import subprocess, sys
+          res = subprocess.run(
+              ["grep", "-rnI", "--exclude-dir=__pycache__", "--exclude-dir=.git", "--exclude-dir=node_modules",
+               "/Users/", "pipeline", "tests", "examples", "README.md", "film-chain/client"],
+              capture_output=True, text=True,
+          )
+          if res.returncode == 1:
+              print("Path Hygiene: PASS (0 matches)")
+              sys.exit(0)
+          print(f"Path Hygiene FAILED (rc={res.returncode}):\n{res.stdout}{res.stderr}")
+          sys.exit(1)
+          PY
 
       - name: "Run unit test suite"
         run: |
           python -m unittest discover -s tests
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Set up Node.js 24"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: film-chain/package-lock.json
+
+      - name: "Install frontend dependencies"
+        run: |
+          npm --prefix film-chain ci
+
+      - name: "Run TypeScript typecheck"
+        run: |
+          npm --prefix film-chain run typecheck
+
+      - name: "Build frontend bundle"
+        run: |
+          npm --prefix film-chain run build
+          test -s film-chain/public/dist/studio.js
+
+      - name: "Run frontend tests"
+        run: |
+          npm --prefix film-chain test

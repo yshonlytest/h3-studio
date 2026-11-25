@@ -1,368 +1,253 @@
-# H3C V2 實體微批次執行計劃（3.8 Flash 傻瓜化接力手冊：F0 ～ F9）
+# H3C Phase A 執行計劃：前端架構債務清理與收斂驗收（`A0-PRE` ～ `A4-6`）
 
-> **⚡ 3.8 Flash 執行鐵律（違反任一條立即停止）**：
-> 1. **禁止整檔讀取 `>200` 行檔案**：對 `index.html`、`h3_storyboard_pipeline.py`、`h3.c` 必先用 `grep -n` 定位行號，再用 `read_file` 讀取 `±40` 行切片。
-> 2. **對 `film-chain/` 下所有檔案一律使用原生 `read_file` / `edit_file` / `write_file` 工具**（禁止在 bash 中直接 cat/sed 修改 `film-chain/public/src/core/*.js`）。
-> 3. **Python 3.9 相容與 Ruff 紅線**：所有新 `.py` 檔第一行必須是模組 docstring，緊接著 `from __future__ import annotations`（置於其他 import 之前）；函式參數 `>3` 個必須封裝為 `@dataclass(frozen=True)`；單一函式 statements `<=50`；縮排 `<=3` 層；禁止空 `except: pass`。
-> 4. **【防崩潰核心鐵律】強制雙檔進度同步（Dual-File Doc Sync Gate）**：
->    - 3.8 Flash 容易只改程式碼卻忘記更新文件，導致下一輪記憶重置後重做或狀態錯亂。
->    - 因此，**每一個子步驟（Sub-Step）都包含強制性的「📝 進度文件同步動作」與「🔍 驗證指令（含 `grep` 檢查文件已打勾）」**！
->    - 每次只准執行 **1 個子步驟**：改完程式碼 $\to$ 跑通過測試與 Ruff $\to$ 用 `edit_file` 將 `docs/dev/STATE.md` 與 `docs/dev/V2_EXECUTION_PLAN.md` 對應步驟的 `- [ ]` 改為 `- [x]`（`STATE.md` 嚴禁超過 50 行、禁止追加長篇敘事）$\to$ 執行含文件打勾斷言的最終驗證指令 $\to$ 才能進入下一步！
-
----
-
-## 階段 F0：核心技術可行性受控實驗與前置環境對齊
-
-- [x] `F0-1` **H3 `256×160` 代理畫布物理耗時與聲紋實測**
-  - **實測結論**：`256×160 --token-reduction` 將 DiT 6 步聯合去噪從 `1,633.22s` 壓縮至 **`95.46s`**（加速 17.1 倍），且 `video VAE decoder`（1×1 tile）僅耗時 **`7.91s`**，全段總耗時 **`127.19s`（2 分 07 秒）**，完全無需修改 `h3.c` 底層程式碼。
-- [x] `F0-2` **H3 代理音軌 vs 獨立 TTS 音軌之客觀量化對比**
-  - **實測結論**：H3 代理音軌與原片長度零誤差（`4.250000s`），與 `part14` / `part15_orig` 頻譜餘弦相似度高達 **`0.9673` / `0.9706`** 且完整保留場景音效與 BGM；獨立 TTS 長度 `5.801s`（誤差 `1.551s`）且缺失 BGM 導致背景配樂斷層（相似度僅 `0.303`）。
-- [x] `F0-3` **中文 Character-Level 時間戳與 VAD 能量包絡對齊實測**
-  - **實測結論**：確立 `ffprobe` 容器時長鎖定 + 200Hz–3800Hz 人聲頻帶 VAD + 中文字符與標點停頓權重對齊（`vad_char_weighted`）為無外部 ASR 模型時的標準演算法（詳見 `docs/dev/F0_AUDIO_AND_ALIGNMENT_REPORT.md`）。
-
-- [x] `F0-BRANCH` **建立 V2 專屬開發分支 `feat/v2-architecture-upgrade` 並提交基準文件**
-  - **動作內容**：
-    1. 執行 `git checkout -b feat/v2-architecture-upgrade`（若已存在則 `git checkout feat/v2-architecture-upgrade`），確保 `main` 主幹不受大版本重構影響。
-    2. 用 `edit_file` 將 `docs/dev/STATE.md` 與 `docs/dev/V2_EXECUTION_PLAN.md` 的 `- [ ] \`F0-BRANCH\`` 改為 `- [x] \`F0-BRANCH\``。
-    3. 將規劃與實驗基準文件納入版本控制：`git add AGENTS.md docs/dev/STATE.md docs/dev/V2_EXECUTION_PLAN.md docs/dev/F0_AUDIO_AND_ALIGNMENT_REPORT.md && git commit -m "docs(v2): initialize feat/v2-architecture-upgrade branch and F0 report"`。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `test "$(git branch --show-current)" = "feat/v2-architecture-upgrade" && grep -q "\- \[x\] \`F0-BRANCH\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F0-BRANCH\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F0-PRE` **修復既有環境斷點（對齊 `resolve_checkpoint_dir` 與 Pillow 測試環境）**
-  - **程式碼檔案**：`tests/test_edu_workflow.py`（讀取 `L65-75`）、`pipeline/h3_subtitles.py`（讀取 `L1-20`）
-  - **修改內容**：
-    1. 修正 `tests/test_edu_workflow.py:65-73` 的 `test_resolve_checkpoint_dir`：對齊 `h3_edu_profile.resolve_checkpoint_dir()` 的真實規格（當傳入 `base_p / "FL2VA"` 或包含 `FL2VA/` 子目錄的 `base_p` 時，一律回傳包含 `FL2VA/` 的根目錄 `base_p`，因為 `h3.c` 需要從根目錄讀取 `FL2VA/` 與 `video_vae/`）。
-    2. 在 `pipeline/h3_subtitles.py` 中，為 `PIL` 提供輕量 fallback 或確保在無 `PIL` 的純標準庫環境下匯入不會直接崩潰，並確認所有測試在 `/opt/homebrew/Caskroom/miniforge/base/bin/python3`（含完整 `PIL`/`scipy`/`numpy`）與 `.venv/bin/python` 皆可 100% 通過。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F0-PRE\`` 改為 `- [x] \`F0-PRE\``。
-    2. 用 `edit_file` 將本檔（`docs/dev/V2_EXECUTION_PLAN.md`）中的 `- [ ] \`F0-PRE\`` 改為 `- [x] \`F0-PRE\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/ tests/ && grep -q "\- \[x\] \`F0-PRE\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F0-PRE\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+> **歷史歸檔**：F0～F9 見 [archive/V2_F0_F9_COMPLETED.md](archive/V2_F0_F9_COMPLETED.md)；F10～F11 見 [archive/V2_F10_F11_COMPLETED.md](archive/V2_F10_F11_COMPLETED.md)。
+> **現況判定**：Phase A 拆分實作（`A0-PRE` ～ `A3-5`）基本完成，進入 **階段 A4（`A4-1` ～ `A4-6`）收斂與最終 Gate 確認**；Phase A 正式結案後方可開啟 **Phase B（`B0-SPEC`）**。
+> **架構決策**：見 [ADR-0002](../adr/0002-frontend-modularization-and-domain-stores.md)；**後製擴充（Phase B）**：見 [POST_PRODUCTION_HYPERFRAMES_PLAN.md](POST_PRODUCTION_HYPERFRAMES_PLAN.md)。
+> **⚡ 執行鐵律**：
+> 1. 禁止整檔讀取 `>200` 行檔案；必先 `grep -n` 或 Python 行號定位再切片讀取（`<=100` 行）。
+> 2. `film-chain/` 下所有檔案一律使用原生 `read_file` / `write_file` / `edit_file` 工具。
+> 3. 嚴格單批推進、零平行子代理、零行為變更（`A4` 不加入任何 Phase B 新能力）。
+> 4. 每完成 1 個微批次，立即同步更新 `docs/dev/STATE.md`（`<= 50` 行）與本檔 `[ ]` $\to$ `[x]` 並執行對應完整驗收。
 
 ---
 
-## 階段 F1：五節點 Artifact DAG 分層雜湊與快取依賴管理
+## 階段 A0：依賴盤點、歷史歸檔與架構立案
 
-```mermaid
-flowchart LR
-    V["Visual Inputs + Engine/Model/VAE Fingerprint"] --> VH["visual_hash"] --> VA["Video Artifact (.mp4/.h3ctx)"]
-    A["Audio Inputs + Spoken Text + Voice Config"] --> AH["audio_hash"] --> AA["Audio Artifact (.wav/.aac)"]
-    VA & AA --> MH["mux_hash (+FFmpeg params)"] --> MA["Muxed Segment (.mp4)"]
-    S["Subtitle Inputs + Font ID + Alignment Config"] --> SH["subtitle_hash"] --> SA["Subtitle Artifact (.srt)"]
-    MA & SA --> FH["final_hash"] --> FA["Final Video (.mp4)"]
+- [x] `A0-PRE` **歸檔 F10～F11、立案 `ADR-0002`、更新規範並掛載 Phase A 清單**
+  - **產出與修改**：`docs/dev/archive/V2_F10_F11_COMPLETED.md`、`docs/adr/0002-frontend-modularization-and-domain-stores.md`、`film-chain/CODING_STANDARDS.md`、`docs/dev/STATE.md`、`docs/dev/V2_EXECUTION_PLAN.md`。
+  - **🔍 驗證指令**：
+    `test -f docs/adr/0002-frontend-modularization-and-domain-stores.md && test -f docs/dev/archive/V2_F10_F11_COMPLETED.md && grep -q "\- \[x\] \`A0-PRE\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A0-PRE\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+---
+
+## 階段 A1：現代化建置地基與靜態資料抽離
+
+- [x] `A1-1` **建立 Vite + TypeScript 建置管線、類型地基與修正 `#lexiconModal` DOM 順序**
+  - **程式碼檔案**：`film-chain/package.json`、`film-chain/tsconfig.json`、`film-chain/vite.config.ts`、`film-chain/public/.assetsignore`、`film-chain/client/types/studio.ts`、`film-chain/client/main.ts`、`film-chain/public/index.html`。
+  - **重點規範**：`vite.config.ts` 設 `publicDir: false`、`build.outDir: "public/dist"` 與 `formats: ["iife"]` (`studio.js`)；不加 `"type": "module"` 到 `package.json`；將 `#lexiconModal` 移至 `</dialog>` 之後；插入 `<script src="dist/studio.js"></script>`。
+  - **🔍 驗證指令**：
+    `npm run typecheck --prefix film-chain && npm test --prefix film-chain && test -f film-chain/public/dist/studio.js && grep -q "\- \[x\] \`A1-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A1-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+- [x] `A1-2` **抽離 `DEMO_PROJECT_CONFIG`、`SPEED_CONFIGS` 與 `GOLDEN_TEMPLATES_FALLBACK` 至 `client/data/templates.ts`**
+  - **程式碼檔案**：新增 `film-chain/client/data/templates.ts`、新增 `film-chain/client/registry/windowBindings.ts`、更新 `film-chain/client/main.ts`、`film-chain/public/index.html`、`film-chain/tests/dom_integrity.test.js`。
+  - **重點規範**：100% 無損搬移資料物件與 `createGoldenProjectObject`；擴充 `dom_integrity.test.js` 遞迴掃描 `client/**/*.ts`。
+  - **🔍 驗證指令**：
+    `npm run typecheck --prefix film-chain && npm test --prefix film-chain && grep -q "\- \[x\] \`A1-2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A1-2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+---
+
+## 階段 A2：領域分治 Store 解耦（消滅 39 個全域可變狀態）
+
+- [x] `A2-1` **建立 Store 工廠、`coreStore` 與 `storyboardStore` 及單元測試**
+  - **程式碼檔案**：新增 `film-chain/client/stores/createStore.ts`、`coreStore.ts`、`storyboardStore.ts`、`legacyGlobalBridge.ts`、`tests/stores.test.ts`；修改 `client/main.ts`、`public/index.html`、`package.json`。
+  - **🔍 驗證指令**：
+    `npm run typecheck --prefix film-chain && npm test --prefix film-chain && grep -q "\- \[x\] \`A2-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A2-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+- [x] `A2-2` **建立 `computeStore` 與 `audioSubtitleStore`（清除所有頂層全域 `let`）**
+  - **程式碼檔案**：新增 `film-chain/client/stores/computeStore.ts`、`audioSubtitleStore.ts`；更新 `legacyGlobalBridge.ts`、`client/main.ts`、`tests/stores.test.ts`、`public/index.html`、`public/src/controllers/studioAudioSubtitles.js`。
+  - **🔍 驗證指令**：
+    `npm run typecheck --prefix film-chain && npm test --prefix film-chain && ! grep -q "^    let " film-chain/public/index.html && grep -q "\- \[x\] \`A2-2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A2-2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+---
+
+## 階段 A3：垂直功能拆分與全倉回歸總驗收
+
+- [x] `A3-1` **垂直拆分 UI Shell 與 Colab Session Relay（`uiShell.ts` + `sessionColab.ts`，清除死碼複本）**
+  - **程式碼檔案**：新增 `film-chain/client/features/uiShell.ts`、`sessionColab.ts`；更新 `windowBindings.ts`、`main.ts`、`public/index.html`。
+  - **重點規範**：刪除早先遭覆寫的死碼複本 `saveCloudDirectKey` / `onCloudProviderChange`（保留 Step 3B 正本）。
+  - **🔍 驗證指令**：
+    `npm run typecheck --prefix film-chain && npm test --prefix film-chain && grep -q "\- \[x\] \`A3-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A3-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+- [x] `A3-2` **垂直拆分 Step 1 編導、單格精修與 Doc-to-Edu（`director.ts` + `panelRefiner.ts` + `eduStudio.ts`）**
+  - **程式碼檔案**：新增 `film-chain/client/features/director.ts`、`panelRefiner.ts`、`eduStudio.ts`；更新 `windowBindings.ts`、`public/index.html`。
+  - **🔍 驗證指令**：
+    `npm run typecheck --prefix film-chain && npm test --prefix film-chain && grep -q "\- \[x\] \`A3-2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A3-2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+- [x] `A3-3` **垂直拆分 Step 2 分鏡、2D 運鏡畫布與破音字詞庫（`stagingCanvas.ts` + `storyboardEditor.ts` + `phoneticsLexicon.ts`）**
+  - **程式碼檔案**：新增 `film-chain/client/features/stagingCanvas.ts`、`storyboardEditor.ts`、`phoneticsLexicon.ts`；更新 `windowBindings.ts`、`public/index.html`。
+  - **🔍 驗證指令**：
+    `npm run typecheck --prefix film-chain && npm test --prefix film-chain && grep -q "\- \[x\] \`A3-3\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A3-3\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+- [x] `A3-4` **垂直拆分 Step 3～5、Workspace 與 Bootstrap，達成 `index.html` 零內嵌 `<script>`**
+  - **程式碼檔案**：新增 `dispatchLocalComfy.ts`、`dispatchCloudApi.ts`、`stagePlayer.ts`、`audioSubtitles.ts`、`workspaceManager.ts`、`client/bootstrap.ts`；移除 `studioAudioSubtitles.js` 與 `legacyGlobalBridge.ts`；更新 `windowBindings.ts`、`main.ts`、`public/index.html`、`tests/dom_integrity.test.js`。
+  - **🔍 驗證指令**：
+    `npm run typecheck --prefix film-chain && npm test --prefix film-chain && test $(wc -l < film-chain/public/index.html) -lt 1500 && grep -q "\- \[x\] \`A3-4\`" docs/dev/STATE.md && grep -q "\- \[x\] \`A3-4\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+
+- [x] `A3-5` **架構單向依賴與 Bridge 契約測試建立（初版）**
+  - **程式碼檔案**：新增 `film-chain/tests/architecture.test.ts`；更新 `film-chain/tsconfig.json`、`film-chain/package.json`。
+  - **驗收缺口紀錄**：原 Gate 因先執行 `python3 -m unittest` 生成 `__pycache__/*.pyc` 後再用無 `-I` 的 `! grep -rn "/Users/"` 掃描二進位 `.pyc` 導致 **Exit code 1**，隨後僅補跑後半段 Python / Ruff / `grep -rnI`，未從頭重跑整條 Gate。所有未竟總驗收與 Code Review 收斂要求統一併入 **階段 A4（`A4-1` ～ `A4-6`）**。
+
+---
+
+## Full Phase A Verification Gate（Fail-Closed 單指令門禁）
+
+所有 Phase A 批次（`A4-1` ～ `A4-6`）修改完成後，必須一次從頭到尾執行下列完整 Gate 且必須 **Exit code 0**（嚴禁拆段執行或僅重跑失敗子項；其中 Layer 1 CI 結構檢驗於 `A4-1` 完成後永久納入）：
+
+```bash
+/bin/bash -Eeuo pipefail <<'EOF'
+NODE_LOG="$(mktemp)"
+PY_LOG="$(mktemp)"
+trap 'rm -f "$NODE_LOG" "$PY_LOG"' EXIT
+
+npm run typecheck --prefix film-chain
+npm run build --prefix film-chain
+test -s film-chain/public/dist/studio.js
+
+npm test --prefix film-chain | tee "$NODE_LOG"
+/usr/bin/python3 - "$NODE_LOG" <<'PY'
+import re, sys
+MIN_NODE_TESTS = 89  # 隨新增測試同步調升基準，嚴禁下調
+txt = open(sys.argv[1], encoding="utf-8").read()
+parsed = {}
+for k in ("tests", "pass", "fail", "skipped", "cancelled", "todo"):
+    hits = re.findall(rf"^ℹ {k} (\d+)$", txt, re.M)
+    if len(hits) != 1:
+        print(f"PARSE_ERROR: Node summary field '{k}' matched {len(hits)} times (expected 1)")
+        sys.exit(1)
+    parsed[k] = int(hits[0])
+if re.search(r"^not ok \d+", txt, re.M):
+    print("FAIL: TAP 'not ok' line detected in Node test output")
+    sys.exit(1)
+t, p, f, s, c, td = (parsed[k] for k in ("tests", "pass", "fail", "skipped", "cancelled", "todo"))
+print(f"Node: {p}/{t} pass (min>={MIN_NODE_TESTS}, fail={f}, skipped={s}, cancelled={c}, todo={td})")
+if not (t >= MIN_NODE_TESTS and p == t and f == 0 and s == 0 and c == 0 and td == 0):
+    sys.exit(1)
+PY
+
+python3 -m unittest discover -s tests 2>&1 | tee "$PY_LOG"
+/usr/bin/python3 - "$PY_LOG" <<'PY'
+import re, sys
+MIN_PY_TESTS = 127  # 隨新增測試同步調升基準，嚴禁下調
+txt = open(sys.argv[1], encoding="utf-8").read()
+ran = re.findall(r"^Ran (\d+) tests? in [0-9.]+s$", txt, re.M)
+if len(ran) != 1:
+    print(f"PARSE_ERROR: Python unittest 'Ran N tests' matched {len(ran)} times (expected 1)")
+    sys.exit(1)
+n = int(ran[0])
+if re.search(r"^FAILED\b", txt, re.M):
+    print("FAIL: Python unittest reported FAILED")
+    sys.exit(1)
+statuses = re.findall(r"^(OK(?:\s*\(.*\))?)$", txt, re.M)
+if statuses != ["OK"]:
+    print(f"PARSE_ERROR_OR_SKIP: Expected exact single 'OK' line, got {statuses}")
+    sys.exit(1)
+print(f"Python: Ran {n} tests, status=OK (min>={MIN_PY_TESTS})")
+if n < MIN_PY_TESTS:
+    sys.exit(1)
+PY
+
+.venv/bin/ruff check .
+
+/usr/bin/python3 - <<'PY'
+import subprocess, sys
+r = subprocess.run(
+    ["grep", "-rnI", "--exclude-dir=__pycache__", "--exclude-dir=.git", "--exclude-dir=node_modules",
+     "/Users/", "pipeline", "tests", "examples", "README.md", "film-chain/client"],
+    capture_output=True, text=True,
+)
+if r.returncode == 1:
+    print("Path Hygiene: PASS (0 matches)")
+    sys.exit(0)
+print(f"Path Hygiene FAILED (rc={r.returncode}):\n{r.stdout}{r.stderr}")
+sys.exit(1)
+PY
+
+CI_JSON="$(ruby -ryaml -rjson -e 'puts JSON.generate(YAML.safe_load(File.read(".github/workflows/ci.yml"), aliases: true))')"
+/usr/bin/python3 - "$CI_JSON" <<'PY'
+import json, sys
+wf = json.loads(sys.argv[1])
+jobs = wf.get("jobs") or {}
+for req in ("test", "frontend"):
+    assert req in jobs, f"Missing CI job: {req}"
+fe_steps = jobs["frontend"].get("steps") or []
+assert any(str(s.get("uses", "")).startswith("actions/setup-node@") and (s.get("with") or {}).get("node-version") for s in fe_steps), "Missing setup-node with node-version"
+fe_runs = "\n".join(str(s.get("run", "")) for s in fe_steps)
+for cmd in ("npm --prefix film-chain ci", "typecheck", "build", "test"):
+    assert cmd in fe_runs, f"Missing frontend CI step command: {cmd}"
+py_runs = "\n".join(str(s.get("run", "")) for s in (jobs["test"].get("steps") or []))
+for cmd in ("ruff check .", "unittest discover -s tests"):
+    assert cmd in py_runs, f"Missing python CI step command: {cmd}"
+assert '! grep -rn "/Users/"' not in py_runs, "Unsafe bare ! grep -rn remains in ci.yml"
+print("CI Layer-1 Static Validation: PASS (jobs=test,frontend)")
+PY
+
+test "$(wc -l < film-chain/public/index.html)" -lt 1500
+test "$(wc -l < docs/dev/STATE.md)" -le 50
+git status --short
+EOF
 ```
 
-- [x] `F1-1` **於 `pipeline/h3_state.py` 實作環境指紋與五節點 `ShotArtifactHashes`**
-  - **程式碼檔案**：`pipeline/h3_state.py`（讀取 `L1-144`）
-  - **修改內容**：
-    1. 將 `STATE_SCHEMA_VERSION` 升為 `2`（保留 `from_dict` 對 `v1` 的向下相容讀取）。
-    2. 新增 `@dataclass(frozen=True) class EnvironmentFingerprints`：收集 `engine_sha256`（`h3` 二進位檔大小與 mtime/前 64KB hash）、`model_fingerprint`（模型目錄下 `.safetensors` 檔案清單與大小摘要）、`prompt_template_version = "v2.0"`、`ffmpeg_mux_signature = "c:v_copy_c:a_aac_192k"`。
-    3. 新增 `@dataclass(frozen=True) class ShotArtifactHashes`：包含 `visual_hash: str`, `audio_hash: str`, `mux_hash: str`, `subtitle_hash: str`, `final_hash: str`。
-    4. 新增純函式 `compute_shot_artifact_hashes(seg: dict, profile_dict: dict, render_cfg: dict, env_fp: EnvironmentFingerprints | None = None) -> ShotArtifactHashes`：
-       - `visual_hash`：雜湊視覺描述（剝除 `<d>...</d>` 對白標籤後的純視覺 Prompt）、`first_frame`、`last_frame`、`chain_mode`、`width`、`height`、`frames`、`steps`、`layers`、`reuse`、`seed`、`engine_sha256`、`model_fingerprint`。
-       - `audio_hash`：雜湊 `spoken_dialogue`（若無則取 `<d>` 內容或 `dialogue`）、`acoustic_anchor`、`bgm_style`、`frames`、`seed`、`model_fingerprint`。
-       - `mux_hash`：雜湊 `visual_hash + audio_hash + ffmpeg_mux_signature`。
-       - `subtitle_hash`：雜湊 `display_dialogue`（若無則取 `dialogue`）、`subtitle_segments`、`font_id`。
-       - `final_hash`：雜湊 `mux_hash + subtitle_hash + burn_subtitles_flag`。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F1-1\`` 改為 `- [x] \`F1-1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F1-1\`` 改為 `- [x] \`F1-1\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_state.py && grep -q "\- \[x\] \`F1-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F1-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F1-2` **實作快取失效判定器 `evaluate_shot_invalidation` 與 8 情境測試**
-  - **程式碼檔案**：`pipeline/h3_state.py`、新增 `tests/test_artifact_cache_graph.py`
-  - **修改內容**：
-    1. 新增 `@dataclass(frozen=True) class ShotInvalidationPlan`：含布林欄位 `rerun_video: bool`, `rerun_audio: bool`, `rerun_mux: bool`, `rerun_subtitle: bool`, `rerun_final: bool`。
-    2. 新增 `evaluate_shot_invalidation(prev_hashes: ShotArtifactHashes | None, curr_hashes: ShotArtifactHashes, upstream_video_changed: bool = False, uses_motion_context: bool = False) -> ShotInvalidationPlan`：
-       - 若 `upstream_video_changed` 為 True 且 `uses_motion_context` 為 True，強制 `rerun_video = True`。
-       - 若僅 `subtitle_hash` 改變：`rerun_video=False, rerun_audio=False, rerun_mux=False, rerun_subtitle=True, rerun_final=True`。
-       - 若僅 `audio_hash` 改變：`rerun_video=False, rerun_audio=True, rerun_mux=True, rerun_subtitle=True, rerun_final=True`。
-    3. 於 `tests/test_artifact_cache_graph.py` 編寫完整 8 種修改情境（含模型指紋變更、上游 `motion_context` 連鎖失效、僅改 `display_dialogue`、僅改 `spoken_dialogue`）的單元測試。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F1-2\`` 改為 `- [x] \`F1-2\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F1-2\`` 改為 `- [x] \`F1-2\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_artifact_cache_graph.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_state.py tests/test_artifact_cache_graph.py && grep -q "\- \[x\] \`F1-2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F1-2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F1-3` **將分層 Hash 接入 `pipeline/h3_storyboard_pipeline.py`**
-  - **程式碼檔案**：`pipeline/h3_storyboard_pipeline.py`（切片讀取 `L825-990`）
-  - **修改內容**：
-    1. 在 `state.completed_segments[str_idx]` 中儲存 `"artifact_hashes": asdict(shot_hashes)`。
-    2. 當 `loaded_state` 存在時，不再因為單一頂層 `cfg_hash` 不同而清空無關段落的快取，改為若段落已有舊 `artifact_hashes` 則呼叫 `evaluate_shot_invalidation()` 判斷該鏡是否可重用既有 `Video Artifact`（同時保留舊版無 `artifact_hashes` 時對 `config_hash` 的向下相容行為）。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F1-3\`` 改為 `- [x] \`F1-3\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F1-3\`` 改為 `- [x] \`F1-3\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_storyboard_pipeline.py && grep -q "\- \[x\] \`F1-3\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F1-3\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+> **Fail-Closed 判準**：`set -Eeuo pipefail` 確保管線前端任何非零結束碼（含 `npm test | tee` 與 `unittest | tee`）即時中止；Node / Python 解析器對未知格式、多行或缺失摘要行均回傳 `PARSE_ERROR` 並拒絕通過；Path Hygiene 僅接受 `rc == 1`（`0` 與 `>= 2` 一律失敗）。
+> **兩層 CI 驗收區分**：本機 Gate 中的 Ruby YAML + JSON 腳本屬於 **Layer 1（靜態定義完整性檢驗）**，僅證明 Workflow YAML 合法且定義了 `frontend` / `test` jobs 與步驟；**Layer 2（遠端 CI 實跑結果）** 須於 `A4-6` 核對推送 Commit SHA 對應的 GitHub Actions 實際執行狀態為 `success`，兩層不可混為一談。
+> **Git Diff 判準**：驗收時以 `git status --short` 與 `git diff --stat HEAD` 逐項對照核可的變更清單；屬於 Phase A / A4 未提交的預期開發修改**不得**被誤判為工作目錄不乾淨，僅禁止遺留暫存檔、`.bak`、`scratch/` 產物或範圍外檔案。
 
 ---
 
-## 階段 F2：Manifest 語音／字幕雙軌與受控發音正規化
+## 階段 A4：收斂修訂與全倉驗收（`A4-1` ～ `A4-6`，待確認後循序執行）
 
-- [x] `F2-1` **建立受控三層發音正規化器 `pipeline/h3_phonetic_normalizer.py`**
-  - **程式碼檔案**：新增 `pipeline/h3_phonetic_normalizer.py`、擴充 `configs/pronunciation_lexicon.json`、新增 `tests/test_phonetic_normalizer.py`
-  - **修改內容**：
-    1. 新增 `@dataclass(frozen=True) class PronunciationOverride` (`original: str`, `replacement: str`, `reason: str`) 與 `@dataclass(frozen=True) class NormalizedDialogueResult` (`display_dialogue: str`, `spoken_dialogue: str`, `pronunciation_overrides: tuple[PronunciationOverride, ...]`, `diagnostic_warnings: tuple[str, ...]`)。
-    2. 實作第一層 `normalize_numbers_and_units(text: str) -> tuple[str, list[PronunciationOverride]]`：處理百分比（`15.5%` $\to$ `百分之十五點五`）、年份與小數。
-    3. 實作第二層：讀取 `configs/pronunciation_lexicon.json` 經人工確認之完整詞組（如 `作業成本`、`資本權重`、`資金調撥`、`會計系統`），絕不單字盲換。
-    4. 實作第三層：套用 Shot 內顯式指定的 `pronunciation_overrides` 清單；若環境裝有 `pypinyin` 僅作唯讀診斷填入 `diagnostic_warnings`，無 `pypinyin` 時安靜跳過。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F2-1\`` 改為 `- [x] \`F2-1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F2-1\`` 改為 `- [x] \`F2-1\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_phonetic_normalizer.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_phonetic_normalizer.py tests/test_phonetic_normalizer.py && grep -q "\- \[x\] \`F2-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F2-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+- [x] `A4-1` **修正 Full Gate、打通本機 `:8080` 靜態服務與 `start_studio.sh` 自動建置、CI 納管前端測試**
+  - **範圍**：`pipeline/h3_server.py`、`tests/test_h3_server.py`、`scripts/start_studio.sh`、`.github/workflows/ci.yml`、`docs/dev/STATE.md`、`docs/dev/V2_EXECUTION_PLAN.md`。
+  - **實作要點**：
+    1. `pipeline/h3_server.py` `do_GET` 新增唯讀靜態資產路由，將 `/` 對應至 `film-chain/public/index.html`，其餘非 `/api/` 路徑以 `Path.resolve()` 嚴格限制於 `film-chain/public/` 內（防範 `..` / symlink 目錄穿越）並回傳正確 MIME 型別（`.html` / `.js` / `.css` / `.png` / `.mp4`）。
+    2. `scripts/start_studio.sh` 於啟動服務前自動執行 `npm run build --prefix film-chain`（若 `film-chain/node_modules` 缺失則輸出清晰提示或執行安裝），並改以 `http://127.0.0.1:8080/` 開啟 Studio UI（消除 fresh clone 缺 `dist/studio.js` 與 `file://` 斷鏈）。
+    3. `.github/workflows/ci.yml` 新增獨立 `frontend` job（`actions/setup-node` + `npm --prefix film-chain ci` + `typecheck` + `build` + `test`），並將 Path Hygiene 改為 3 態 exit code 檢查（移除裸 `! grep -rn`）。
+  - **🔍 驗收標準**：`tests/test_h3_server.py` 覆蓋靜態資源 200、`/dist/studio.js` MIME 與目錄穿越 `403/404` 阻擋；`scripts/start_studio.sh` 經 `bash -n` 驗證；**Layer 1 CI 靜態結構檢查通過**且完成完整 Fail-Closed Full Gate（Exit 0；**Layer 2 遠端實跑結果**於推送後在 `A4-6` 確認，不以本機檢驗替代遠端 CI）。
 
-- [x] `F2-2` **接入 `pipeline/h3_edu_profile.py` 雙軌欄位並維持舊版相容**
-  - **程式碼檔案**：`pipeline/h3_edu_profile.py`（讀取 `L57-201`）
-  - **修改內容**：
-    1. 新增 `resolve_shot_dialogues(shot: dict, lang_code: str = "zh-TW") -> NormalizedDialogueResult`：若 `shot` 已提供 `display_dialogue` / `spoken_dialogue` 則優先尊重；若僅提供 `dialogue` 則自動衍生雙軌。
-    2. `compile_shot_prompt()` 嚴格使用 `spoken_dialogue` 寫入 `<d>[Chinese] ...</d>`，且 `calculate_optimal_frames()` 以 `spoken_dialogue` 的實際發音字數計算幀數。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F2-2\`` 改為 `- [x] \`F2-2\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F2-2\`` 改為 `- [x] \`F2-2\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_edu_profile.py && grep -q "\- \[x\] \`F2-2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F2-2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+- [x] `A4-2` **修復狀態映射回歸、強化 Store 外部不可變封裝、全量稽核 45 處動態 HTML Sink 與清理舊 CLI 字串**
+  - **範圍**：`client/types/studio.ts`、`client/utils/domSafety.ts`（新增）、`client/stores/createStore.ts`、`client/stores/storyboardStore.ts`、`client/stores/coreStore.ts`、`client/stores/computeStore.ts`、`client/stores/audioSubtitleStore.ts`、`client/features/uiShell.ts`、`sessionColab.ts`、`storyboardEditor.ts`、`phoneticsLexicon.ts`、`stagePlayer.ts`、`director.ts`、`dispatchCloudApi.ts`、`dispatchLocalComfy.ts`、`audioSubtitles.ts`、`workspaceManager.ts`、`client/bootstrap.ts`、`client/registry/windowBindings.ts`、`tests/stores.test.ts`、`tests/dom_safety.test.ts`、`film-chain/package.json`。
+  - **實作要點**：
+    1. 正確性與契約回歸修補：統一 `ComputeRoute = "colab" | "saas_api" | "local"` 與 `StartWorkflowMode = "web" | "agent"`；修正 `sessionColab.ts#L94` `routeGpu` 判斷 `"saas_api"`；修正 `storyboardEditor.ts#L745` 改由 `storyboardStore.getState().refImageBase64`（與 `#refPreview` `src`）判斷自訂參考圖；修正 `workspaceManager.ts#L20` 在 `syncSegmentsFromDOM()` 後才讀取快照；清理 `stagePlayer.ts#L403` 與 `storyboardEditor.ts#L639` 裸調腳本字串為 `python3 -m pipeline.h3_cli`。
+    2. **Store State 型別限制與 `deepFreeze` 契約**：
+       - **允許之領域資料型別**：僅限 Primitive（`string | number | boolean | null | undefined`）、Plain Object（原型為 `Object.prototype` 或 `null`）與 `Array`。
+       - **明確拒絕不支援之內建可變物件**：禁止將 `Map`、`Set`、`Date`、`RegExp`、`WeakMap`、`WeakSet`、`ArrayBuffer` / `TypedArray` 放入 Domain Data State；`createStore` 於開發／測試模式對這類物件**直接拋出 `TypeError`**，絕不宣稱 `Object.freeze()` 可凍結其內部狀態。
+       - **瀏覽器 Runtime Handle 隔離白名單**：`Blob`、`WebSocket`、`EventSource`、`AbortController`、`AudioContext`、`AudioBuffer`、`AudioNode`、Timer ID 與 Promise resolver 僅得存放於顯式標記的 Opaque Handle 欄位（白名單跳過凍結，不偽裝為不可變資料）。
+       - **不可變 Actions**：於 `storyboardStore` 新增 `updateSegments`、`updateSegmentAt`、`updatePlanMeta`，消除全部 6 處就地變異 `currentPlan`。
+    3. **全量 45 處動態 HTML Sink 脈絡分類與防護**（`45` 為盤點總數，**禁止**一律機械套用 `escapeHtml()`）：
+       - 逐一產出五欄分類稽核表：**（1）輸入資料來源、（2）是否含使用者／外部可控資料、（3）DOM API、（4）脈絡安全策略（純文字改 `textContent`／`.value`、`<textarea>` 改 `.value` 設定、`href`/`src` 採 `sanitizeUrl()` 協定白名單＋`setAttribute`、內聯數值引數強制整數、HTML 文字插值才使用 `escapeHtml`）、（5）對應測試**。
+  - **🔍 驗收標準**：新增單元測試驗證「外部變異 `getState().currentPlan` 拋出 `TypeError` 且內部 State 不變」以及「傳入 `Map` / `Set` / `Date` 至 `setState` 明確拒絕拋出 `TypeError`」；45 處 Sink 全數完成五欄分類與脈絡修正，並通過 `</textarea><script>`、引號逃逸與 `javascript:` URL 測試；完整 Fail-Closed Full Gate（Exit 0）。
 
----
+- [x] `A4-3` **開啟 TypeScript `strict: true`、集中常數、精簡 `windowBindings.ts`、強化架構測試與 `.mts` 靜音**
+  - **範圍**：`film-chain/tsconfig.json`、`film-chain/client/config/constants.ts`（新增）、`film-chain/client/utils/errors.ts`（新增）、`film-chain/client/package.json`（新增）、`film-chain/src/package.json`（新增）、`film-chain/client/registry/windowBindings.ts`、`sessionColab.ts`、`vite.config.mts`（由 `.ts` 改名）、`tests/architecture.test.mts` / `tests/stores.test.mts` / `tests/dom_safety.test.mts` / `tests/worker_session.test.mjs`、`film-chain/package.json`。
+  - **實作要點**：
+    1. `tsconfig.json` 開啟 `"strict": true`（移除 `strict: false`、`noImplicitAny: false`、`strictNullChecks: false`），將 `vite.config.mts` 納入檢查，消除無必要的鬆散型別與不安全 `any`（保留明確且可驗證邊界的型別定義）。
+    2. 新增 `client/config/constants.ts` 集中管理 `:8080` Daemon URL、`localStorage` keys 與共用時序／畫布／語速閾值常數。
+    3. 精簡 `windowBindings.ts` 僅註冊 `index.html` 與動態 HTML 實際使用的 inline handlers + 8 項外部 Bridge 契約（含唯讀 `window.currentActiveProjectId` getter），將 `_renderColabPipelineTrackerInner` 收斂為模組私有。
+    4. 升級 `tests/architecture.test.mts` 擴充 import 擷取涵蓋 `export ... from`、動態 `import()`、`require()` 及 `createStore.ts` 邊界，並檢查 `public/src/core/*.js` 不依賴 UI/DOM（**嚴禁加入機械式函式行數限制斷言**）；改用 `.mts` 消除 Node `MODULE_TYPELESS_PACKAGE_JSON` 與 Vite native config 警告。
+  - **🔍 驗收標準**：`tsc --noEmit`（`strict: true`）0 錯誤；`npm test` 0 `MODULE_TYPELESS_PACKAGE_JSON` 警告；`vite build` 0 configLoader 警告；Full Gate 全綠。
 
-## 階段 F3：零漂移 CJK 字幕系統、中文字符級時間軸與軟硬封裝
+- [x] `A4-4` **證據驅動重構 Batch 1（編導、分鏡、Colab、UI Shell）**
+  - **實作範圍與設計卡（5 Cards）**：`client/utils/errors.ts`（`formatDiagnosticError`）、`director.ts`（`dispatchPlanByProvider` / `generateStep1GridImage`）、`storyboardEditor.ts`（共用 `dispatchPlanByProvider`、`resolveSegmentCardContext` / `buildSegmentChainControlHtml`）、`sessionColab.ts`（`computeSegmentTimeRanges`、`markRenderCardsDone` / `applySessionStageProgress`）、`uiShell.ts`（`syncModeToolbarUI` / `syncSegmentCardsModeBadges`）、`panelRefiner.ts`、`tests/refactor_helpers.test.mts`。
+  - **豁免保留單一職責函式（不硬拆）**：`createGoldenProjectObject`、`buildDirectorSystemPrompt`、`normalizeAgentPlan`、`callPlanViaLocalLLM`、`onChainParadigmChange`、`renderChainTimelineBar`、`syncSegmentsFromDOM`、`exportChainedManifest`、`splitSegmentCardInTwo`、`updateDurationBadge`、`startSessionListener`、`updateColabPromptText`、`updateStep3UI`、`loadSampleEduDoc`、`extractEduOutlines`、`generateEduStoryboardFromOutlines`、`updatePacingBadgeForCard`、`executeSinglePanelAiRegen`。
+  - **重構目標與克制界線**：以實質降低維護與 Bug 風險為限，不做無止境的指標導向重構。`50 行 / 3 層縮排 / 3 參數` 僅作 **Code Review 警示門檻**，禁止機械式拆小函式；任何拆解必先完成 **4 項重構設計卡（原始設計問題／實際複雜度或耦合問題／預計改善的職責邊界／拆解後驗收方式）**；具單一清晰職責且無明顯維護風險者（例如 `createGoldenProjectObject`）明確保留並記錄豁免理由。
+  - **候選評估標的**：`director.ts`（`executeStep1`、`callPlanViaGemini`、`callPlanViaOpenAI`、`buildAgentPlanTaskPack`、統一 `H3CloudDiagnostics` 錯誤轉譯 helper）、`storyboardEditor.ts`（`appendSegmentCardDOM`、`renderChainTimelineBar`、`syncSegmentsFromDOM`、`exportChainedManifest`、`replanCurrentSegmentsViaAI`）、`sessionColab.ts`（`_renderColabPipelineTrackerInner`、`handleSessionUpdate`、`buildColabCompatibleManifest`）、`uiShell.ts`（`selectProjectMode`、`updateStep3UI`）、`eduStudio.ts`、`panelRefiner.ts`。
+  - **🔍 驗收標準**：每個改動函式均具備 4 項設計卡紀錄，未改動超長函式皆具明確豁免理由；目標模組行為 100% 等價；完整 Fail-Closed Full Gate（Exit 0）。
 
-- [x] `F3-A1` **CJK 字體 `getmask` 實測載入驗證與動態畫布排版**
-  - **程式碼檔案**：`pipeline/h3_subtitles.py`（讀取 `L1-119`）
-  - **修改內容**：
-    1. 新增 `resolve_verified_cjk_font(font_size: int) -> tuple[ImageFont.FreeTypeFont | ImageFont.ImageFont, str]`：依序探測 `H3_SUBTITLE_FONT`、`PingFang.ttc`、`STHeiti Medium.ttc`、`Arial Unicode.ttf`、`NotoSansCJK-Regular.ttc`；載入後強制執行 `mask = font.getmask("測試中文")` 確認 `mask.size[0] > 0`，回傳字體物件與字體檔指紋 `font_id`。
-    2. 新增 `probe_media_streams(video_path: Path) -> MediaStreamInfo`（透過 `ffprobe` 取得精確 `width`, `height`, `video_duration_sec`, `audio_duration_sec`）。
-    3. `render_subtitle_card()` 支援依影片實際 `(width, height)` 動態縮放字級，並在單行超寬時自動切成雙行居中繪製。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F3-A1\`` 改為 `- [x] \`F3-A1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F3-A1\`` 改為 `- [x] \`F3-A1\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_subtitles.py && grep -q "\- \[x\] \`F3-A1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F3-A1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+- [x] `A4-5` **證據驅動重構 Batch 2（算力調度、播放器、音訊、工作區與資源洩漏修補）**
+  - **重構目標與克制界線**：同 `A4-4`（4 項設計卡優先、單一職責豁免不硬拆、`buildComfyApiPrompt` / `executeLocalComfyStep` / `executeCloudSaveOption` / `mergeAndDownloadCloudClips` / `renderSegmentsPlaylist` / `applyProjectStateToUI` / `initWorkspaceOnLoad` / `replaceShotSpeechOnly` / `registerStudioBootstrap` 等明確豁免）。
+  - **已落地修復與設計卡（5 Cards）**：`stagingCanvas.ts` 全域 `window` 拖曳監聽器僅於拖曳期間掛載並於結束/清理時解除；`uiShell.ts` `playCompletionChime` 與 `audioSubtitles.ts`（`handleCustomBgmUpload`、`renderMixedAudioTrack`、`executeMasterAudioVideoMux`）一次性 `AudioContext` 於結束/`finally` 釋放 `.close()`；`storyboardEditor.ts` / `workspaceManager.ts` / `uiShell.ts` 統一使用 `copyTextToClipboard`；`audioSubtitles.ts` 拆出 `renderMixedAudioTrack` 與 `drawBurnInSubtitleOnCanvas`；`stagePlayer.ts` `triggerRerollExecution` 拆為 `dispatchColabReroll` 與 `dispatchCloudApiReroll` 並連同 `dispatchCloudApi.ts` 接上 `formatDiagnosticError`；新增 `tests/resource_lifecycle.test.mts`。
+  - **🔍 驗收標準**：每個改動均附 4 項設計卡，豁免項目均有紀錄；`stagingCanvas.ts` 與 `AudioContext` 生命週期具單元測試覆蓋；完整 Fail-Closed Full Gate（Exit 0）。
 
-- [x] `F3-A2` **中文 Character-Level 時間戳與兩階段語音對齊引擎**
-  - **程式碼檔案**：`pipeline/h3_subtitles.py`、新增 `tests/test_subtitles_alignment.py`
-  - **修改內容**：
-    1. 新增 `@dataclass(frozen=True) class CharTimestamp` (`char: str`, `start: float`, `end: float`) 與 `@dataclass(frozen=True) class ShotSubtitleTrack` (`shot_id: str`, `start_frame: int`, `end_frame: int`, `display_dialogue: str`, `alignment_method: str`, `subtitle_segments: tuple[SubtitleCue, ...]`)。
-    2. 實作標點與語意切卡器 `split_cjk_dialogue_into_cards(text: str, max_chars: int = 22) -> list[str]`。
-    3. 實作兩階段時間軸 `align_shot_subtitles()`：
-       - 若有字級強制對齊器 callback 則標記 `alignment_method="forced_align"`。
-       - 否則使用 WAV 能量包絡 / `silencedetect` 找出真實發聲起訖 `[speech_onset, speech_offset]`，按「中文字符權重 1.0 + 標點停頓權重（逗號 0.38、頓號 0.25、句號/問號/驚嘆號 0.55）」分配每個中文字的 Character-Level 時間戳，再聚合為 `subtitle_segments`，標記 `alignment_method="vad_char_weighted"`。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F3-A2\`` 改為 `- [x] \`F3-A2\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F3-A2\`` 改為 `- [x] \`F3-A2\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_subtitles_alignment.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_subtitles.py tests/test_subtitles_alignment.py && grep -q "\- \[x\] \`F3-A2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F3-A2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F3-B` **音視訊時長差 `apad` 安全檢查與 `mov_text` 軟/硬字幕封裝**
-  - **程式碼檔案**：`pipeline/h3_subtitles.py`、`pipeline/h3_storyboard_pipeline.py`（切片讀取 `L660-740`）、新增 `tests/test_subtitles_muxing.py`
-  - **修改內容**：
-    1. 新增 `mux_soft_subtitles_mp4(video_path: Path, srt_path: Path, output_path: Path) -> Path`：明確執行 `ffmpeg -y -i video -i srt -map 0:v:0 -map 0:a:0? -map 1:s:0 -c:v copy -c:a copy -c:s mov_text -metadata:s:s:0 language=zho output`。
-    2. 新增 `reconcile_av_duration(video_path: Path, audio_path: Path, output_path: Path) -> Path`：先用 `probe_media_streams` 檢查視訊與音訊秒數差，音訊較短時加 `-af apad` 對齊視訊長度，**嚴禁盲目用 `-shortest` 切斷說話尾音**。
-    3. 修改 `_apply_manifest_subtitles()`：優先從各段 `display_dialogue` 與已落盤 `.mp4` 的真實 `ffprobe` 秒數建立零漂移字幕軌；支援 `mov_text` 軟字幕與 `burn_subtitles` 硬字幕燒錄。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F3-B\`` 改為 `- [x] \`F3-B\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F3-B\`` 改為 `- [x] \`F3-B\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_subtitles_muxing.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_subtitles.py pipeline/h3_storyboard_pipeline.py tests/test_subtitles_muxing.py && grep -q "\- \[x\] \`F3-B\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F3-B\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
+- [x] `A4-6` **完整端到端 Gate 驗收、Git Diff 範圍確認與 Layer 2 CI ＋ 雙軸複驗**
+  - **實作要點**：
+    1. 一次性從頭執行完整 **Fail-Closed Full Gate**（Exit 0），紀錄 Node 實際數／失敗／跳過數、Python 實際數／失敗／跳過數、Vite build 產物與耗時、Ruff、3 態 Path Hygiene 與 Layer 1 CI 結構檢查結果。
+    2. 對照 `git status --short` 與 `git diff --stat HEAD`，確認變更均為預期 Phase A / A4 產物且無遺留垃圾檔（不把合理未提交開發變更誤判為失敗）。
+    3. 確認 **Layer 2 遠端 CI**：於推送後核對該 Commit SHA 對應之 GitHub Actions 實際執行結果為 `success`（若環境尚未推送，必須明確標記「待推送遠端驗證」，不得宣告遠端 CI 已通過）。
+    4. 重新執行 `/code-review` 雙軸複驗，達成 **Spec = `PASS`** 與 **Standards = `PASS`**（既有功能正確、架構邊界清楚、部署可重現、品質可自動驗收、具備 Phase B 穩定契約），方將 `STATE.md` 標記 Phase A 結案。
+  - **🔍 驗收紀錄**：Fail-Closed Full Gate Exit 0（Node `89/89 pass`, `0 fail`, `0 skip`, 0 `MODULE_TYPELESS_PACKAGE_JSON` 警告；Python `127/127 OK`；TS `strict: true` 0 錯誤；`vite build` 0 `configLoader` 警告；Ruff PASS；Path Hygiene PASS `rc=1`；CI Layer-1 PASS）；Dual-Axis Review：**Spec = `PASS`**、**Standards = `PASS`**；**Layer 2 遠端 CI：待推送遠端驗證**（本地變更保留於工作目錄供審視）。
 
 ---
 
-## 階段 F4：數據分級 Telemetry 與五態 Colab Watchdog
+## 階段 B：引擎擴充前導契約（`B0-SPEC`，Phase A 正式結案後方可啟動）
 
-- [x] `F4-1` **建立數據可信度分級之 `pipeline/h3_telemetry.py`**
-  - **程式碼檔案**：新增 `pipeline/h3_telemetry.py`、新增 `tests/test_telemetry_and_watchdog.py`
-  - **修改內容**：
-    1. 實作 `@dataclass(frozen=True) class SpecGroupKey` (`gpu_model: str`, `resolution: str`, `frames: int`, `mode: str`)。
-    2. 實作 `@dataclass(frozen=True) class TelemetrySnapshot`：
-       - 實測欄位（`measured`）：`completed_segments`, `total_segments`, `current_segment_step`, `current_segment_total_steps`, `last_segment_seconds`。
-       - 分組統計與推估欄位（`estimated`）：依同 `SpecGroupKey` 歷史樣本計算 `avg_segment_seconds`、`remaining_minutes`、`eta_status` (`"estimated" | "insufficient_samples"`)、`eta_confidence` (`"high" | "medium" | "low"`)。
-       - 外部欄位（`external`）：`cu_balance: float | None`、`cu_balance_status` (`"available" | "stale" | "unknown"`)，**嚴禁自行扣減推算餘額**。
-    3. 實作原子寫入 `write_telemetry_snapshot(output_dir: Path, snapshot: TelemetrySnapshot) -> Path`。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F4-1\`` 改為 `- [x] \`F4-1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F4-1\`` 改為 `- [x] \`F4-1\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_telemetry_and_watchdog.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_telemetry.py tests/test_telemetry_and_watchdog.py && grep -q "\- \[x\] \`F4-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F4-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F4-2` **收編通用化五態 `pipeline/h3_colab_watchdog.py`（含 `STALLED` 偵測）**
-  - **程式碼檔案**：新增 `pipeline/h3_colab_watchdog.py`、擴充 `tests/test_telemetry_and_watchdog.py`
-  - **修改內容**：
-    1. 定義五態常數：`RUNNING`, `STALLED`, `RECOVERING`, `COMPLETED`, `FAILED`。
-    2. 實作五維度健康探針 `evaluate_watchdog_health(proc_alive, session_alive, progress_updated_ago_sec, max_stall_sec, output_count)`：**即使 `proc_alive` 與 `session_alive` 皆為 True，只要 `progress_updated_ago_sec > max_stall_sec`，立即判定為 `STALLED`（假活著）** 並進入 `RECOVERING`。
-    3. 實作 `is_gpu_capacity_503(stderr_text: str) -> bool`：僅當錯誤包含容量/配額關鍵字（`RESOURCE_EXHAUSTED`, `accelerator`, `stockout`, `A100`）時才允許 `A100 -> L4` 降級。
-    4. 移除所有硬編碼路徑，支援 CLI 參數 `--manifest`, `--output-dir`, `--gpu`, `--min-cu`, `--cold-stall-sec`, `--warm-stall-sec`。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F4-2\`` 改為 `- [x] \`F4-2\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F4-2\`` 改為 `- [x] \`F4-2\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_telemetry_and_watchdog.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_colab_watchdog.py tests/test_telemetry_and_watchdog.py && grep -q "\- \[x\] \`F4-2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F4-2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
----
-
-## 階段 F5：確定性 Agent 唯一主入口 `pipeline/h3_cli.py` 與四級防呆 Skill
-
-- [x] `F5-1` **實作 `pipeline/h3_cli.py`：Manifest 驗證、表格編譯與語意切片 `digest`**
-  - **程式碼檔案**：新增 `pipeline/h3_cli.py`、新增 `tests/test_h3_cli.py`
-  - **修改內容**：
-    1. 子指令 `validate-manifest --manifest <path>`：檢查雙軌欄位、幀數合法性、錨點圖存在性與五節點 Hash 狀態。
-    2. 子指令 `build-manifest --from-table <md/tsv> --track <local_5s|colab_12s> --output <json>`：將簡單表格確定性編譯為完整 JSON Manifest（自動執行 F2 雙軌正規化）。
-    3. 子指令 `digest --input <doc_path> --max-chars 1000`：優先按 Markdown `#` 標題、空行段落與表格邊界切分語意區塊，絕不切斷句子或表格。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F5-1\`` 改為 `- [x] \`F5-1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F5-1\`` 改為 `- [x] \`F5-1\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_h3_cli.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_cli.py tests/test_h3_cli.py && grep -q "\- \[x\] \`F5-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F5-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F5-2` **實作 `resolve-anchor` 四級防呆梯、`render-slide` 與更新 `SKILL.md`**
-  - **程式碼檔案**：`pipeline/h3_cli.py`、`.agents/skills/h3c-local-film-chain/SKILL.md`
-  - **修改內容**：
-    1. 子指令 `render-slide --title "..." --bullets "..." --output <png>`：使用 Pillow + 實測 CJK 字體繪製 `1376×768` / `864×480` 教學圖表卡。
-    2. 子指令 `resolve-anchor --role <speaker|slide|scene> --query "..."`：
-       - 若 `role == "slide"` 且無外部圖：直接呼叫 `render-slide` 程式繪製，**不觸發 Abort**。
-       - Tier 1：檢查本地既有圖片或生圖輸出。
-       - Tier 2：檢索 Wikimedia / Openverse API，**逐張驗證 `license` 屬於 `{"cc0", "pdm", "cc-by", "cc-by-sa"}`**，下載後強制寫入 `assets/attribution.json`。
-       - Tier 3：寫入 `waiting_for_user_asset` 狀態並輸出提示口令，要求使用者於網頁或 `assets/` 提供圖片。
-       - Tier 4：僅在核心角色錨點缺失且無法取得時返回 Exit Code `3`（Fail-Safe Abort）。
-    3. 更新 `SKILL.md`：規定 Agent 一律透過 `python3 -m pipeline.h3_cli` 操作。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F5-2\`` 改為 `- [x] \`F5-2\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F5-2\`` 改為 `- [x] \`F5-2\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_h3_cli.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_cli.py tests/test_h3_cli.py && grep -q "\- \[x\] \`F5-2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F5-2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
----
-
-## 階段 F6：前端漸進式拆分與 DOM / Inline Handler 完整性測試
-
-- [x] `F6-A1` **抽離 `index.html` 內嵌 CSS 與靜態長篇 Prompt（100% 保留閘道 DOM）**
-  - **程式碼檔案**：新增 `film-chain/public/src/styles/studio.css`、新增 `film-chain/public/src/prompts/agentPrompts.js`、修改 `film-chain/public/index.html`
-  - **修改內容**：
-    1. 使用 `read_file` 讀取 `index.html` `L1-815`，將 `<style>...</style>` 內容完整移入 `src/styles/studio.css`，原處替換為 `<link rel="stylesheet" href="src/styles/studio.css">`。
-    2. 將靜態長篇 Prompt 字串抽離至 `src/prompts/agentPrompts.js`（掛載於 `window.H3Prompts`）。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F6-A1\`` 改為 `- [x] \`F6-A1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F6-A1\`` 改為 `- [x] \`F6-A1\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `npm test --prefix film-chain && node --check film-chain/public/src/prompts/agentPrompts.js && grep -q "\- \[x\] \`F6-A1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F6-A1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F6-A2` **漸進抽離 Step 5 音軌字幕控制器與新增 `dom_integrity.test.js`**
-  - **程式碼檔案**：新增 `film-chain/public/src/controllers/studioAudioSubtitles.js`、修改 `film-chain/public/index.html`、`film-chain/package.json`、新增 `film-chain/tests/dom_integrity.test.js`
-  - **修改內容**：
-    1. 僅抽離低耦合的 Step 5 音軌/字幕相關函式（`L6400-6969`）至 `src/controllers/studioAudioSubtitles.js`，以傳統 `<script src="src/controllers/studioAudioSubtitles.js"></script>` 載入，確保所有頂層函式留在全域作用域。
-    2. 在 `film-chain/tests/dom_integrity.test.js` 實作自動化檢驗（並加入 `package.json` 的 `npm test` 清單）：
-       - 解析 `index.html` 中所有 `onclick="..."`、`onchange="..."`、`oninput="..."` 引用的函式名稱；
-       - 掃描所有載入的 `.js` 檔與內嵌 `<script>`，驗證 **100% 內聯事件處理器皆有定義**、`<script>` 載入順序正確且無語法錯誤。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F6-A2\`` 改為 `- [x] \`F6-A2\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F6-A2\`` 改為 `- [x] \`F6-A2\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `npm test --prefix film-chain && grep -q "\- \[x\] \`F6-A2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F6-A2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
----
-
-## 階段 F7：後端 `JobManager`、`ShotLock`、異常恢復與前端即時媒合
-
-- [x] `F7-A1` **實作 `pipeline/h3_job_manager.py`：Job Lifecycle、`ShotLock`、Journal Commit 與異常恢復**
-  - **程式碼檔案**：新增 `pipeline/h3_job_manager.py`、新增 `tests/test_job_manager_and_locks.py`
-  - **修改內容**：
-    1. 定義 Job 狀態：`PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED`，支援 `job_id` 與 `idempotency_key` 去重。
-    2. 實作跨程序排他鎖 `ShotLock(project_dir, shot_index)`（使用 `fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)` 鎖定 `.locks/shot_<N>.lock` 並寫入 PID 與 `job_id`）。
-    3. 實作 `atomic_commit_shot_artifacts()`：先在 `scratch/staging_<job_id>/` 驗證產物健康度，寫入 `.commit_journal.json`，再依序 `os.replace()` 替換正式產物與更新 `state.json`，最後清除 journal。
-    4. 實作 `recover_interrupted_jobs(project_dir)`：啟動時掃描殘留 journal 與死鎖（檢查 PID 是否存活），自動清理未完成之 `.tmp` 暫存檔並將中斷之 Job 標記為 `FAILED (interrupted_recovered)`。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F7-A1\`` 改為 `- [x] \`F7-A1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F7-A1\`` 改為 `- [x] \`F7-A1\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_job_manager_and_locks.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_job_manager.py tests/test_job_manager_and_locks.py && grep -q "\- \[x\] \`F7-A1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F7-A1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F7-A2` **於 `pipeline/h3_server.py` 接入安全沙盒 API：`/api/workspace-sync` 與 `/api/reroll-shot`**
-  - **程式碼檔案**：`pipeline/h3_server.py`、`tests/test_h3_server.py`
-  - **修改內容**：
-    1. 新增 `validate_safe_project_id(project_id: str) -> Path`：嚴格限制 `^[a-zA-Z0-9_-]{1,64}$` 並驗證解析路徑位於 `get_output_dir()` 內，防堵 Path Traversal。
-    2. 新增 `GET /api/workspace-sync?project_id=...`（回傳 Manifest 摘要、五節點 Hash 狀態、`TelemetrySnapshot` 與各段鎖定狀態）與 `POST /api/reroll-shot`（檢查 `idempotency_key` 與 `ShotLock`，若該鏡正被 CLI 鎖定則回傳 `409 Conflict`）。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F7-A2\`` 改為 `- [x] \`F7-A2\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F7-A2\`` 改為 `- [x] \`F7-A2\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_h3_server.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/h3_server.py tests/test_h3_server.py && grep -q "\- \[x\] \`F7-A2\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F7-A2\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
-- [x] `F7-B` **實作 `workspaceSync.js` 串接步驟一～五閘道與鎖定狀態 UI**
-  - **程式碼檔案**：新增 `film-chain/public/src/controllers/workspaceSync.js`、修改 `film-chain/public/h3ServeBridge.js`、`film-chain/public/index.html`、`film-chain/tests/dom_integrity.test.js`
-  - **修改內容**：
-    1. 訂閱後端 `/api/workspace-sync`，當 Agent CLI 推進時自動更新網頁步驟一～五閘道、顯示 `display_dialogue` / `spoken_dialogue` 雙軌標籤與 ETA 信賴度徽章（`實測` / `推估 (高/中/低信賴)`）。
-    2. 在步驟四分段卡片顯示 `ShotLock` 狀態（鎖定時禁用重抽按鈕並顯示 `🔒 生成中`）。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F7-B\`` 改為 `- [x] \`F7-B\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F7-B\`` 改為 `- [x] \`F7-B\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && npm test --prefix film-chain && grep -q "\- \[x\] \`F7-B\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F7-B\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
----
-
-## 階段 F8：單段語音重抽落地（依 F0 實測報告裁決技術路徑）
-
-- [x] `F8-1` **實作極速代理音訊重抽器 `h3_audio_reroller.py` 與 8 步跨批次快取失效整合測試**
-  - **程式碼檔案**：新增 `pipeline/h3_audio_reroller.py`、修改 `pipeline/h3_storyboard_pipeline.py`、新增 `tests/test_audio_reroll_integration.py`
-  - **修改內容**：
-    1. **採用 F0 實測勝出之「路徑 A：免改 `h3.c` 原生 `256×160 --token-reduction` 極速代理音軌重抽 (`--reroll-audio-fast`)」**：
-       - 當第 $N$ 段僅修改 `spoken_dialogue`（即 `audio_hash` 變更但 `visual_hash` 不變）或顯式傳入 `--reroll-audio-fast --only-shots N` 時，自動以 `--width 256 --height 160 --token-reduction` 與前一段 `.mp4` 作為 `--motion-context`（**不傳 `--save-context` 以保護原高畫質 `.h3ctx`**）在 ~2 分鐘內產出代理音軌。
-       - 呼叫 F3-B `reconcile_av_duration()` 將代理音軌以 `-map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 192k` 無損換入原高畫質 `Video Artifact`。
-    2. 編寫 **8 步跨批次 Cache Invalidation 端到端整合測試**（首次生成 $\to$ 僅改 `display_dialogue` 驗證不重算影音 $\to$ 僅改 `spoken_dialogue` 驗證保留原視訊僅跑代理重抽與換軌 $\to$ 改 `visual_prompt` 驗證下游 `motion_context` 連鎖失效 $\to$ 驗證最終軌版本一致）。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F8-1\`` 改為 `- [x] \`F8-1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F8-1\`` 改為 `- [x] \`F8-1\``。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest tests/test_audio_reroll_integration.py && /opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check pipeline/ tests/ && grep -q "\- \[x\] \`F8-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F8-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
----
-
-## 階段 F9：Colab 12s 雙圖高吞吐獨立規格擴充
-
-- [x] `F9-1` **於 `h3_edu_profile.py` 與 `h3_cli.py` 新增獨立 `colab_12s` 雙圖高吞吐規格**
-  - **程式碼檔案**：`pipeline/h3_edu_profile.py`、`pipeline/h3_cli.py`、新增 `tests/test_colab_12s_profile.py`
-  - **修改內容**：
-    1. 新增 `EXECUTION_TRACK_SPECS` 常數：
-       - `"local_5s"`（預設）：`buckets=(93, 124, 155, 186)`、`max_cjk_chars=26`、`default_size=(864, 480)`。
-       - `"colab_12s"`：`buckets=(241, 289)`、`max_cjk_chars=55`、`default_size=(1376, 768)`、支援 `reference_images: [speaker_anchor, slide_image]` 雙圖欄位驗證。
-    2. 確保未指定 `execution_track` 時 100% 走 `"local_5s"`，既有測試零修改通過。
-  - **📝 進度文件同步動作（必做）**：
-    1. 用 `edit_file` 將 `docs/dev/STATE.md` 中的 `- [ ] \`F9-1\`` 改為 `- [x] \`F9-1\``。
-    2. 用 `edit_file` 將 `docs/dev/V2_EXECUTION_PLAN.md` 中的 `- [ ] \`F9-1\`` 改為 `- [x] \`F9-1\``。
-    3. 清理 `scratch/f0_exp/` 內之大型臨時 `.mp4` / `.wav`，確保工作區乾淨。
-  - **🔍 驗證與文件打勾斷言指令**：
-    `/opt/homebrew/Caskroom/miniforge/base/bin/python3 -m unittest discover -s tests && .venv/bin/ruff check . && npm test --prefix film-chain && grep -q "\- \[x\] \`F9-1\`" docs/dev/STATE.md && grep -q "\- \[x\] \`F9-1\`" docs/dev/V2_EXECUTION_PLAN.md && test $(wc -l < docs/dev/STATE.md) -le 50`
-
----
-
-## 階段 F10：算力調用、狀態持久化、教學範本落地與 Code Review
-
-- [x] `F10-PRE` **F0～F9 歷史無損歸檔與 F10 原子微批次清單掛載**
-  - **檔案**：`docs/dev/archive/V2_F0_F9_COMPLETED.md`、`docs/dev/STATE.md`、`docs/dev/V2_EXECUTION_PLAN.md`
-  - **內容**：完成歷史紀錄無損歸檔，重組微批次清單。
-
-- [x] `F10-1A` **於 `pipeline/h3_state.py` 實作七態狀態機、錯誤細分碼與跨 Session 持久化查詢**
-- [x] `F10-1B` **實作產物深度驗證器 `pipeline/h3_verifier.py`（ffprobe + SHA-256）**
-- [x] `F10-2A` **實作 Schema v2 角色感知轉接器 `pipeline/h3_manifest_adapter.py`**
-- [x] `F10-2B` **擴充 `pipeline/h3_colab_watchdog.py` 四階段感知與進程清理**
-- [x] `F10-3A` **實作兩階段授權門禁調度器 `pipeline/h3_dispatcher.py`**
-- [x] `F10-3B` **重構 `pipeline/h3_cli.py` 表驅動路由並接入算力調度子命令**
-- [x] `F10-4` **路線正名（saas_api）與前端雙向向下相容**
-- [x] `F10-5` **Skill Discovery 雙平台實證與專案 Skill 統一導向**
-- [x] `F10-6A` **H3 實測教學成片與完整分鏡範本全鏈路落地**
-- [x] `F10-6B` **規範落地與執行 `/code-review` 總驗收**
-
----
-
-## 階段 F11：UX 改善、操作動線收斂與資料交接可靠性
-
-- [x] `F11-0` **UX 現況盤點、User Journey 拆解與 P0~P3 問題分級**
-- [x] `F11-1` **Web 操作動線與已知 Bug 修復（移除步驟一錯置藍框、唯一 ID、秒數檔名、步驟三下載入口）**
-- [x] `F11-1-FIX` **修復 Edu 幀數桶秒數累積偏差 (105s)、補齊 jobs 參考圖與消除 Adapter 短路**
-- [x] `F11-2` **Web / Agent / CLI 資料交接可靠性**
-- [x] `F11-3` **Prompt 生成邏輯與 `h3_cli` 整合**
-- [x] `F11-4` **Agent-First 快速體驗入口**
-- [x] `F11-5` **統一 Skill 與授權引導**
-- [x] `F11-FIX` **跨工作流整合驗收缺陷收斂（修復 DOM 遞迴、Inline Payload 碰撞、`build-manifest` 缺圖、Hybrid 無損匯回、Worker Revision 樂觀鎖與 Dispatcher 授權門禁）**
-
-
+- [ ] `B0-SPEC` **契約先行（立案 `ADR-0003`）：定義 `TimelineSpec`、分離 `VoiceProvider` 與 `ResourceScheduler`、鎖定 `HyperFrames` 轉接契約**
+  - **前置條件**：僅於 `A4-6` 達雙軸 `PASS` 且 Full Gate 全綠後方可開啟；此批次僅產出設計契約與型別骨架，不寫入推理或渲染實作。
+  - **三大核心邊界設計**：
+    1. **`TimelineSpec` 統一時間軸契約**（Single Source of Truth）：
+       - **Timebase（時間基準）**：以整數刻度／微秒或統一格率座標表示絕對時間，Storyboard 段落、對白音軌、字幕 Cue、BGM 閃避（Ducking）與 Compositor 軌道共享同一座標基準。
+       - **Frame Rate（影格率）**：定義標準基準格率 `24 fps`（與 H3 `frames / 24` 與變數教育分段格數對齊），所有視訊片段起訖皆具明確幀邊界。
+       - **Audio Sample Rate（音訊取樣率）**：定義基準系統取樣率為 `32000 Hz`（對齊 H3 原生音軌），並明確宣告外部 TTS（如 Qwen3-TTS `24000 Hz`）或母帶輸出（`48000 Hz`）的強制重取樣契約（不得靜默混接不同取樣率）。
+       - **Sync Rules（音畫同步規則）**：顯式區分 `audio-first`（對白決定鏡段時長、視訊補幀／擴展或依策略裁切）與 `video-first`（鏡段時長鎖定、對白起音偏移與語速超標拒絕／自動鴨避），並規範字幕時間窗與 BGM Ducking 前後緩衝邊界。
+    2. **`VoiceProvider` 與 `ResourceScheduler` 嚴格職責分離**：
+       - **`VoiceProvider`（純語音合成／克隆契約）**：僅定義 `capabilities()`、`createProfile(input)`、`synthesize(request)`、`getJobStatus(jobId)` 與授權／同意元資料（語言、參考音檔、Transcript、模型版本；14 秒僅為 UI 預設錄音時長，非品質最佳理論值）。嚴禁將 GPU／RAM 搶佔與排程邏輯寫死於 Provider 介面內。
+       - **`ResourceScheduler`（獨立資源生命週期與互斥調度層）**：管理 Apple Silicon Unified Memory 與 Metal Compute 預算（狀態：`unloaded -> loading -> ready -> busy -> unloading`），統一協調 H3 視訊引擎、`Qwen3-TTS`（0.6B/1.7B 及 KV Cache 實際記憶體開銷）與 `HyperFrames` 的載入優先序、排隊佇列、任務後自動卸載與中斷釋放。
+    3. **`HyperFrames` Compositor 轉接契約**：單向消費 `TimelineSpec` 與既有 Frame Contract 輸出渲染任務，嚴禁反向修改 Storyboard / Store / Voice 業務規則。

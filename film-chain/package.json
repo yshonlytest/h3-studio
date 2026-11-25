@@ -4,9 +4,14 @@
   "description": "H3 Storyboard Studio - First/Last-frame chained video generation studio",
   "private": true,
   "scripts": {
-    "test": "node --test tests/core.test.js tests/worker_session.test.js tests/cloud_adapter.test.js tests/audio_studio.test.js tests/project_store.test.js tests/dom_integrity.test.js",
-    "deploy": "wrangler deploy",
-    "preview": "wrangler dev"
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "pretest": "vite build",
+    "test": "node --test tests/core.test.js tests/worker_session.test.mjs tests/cloud_adapter.test.js tests/audio_studio.test.js tests/project_store.test.js tests/dom_integrity.test.js tests/stores.test.mts tests/dom_safety.test.mts tests/refactor_helpers.test.mts tests/resource_lifecycle.test.mts tests/architecture.test.mts",
+    "prepreview": "vite build",
+    "preview": "wrangler dev",
+    "predeploy": "vite build",
+    "deploy": "wrangler deploy"
   },
   "keywords": [
     "comfyui",
@@ -17,6 +22,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
     "wrangler": "^4.152.0"
   }
 }

@@ -7,29 +7,19 @@
 
 ## 1. 架構原則 (Architecture Principles)
 
-### 1.1 純邏輯與副作用解耦
-- 所有核心計算（時間軸切分、Prompt 組裝、ComfyUI 節點生成、錯誤診斷）必須置於 `public/src/core/` 且為**無狀態純函數 (Pure Functions)**。
-- 前端 DOM 操作、瀏覽器事件監聽、Canvas 繪圖等副作用代碼一律限制在 `public/index.html`、`public/h3ServeBridge.js` 或專案外層腳本中，嚴禁侵入 `public/src/core/`。
+### 1.1 純邏輯、狀態與副作用分層
+- 所有跨環境共用純計算（時間軸切分、Prompt 組裝、ComfyUI 節點生成、錯誤診斷）置於 `public/src/core/`，維持**無狀態純函數 (Pure Functions)**。
+- 領域狀態與業務控制器置於 `client/`（TypeScript），依單向依賴原則組織：`features/* -> stores/* -> types/* / data/*`；禁止 `stores/` 或 `data/` 反向依賴 `features/`，亦禁止跨 Store 未受控寫入。
+- 前端 DOM 操作、瀏覽器事件監聽、Canvas 繪圖等副作用代碼限制在 `client/features/*`、`client/bootstrap.ts` 與 `public/h3ServeBridge.js`，嚴禁侵入 `public/src/core/`。
 - 量化紅線（函式長度、參數數量等）以 [docs/STANDARDS.md](../docs/STANDARDS.md) 為單一來源。
 
-### 1.2 UMD 雙模相容性規範 (Dual-Mode Compatibility)
-- `src/core/` 下的所有模組必須使用 UMD (Universal Module Definition) 樣板：
-  ```javascript
-  (function (root, factory) {
-    if (typeof module === 'object' && module.exports) {
-      module.exports = factory();
-    } else {
-      root.MyModule = factory();
-    }
-  }(typeof self !== 'undefined' ? self : this, function () {
-    return { ... };
-  }));
-  ```
-- **禁止**在核心模組使用原生 ESM `import / export` 語法，以確保一般使用者雙擊 HTML (`file:///`) 即可運作，同時開發者可使用 Node.js 執行單元測試。
+### 1.2 雙軌模組規範（Core UMD + Client TypeScript/ESM）
+- `public/src/core/*.js` 保留 UMD (Universal Module Definition) 樣板，確保現有 CommonJS 單元測試零修改執行，同時可供瀏覽器與 `client/` 呼叫。
+- UI 控制器、Store 與擴充契約一律使用 `film-chain/client/**/*.ts`（標準 ES Modules + TypeScript，避免 TS `enum` / `namespace` 以相容 Node 原生 TypeScript 執行），經 Vite (`publicDir: false`, `build.outDir: "public/dist"`) 編譯為 `public/dist/studio.js` 供 Cloudflare Workers 與本機環境使用。
 
-### 1.3 零建置與測試守則 (Zero-Build & Testing)
-- 單元測試置於 `tests/`，強制使用 Node 原生模組 `node:test` 與 `node:assert`。
-- 新增模組或修改核心邏輯時，必須附帶對應的單元測試，並確保 `npm test` 通過率 100%。
+### 1.3 建置與測試守則 (Vite Build & Native `node:test`)
+- 單元測試置於 `tests/`，強制使用 Node 原生模組 `node:test` 與 `node:assert`（同時支援 CommonJS `.test.js` 與原生 TypeScript `.test.ts`）。
+- 變更前端程式碼後，必須確保 `npm run typecheck` 與 `npm test`（含 `pretest` 自动執行 `vite build`）通過率 100%。
 
 ---
 
